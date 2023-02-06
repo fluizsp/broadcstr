@@ -1,4 +1,6 @@
 import React from 'react';
+import { Provider } from 'react-redux';
+import { createSlice, configureStore } from '@reduxjs/toolkit'
 import {
   ChakraProvider,
   Box,
@@ -15,10 +17,14 @@ import {
   Route,
   Routes,
 } from 'react-router-dom';
-import AppContainer from './containers/AppContainer';
+import HomeContainer from './containers/HomeContainer';
+import rootReducer from './reducer';
 
 import { extendTheme } from "@chakra-ui/react"
-import { Switch } from '@chakra-ui/switch';
+
+const store = configureStore({
+  reducer: rootReducer
+})
 
 // 2. Call `extendTheme` and pass your custom values
 const customTheme = extendTheme({
@@ -28,43 +34,45 @@ const customTheme = extendTheme({
     brand: {
       purple: "#874DF8",
       green: "#1EF0B2",
-      kindsteel1:"#E9DEFA",
-      kindsteel2:"#FBFCDB"
+      kindsteel1: "#E9DEFA",
+      kindsteel2: "#FBFCDB"
     },
   },
 })
 
 const splash2 = <h2>aaa</h2>;
 
-const splash=<Box textAlign="center" fontSize="xl">
-    <Grid minH="100vh" p={200} bgGradient='linear(to-br, brand.purple, brand.green)'>
-      <VStack spacing={10}>
-        <Logo h="40vmin" pointerEvents="none" />
-        <Text color="gray.50">
-          Welcome!
-        </Text>
-        <Link
-          color="gra  y.50"
-          href="/app"
-          fontSize="2xl"
-          rel="noopener noreferrer"
-        >
-          Launch App!
-        </Link>
-      </VStack>
-    </Grid>
-  </Box>
+const splash = <Box textAlign="center" fontSize="xl">
+  <Grid minH="100vh" p={200} bgGradient='linear(to-br, brand.purple, brand.green)'>
+    <VStack spacing={10}>
+      <Logo h="40vmin" pointerEvents="none" />
+      <Text color="gray.50">
+        Welcome!
+      </Text>
+      <Link
+        color="gra  y.50"
+        href="/app"
+        fontSize="2xl"
+        rel="noopener noreferrer"
+      >
+        Launch App!
+      </Link>
+    </VStack>
+  </Grid>
+</Box>
 
 function App() {
   return (
-    <ChakraProvider theme={customTheme}>
-      <Router>
-        <Routes>
-          <Route path="/" element={splash} />
-          <Route path="/app" element={AppContainer} />
-        </Routes>
-      </Router>
-    </ChakraProvider >
+    <Provider store={store}>
+      <ChakraProvider theme={customTheme}>
+        <Router>
+          <Routes>
+            <Route path="/" element={splash} />
+            <Route path="/app" element={<HomeContainer />} />
+          </Routes>
+        </Router>
+      </ChakraProvider >
+    </Provider>
   );
 }
 
