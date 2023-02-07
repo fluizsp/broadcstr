@@ -18,56 +18,57 @@ const mapDispatchToProps = (dispatch) => {
 };
 
 const mapStateToProps = (state, ownProps) => {
-    let last= new Date();
+    let last = new Date();
     return {
         notes: state.relay.notes,
-        last_time:last
+        relayLoaded: state.relay.loaded,
+        last_time: last,
+        isLoading: state.relay.notes.length===0
     }
 }
 
-
 class HomeContainer extends Component {
-    componentDidMount() {
-        this.props.loadRelay();
+    constructor(props) {
+        super(props);
+        this.isLoading=true;
     }
-
     render() {
-        let notes=this.props.notes;
+        let notes = this.props.notes;
         return (
             <Box bgGradient='linear(to-br, brand.kindsteel1, brand.kindsteel2)' minH="100vH">
-                <MenuBar /> 
+                <MenuBar />
                 <Box ml={{ md: '100px', lg: '330px' }}>
                     <Container maxW='4xl' pt="20px" pb="20px">
                         <Grid templateColumns='repeat(12, 1fr)' gap="3" mb="5">
-                            <Show above="md"> 
+                            <Show above="md">
                                 <GridItem colSpan={7}>
                                     <Box bg="whiteAlpha.700" h="54px" p="1">
                                         <Center>
                                             <Button leftIcon={<HiPlusCircle />} pl="10" pr="10" variant="ghost" size="lg" fontSize="md" color="gray.400">What's on your mind?</Button>
                                         </Center>
                                     </Box>
-                                </GridItem> 
-                            </Show> 
+                                </GridItem>
+                            </Show>
                             <GridItem colSpan={[12, 12, 5]}>
                                 <Box bg="whiteAlpha.700" h="54px" p="4">
                                     <Center>
-                                        <Link pl="2" fontSize="sm" >Trending</Link>
-                                        <Link pl="2" fontSize="sm">Following</Link>
-                                        <Link as="b" pl="2" fontSize="sm" color="blue.300" onClick={this.props.loadNotes.bind(this)}>Global</Link>
+                                        <Button size="sm" variant="link" pr="5">Trending</Button>
+                                        <Button size="sm" variant="link" pr="5" color="blue.300" onClick={this.props.loadNotes.bind(this)}>Following</Button>
                                     </Center>
                                 </Box>
                             </GridItem>
                         </Grid>
-                        <Center>
+                        <Center display={this.props.isLoading?'flex':'none'}>
                             <Spinner size="xl" color="blue.300" />
-                        </Center> 
-                        {notes.map((note, i) => { 
-                            if(i<50)
-                                return (<Note note={note} /> );
-                        })}
+                        </Center>
+                        {
+                            Object.keys(notes).map((key) => {
+                                return (<Note note={notes[key]} key={'Note' + key} />);
+                            })
+                        }
                     </Container>
                 </Box>
-            </Box> 
+            </Box>
         )
     }
 }

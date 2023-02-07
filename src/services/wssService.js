@@ -4,12 +4,18 @@ class WsService {
         this.opened = false;
         this.ws = new WebSocket(addr);
         this.onMessage = onMessage;
-        this.openReq = null;
         this.ws.onopen = onOpen;
         this.ws.onmessage = onMessage;
     }
     req(params) {
-        this.ws.send(params);
+        if (this.ws.readyState === 1) {
+            this.ws.send(params);
+        } else {
+            let that = this;
+            setTimeout(() => {
+                that.req(params);
+            }, 500);
+        }
     }
 }
 

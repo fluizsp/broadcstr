@@ -1,14 +1,10 @@
-import { Flex, Center, Box, Image, HStack, VStack, Button, Avatar, Text, Container, Grid, GridItem, Link, Card, Code } from '@chakra-ui/react'
-import { FaHashtag, FaPaperclip } from 'react-icons/fa';
-import { SearchOutline } from 'react-ionicons'
-import { GoHome, GoSettings } from 'react-icons/go';
-import { IoMdSettings, Io } from 'react-icons/io';
-import { HiPlusCircle } from 'react-icons/hi';
+import { Box, HStack, VStack, Button, Avatar, Text, Grid, GridItem, Card, Image, Skeleton, SlideFade } from '@chakra-ui/react'
 import { FiMoreHorizontal } from 'react-icons/fi';
 import { BiCommentDetail, BiHeart, BiRepost } from 'react-icons/bi';
 
 function Note(props) {
-    let created=props.note?new Date(props.note.created_at):new Date();
+    let created = props.note ? new Date(props.note.created_at * 1000) : new Date();
+    //console.log(created);
     return (
         <Card mb="5">
             <VStack align="left">
@@ -16,8 +12,8 @@ function Note(props) {
                     <Grid templateColumns='repeat(12, 1fr)'>
                         <GridItem colSpan="11">
                             <HStack>
-                                <Avatar size="md" src="https://member.cash/img/profilepics/5579868970219573173.128x128.jpg" />
-                                <Text fontSize="md" as="b">{props.note?props.note.pubkey:''}</Text>
+                                <Avatar size="md" name="" />
+                                <Text fontSize="md" as="b" maxW="200px" noOfLines="1"><Skeleton w="20" h="2" /></Text>
                                 <Text fontSize="md" as="b">&middot;</Text>
                                 <Text fontSize="md">10s</Text>
                             </HStack>
@@ -27,20 +23,21 @@ function Note(props) {
                         </GridItem>
                     </Grid>
                 </Box>
-                <Code p="5" fontSize={['xs','sm','md']}>
-                    {props.note?props.note.content:''}
-                </Code>
-                <Code p="5" fontSize={['xs','sm','md']}>
-                    {props.note?JSON.stringify(props.note):''}
-                </Code>
-                {/*<Image maxH={{ sm: '300px', md: '400px', lg: '500px' }} src="https://pbs.twimg.com/media/FoONMfXXoAIwQVn.jpg" />*/}
+                <Text p="5" fontSize={['xs', 'sm', 'md']}>
+                    {props.note ? props.note.content : ''}
+                </Text>
+                {/*<Code p="5" fontSize={['xs', 'sm', 'md']}>
+                    {props.note ? JSON.stringify(props.note) : ''}
+                </Code>*/}
+
+                <Image fit="scale-down" maxH="500px" src={props.note ? props.note.image : ''} />
                 <HStack p="5" verticalAlign="middle" spacing="2">
-                    <BiCommentDetail />
-                    <Text fontSize="sm" pr="24">3514</Text>
-                    <BiHeart/>
-                    <Text fontSize="sm" pr="24">3514</Text>
-                    <BiRepost />  
-                    <Text fontSize="sm">3514</Text>
+                    <Button variant="link"><BiCommentDetail /></Button>
+                    <Skeleton w="5" h="2" />
+                    <Button variant="link"><BiHeart /></Button>
+                    <Skeleton w="5" h="2" />
+                    <Button variant="link"><BiRepost /></Button>
+                    <Skeleton w="5" h="2" />
                 </HStack>
             </VStack>
         </Card>

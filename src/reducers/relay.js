@@ -1,23 +1,33 @@
-import { createSlice } from '@reduxjs/toolkit'
-import { NOTES_LOADED, RELAY_LOADED } from '../actions/relay';
+import { createReducer } from '@reduxjs/toolkit'
 
 const initialState = {
-    addr: ' wss://relay.damus.io',
-    notes: [],
+    addrs: ['wss://relay.nostr.info','wss://relay.damus.io'],
+    notes: {},
     loaded: null
 };
 
-const relayReducer = (state = initialState, action) => {
-    switch (action.type) {
-        case RELAY_LOADED:
-            return Object.assign({}, state, {loaded:true});
-        case NOTES_LOADED:
-            state.notes.push(action.data.notes[2])
-            return Object.assign({}, state, {});
-                
-        default:
-            return state;
+const treatImages = (note) => {
+    let imgRgx = new RegExp(/(https?:\/\/.*\.(?:png|jpg|gif))/, 'gmi').exec(note.content);
+    if (imgRgx) {
+        note.image = imgRgx[1];
+        note.content = note.content.replace(imgRgx[0], "");
     }
+    return note;
 }
+
+const relayReducer = createReducer(initialState, {
+    RELAY_LOADED: (state, action) => {
+        state.loaded = true;
+    }
+    , NOTES_LOADED: (state, action) => {
+        if (action.data.notes[0] === "NOTICE")
+            console.log(`${action.data.notes[0]} - ${action.data.notes[1]}`);
+        if (action.data.notes.length > 2) {
+            let newNote = action.data.notes[2];
+            newNote = treatImages(newNote);
+            state.notes[newNote.id]=newNote;
+        }
+    }
+});
 
 export default relayReducer;

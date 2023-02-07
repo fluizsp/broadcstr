@@ -1,15 +1,19 @@
 import WsService from "./wssService";
 
-class RelayService {    
-    constructor(){
-        this.wssList=[];
+class RelayService {
+    constructor(addr) {
+        this.addr=addr;
+        this.wsS=null;
     }
-    init(addr, onMessage, onOpen) {
-        this.wssList[0]=new WsService(addr, onMessage, onOpen);
+    init(onMessage, onOpen) {
+        this.wsS = new WsService(this.addr, onMessage, function () {
+            onOpen();
+        });
+        //console.log(this.wsS);
     }
-    req(addr) {
-        console.log(addr);
-        this.wssList[0].req('["REQ", "my-sub", {"kinds":[1]}]');
+    getNotes() {
+        let reqString=`["REQ","Bdcstr${new Date().getTime()}",{"authors":["46fcbe3065eaf1ae7811465924e48923363ff3f526bd6f73d7c184b16bd8ce4d"],"kinds":[1],"limit":50} ]`
+        this.wsS.req(reqString);
     }
 }
 

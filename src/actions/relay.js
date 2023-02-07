@@ -3,7 +3,7 @@ import RelayService from '../services/relayService';
 export const NOTES_LOADED = "NOTES_LOADED";
 export const RELAY_LOADED = "RELAY_LOADED";
 
-const relayService = new RelayService();
+const relayServices = [];
 
 export const notesLoaded = (notes) => {
     return {
@@ -11,19 +11,27 @@ export const notesLoaded = (notes) => {
         data: { notes: notes }
     }
 }
-export const relayLoaded = (relay) => {
+export const relayLoaded = (event) => {
     return {
         type: RELAY_LOADED,
-        data: { relay: relay }
+        data: { relay: event }
     }
 }
 
 export const loadRelay = () => {
     return ((dispatch, getState) => {
-        relayService.init(getState().relay.addr, function (message) {
+        relayServices.push(new RelayService(getState().relay.addrs[0]));
+        relayServices.push(new RelayService(getState().relay.addrs[1]));
+        relayServices[0].init(function (message) {
             dispatch(notesLoaded(JSON.parse(message.data)));
-        }, function () {
-            dispatch(relayLoaded());
+        }, function (event) {
+            dispatch(relayLoaded(event));
+        });
+
+        relayServices[1].init(function (message2) {
+            dispatch(notesLoaded(JSON.parse(message2.data)));
+        }, function (event) {
+            dispatch(relayLoaded(event));
         });
 
     });
@@ -31,7 +39,9 @@ export const loadRelay = () => {
 
 export const loadNotes = () => {
     return ((dispatch, getState) => {
-        console.log('Load Notes');
-        relayService.req(getState().relay.addr);
+        relayServices.forEach(relayService => {
+            if(relayService)
+            relayService.getNotes(getState().relay.addr);
+        });
     });
 };

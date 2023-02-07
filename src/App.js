@@ -21,10 +21,13 @@ import HomeContainer from './containers/HomeContainer';
 import rootReducer from './reducer';
 
 import { extendTheme } from "@chakra-ui/react"
+import { loadRelay } from './actions/relay';
 
 const store = configureStore({
   reducer: rootReducer
 })
+
+store.dispatch(loadRelay());
 
 // 2. Call `extendTheme` and pass your custom values
 const customTheme = extendTheme({
@@ -62,6 +65,7 @@ const splash = <Box textAlign="center" fontSize="xl">
 </Box>
 
 function App() {
+  
   return (
     <Provider store={store}>
       <ChakraProvider theme={customTheme}>
