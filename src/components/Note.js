@@ -1,6 +1,7 @@
 import { Box, HStack, VStack, Button, Avatar, Text, Grid, GridItem, Card, Image, Skeleton, SlideFade } from '@chakra-ui/react'
 import { FiMoreHorizontal } from 'react-icons/fi';
 import { BiCommentDetail, BiHeart, BiRepost } from 'react-icons/bi';
+import { formatDistance } from 'date-fns'
 
 function Note(props) {
     let created = props.note ? new Date(props.note.created_at * 1000) : new Date();
@@ -15,7 +16,7 @@ function Note(props) {
                                 <Avatar size="md" name="" />
                                 <Text fontSize="md" as="b" maxW="200px" noOfLines="1"><Skeleton w="20" h="2" /></Text>
                                 <Text fontSize="md" as="b">&middot;</Text>
-                                <Text fontSize="md">10s</Text>
+                                <Text fontSize="sm" aria-label='aaa'>{formatDistance(created, new Date(), { addSuffix: true})}</Text>
                             </HStack>
                         </GridItem>
                         <GridItem align="right">
@@ -23,7 +24,7 @@ function Note(props) {
                         </GridItem>
                     </Grid>
                 </Box>
-                <Text p="5" fontSize={['xs', 'sm', 'md']}>
+                <Text p="5" fontSize={['xs', 'sm', 'sm','md']}>
                     {props.note ? props.note.content : ''}
                 </Text>
                 {/*<Code p="5" fontSize={['xs', 'sm', 'md']}>

@@ -21,13 +21,13 @@ import HomeContainer from './containers/HomeContainer';
 import rootReducer from './reducer';
 
 import { extendTheme } from "@chakra-ui/react"
-import { loadRelay } from './actions/relay';
+import { loadRelays } from './actions/relay';
 
 const store = configureStore({
   reducer: rootReducer
 })
 
-store.dispatch(loadRelay());
+store.dispatch(loadRelays());
 
 // 2. Call `extendTheme` and pass your custom values
 const customTheme = extendTheme({
@@ -35,6 +35,7 @@ const customTheme = extendTheme({
   },
   colors: {
     brand: {
+
       purple: "#874DF8",
       green: "#1EF0B2",
       kindsteel1: "#E9DEFA",
@@ -42,8 +43,6 @@ const customTheme = extendTheme({
     },
   },
 })
-
-const splash2 = <h2>aaa</h2>;
 
 const splash = <Box textAlign="center" fontSize="xl">
   <Grid minH="100vh" p={200} bgGradient='linear(to-br, brand.purple, brand.green)'>

@@ -3,15 +3,17 @@ import { HiPlusCircle } from 'react-icons/hi';
 import { Component } from 'react';
 import { connect } from 'react-redux';
 import MenuBar from '../components/MenuBar';
-import { loadNotes, loadRelay } from '../actions/relay';
+import { loadNotes } from '../actions/relay';
 import Note from '../components/Note';
+import TopBar from '../components/TopBar';
+import LazyLoad from 'react-lazyload';
+import BottomNavigation from '../components/BottomNavigation';
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        loadRelay: () => {
-            dispatch(loadRelay());
-        },
-        loadNotes: () => {
+        loadNotes: (feedType, component) => {
+            component.state.feedType = 'following';
+            component.state.isLoading = true;
             dispatch(loadNotes());
         }
     }
@@ -22,23 +24,32 @@ const mapStateToProps = (state, ownProps) => {
     return {
         notes: state.relay.notes,
         relayLoaded: state.relay.loaded,
-        last_time: last,
-        isLoading: state.relay.notes.length===0
+        last_time: last
     }
 }
 
 class HomeContainer extends Component {
     constructor(props) {
         super(props);
-        this.isLoading=true;
+        this.state = {
+            isLoading: false,
+            feedType: ''
+        }
+    }
+    componentDidMount(dispatch) {
+        if (this.state.feedType === '')
+            this.props.loadNotes.bind(this, 'following', this)();
     }
     render() {
         let notes = this.props.notes;
+        let feedType = this.state.feedType;
         return (
             <Box bgGradient='linear(to-br, brand.kindsteel1, brand.kindsteel2)' minH="100vH">
                 <MenuBar />
+                <TopBar />
+                <BottomNavigation />
                 <Box ml={{ md: '100px', lg: '330px' }}>
-                    <Container maxW='4xl' pt="20px" pb="20px">
+                    <Container maxW='4xl' pt="80px" pb="20px">
                         <Grid templateColumns='repeat(12, 1fr)' gap="3" mb="5">
                             <Show above="md">
                                 <GridItem colSpan={7}>
@@ -53,19 +64,21 @@ class HomeContainer extends Component {
                                 <Box bg="whiteAlpha.700" h="54px" p="4">
                                     <Center>
                                         <Button size="sm" variant="link" pr="5">Trending</Button>
-                                        <Button size="sm" variant="link" pr="5" color="blue.300" onClick={this.props.loadNotes.bind(this)}>Following</Button>
+                                        <Button size="sm" variant="link" pr="5" color={feedType === "following" ? "blue.300" : ''} onClick={this.props.loadNotes.bind(this, 'following', this)}>Following</Button>
                                     </Center>
                                 </Box>
                             </GridItem>
                         </Grid>
-                        <Center display={this.props.isLoading?'flex':'none'}>
+                        <Center display={this.props.isLoading ? 'flex' : 'none'}>
                             <Spinner size="xl" color="blue.300" />
                         </Center>
-                        {
-                            Object.keys(notes).map((key) => {
-                                return (<Note note={notes[key]} key={'Note' + key} />);
-                            })
-                        }
+                        <LazyLoad height={200} overflow={true}>
+                            {
+                                Object.keys(notes).map((key) => {
+                                    return (<Note note={notes[key]} key={'Note' + key} />);
+                                })
+                            }
+                        </LazyLoad>
                     </Container>
                 </Box>
             </Box>

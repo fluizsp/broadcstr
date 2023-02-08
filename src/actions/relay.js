@@ -1,9 +1,10 @@
-import RelayService from '../services/relayService';
+import {
+    relayInit,
+} from 'nostr-tools'
 
 export const NOTES_LOADED = "NOTES_LOADED";
-export const RELAY_LOADED = "RELAY_LOADED";
 
-const relayServices = [];
+const relays = [];
 
 export const notesLoaded = (notes) => {
     return {
@@ -11,37 +12,38 @@ export const notesLoaded = (notes) => {
         data: { notes: notes }
     }
 }
-export const relayLoaded = (event) => {
-    return {
-        type: RELAY_LOADED,
-        data: { relay: event }
-    }
-}
 
-export const loadRelay = () => {
+export const loadRelays = () => {
     return ((dispatch, getState) => {
-        relayServices.push(new RelayService(getState().relay.addrs[0]));
-        relayServices.push(new RelayService(getState().relay.addrs[1]));
-        relayServices[0].init(function (message) {
-            dispatch(notesLoaded(JSON.parse(message.data)));
-        }, function (event) {
-            dispatch(relayLoaded(event));
-        });
-
-        relayServices[1].init(function (message2) {
-            dispatch(notesLoaded(JSON.parse(message2.data)));
-        }, function (event) {
-            dispatch(relayLoaded(event));
-        });
-
+        relays.push(relayInit(getState().relay.addrs[0]));
+        relays.push(relayInit(getState().relay.addrs[1]));
+        relays.forEach(async relay => {
+            relay.on('connect', () => {
+                console.log(`connected to ${relay.url}`)
+            })
+            relay.on('error', () => {
+                console.log(`failed to connect to ${relay.url}`)
+            })
+            await relay.connect();
+        })
     });
 };
 
 export const loadNotes = () => {
     return ((dispatch, getState) => {
-        relayServices.forEach(relayService => {
-            if(relayService)
-            relayService.getNotes(getState().relay.addr);
+        relays.forEach(relay => {
+            let sub = relay.sub([
+                {
+                    kinds: [1],
+                    authors: ['46fcbe3065eaf1ae7811465924e48923363ff3f526bd6f73d7c184b16bd8ce4d'],
+                    limit: 50
+                }
+            ])
+
+            sub.on('event', event => {
+                dispatch(notesLoaded(event));
+            })
         });
+
     });
-};
+}
