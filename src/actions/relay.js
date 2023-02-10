@@ -1,6 +1,8 @@
 import {
     relayInit,
+    nip19
 } from 'nostr-tools'
+import { accountInfo, setAccount } from './account';
 
 export const NOTES_LOADED = "NOTES_LOADED";
 
@@ -35,15 +37,34 @@ export const loadNotes = () => {
             let sub = relay.sub([
                 {
                     kinds: [1],
-                    authors: ['46fcbe3065eaf1ae7811465924e48923363ff3f526bd6f73d7c184b16bd8ce4d'],
+                    //authors: ['46fcbe3065eaf1ae7811465924e48923363ff3f526bd6f73d7c184b16bd8ce4d'],
                     limit: 50
                 }
             ])
-
             sub.on('event', event => {
                 dispatch(notesLoaded(event));
+                if (Object.keys(getState().relay.notes).length > 50)
+                    sub.unsub();
             })
         });
+    });
+}
 
+export const loadMyInfo = (publicKey) => {
+    return ((dispatch, getState) => {
+        relays.forEach(relay => {
+            let sub = relay.sub([
+                {
+                    kinds: [0],
+                    authors: [nip19.decode(publicKey).data],
+                    limit: 10
+                }
+            ])
+            sub.on('event', event => {
+                let accountInfo = JSON.parse(event.content);
+                sub.unsub();
+                dispatch(setAccount(null, accountInfo));
+            })
+        });
     });
 }

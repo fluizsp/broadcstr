@@ -1,27 +1,37 @@
-import { Flex, Center, Box, Image, VStack, Button, Avatar, Text, Container, Grid, GridItem, Link, Show, Hide, Tooltip } from '@chakra-ui/react'
+import { Flex, Center, Box, Image, VStack, Button, Avatar, Text, Link, Show, Hide, Tooltip, HStack } from '@chakra-ui/react'
 import { FaHashtag } from 'react-icons/fa';
 import { GoHome } from 'react-icons/go';
-import { IoMdSettings, IoMdSearch, } from 'react-icons/io';
+import { IoMdSearch, IoIosSettings } from 'react-icons/io';
 import { AiFillRead } from 'react-icons/ai';
-
+import { useLocation, useNavigate } from "react-router-dom";
 import logo from '../logo_h.svg';
 import smallLogo from '../logo_small.svg';
 
-const MenuBar = () => {
+const MenuBar = (props) => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    function goSplash() {
+        navigate('/welcome');
+    }
+    function goHome() {
+        navigate('/');
+    }
+    if (location.pathname === "/welcome")
+        return null;
     return (<Show above="md">
         <Box w={{ md: '100px', lg: '330px' }} h="100vh" p="40px" bg="whiteAlpha.700"
-         backdropFilter="auto" backdropBlur="6px" top="0" left="0" pos="fixed" zIndex="1"
-         borderRight="1px" borderRightColor="white">
+            backdropFilter="auto" backdropBlur="6px" top="0" left="0" pos="fixed" zIndex="1"
+            borderRight="1px" borderRightColor="white">
             <Center>
                 {/*Desktop Menu*/}
                 <Show above="lg">
                     <VStack name="desktop1" spacing="20">
                         <Image src={logo} w="225px" />
                         <VStack spacing="1">
-                            <Button leftIcon={<GoHome />} variant="ghost" color="blue.300" size="lg" >Home</Button>
+                            <Button leftIcon={<GoHome />} variant="ghost" color={location.path === "/" ? 'blue.300' : ''} size="lg" onClick={goHome} >Home</Button>
                             <Button leftIcon={<IoMdSearch />} variant="ghost" color="gray.300" size="lg">Search</Button>
                             <Button leftIcon={<FaHashtag />} variant="ghost" color="gray.300" size="lg">Discover</Button>
-                            <Button leftIcon={<AiFillRead />} variant="ghost" color="gray.300" size="lg">Read</Button>
+                            <Button leftIcon={<AiFillRead />} variant="ghost" color="gray.300" size="lg" onClick={goSplash}>Read</Button>
                         </VStack>
                     </VStack>
                 </Show>
@@ -49,12 +59,14 @@ const MenuBar = () => {
             {/* ACCOUNT */}
             <Box w={{ md: '100px', lg: '330px' }} h="75px" p="4" bottom="0" left="0" pos="fixed" bg="whiteAlpha.700" verticalAlign="middle">
                 <Flex wrap="wrap">
-                    <Avatar src="https://member.cash/img/profilepics/5579868970219573173.128x128.jpg" mb="5" ml={{ md: 2, lg: 0 }} />
+                    <Avatar src={props.accountInfo.picture??''} name={props.accountInfo.name??'Visitor'} bg="blue.300" mb="5" ml={{ md: 2, lg: 0 }} />
                     <VStack spacing="0" align="left" pl="2">
-                        <Text as="b" fontSize="md">fluizsp</Text>
-                        <Text w="180px" noOfLines="1" fontSize="xs">npub1d5s32lzg6a0c49u42tvmz9s0v6ldv6mkm4r</Text>
+                        <HStack><Text fontSize="md">{props.accountInfo.name??'Visitor'}</Text><Text as="b" fontSize="xs">{props.accountInfo.nip05??''}</Text></HStack>
+                        <Text w="180px" noOfLines="1" fontSize="xs">{props.account?props.account.publicKey:'no pub key'}</Text>
                     </VStack>
-                    <Button variant="ghost" color="gray.400"><IoMdSettings /></Button>
+                    <VStack align="right" w="60px">
+                        <Button variant="ghost" color="gray.400"><IoIosSettings /></Button>
+                    </VStack>
                 </Flex>
             </Box>
         </Box>

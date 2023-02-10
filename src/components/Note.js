@@ -1,4 +1,4 @@
-import { Box, HStack, VStack, Button, Avatar, Text, Grid, GridItem, Card, Image, Skeleton, SlideFade } from '@chakra-ui/react'
+import { Box, HStack, VStack, Button, Avatar, Text, Grid, GridItem, Card, Image, Skeleton } from '@chakra-ui/react'
 import { FiMoreHorizontal } from 'react-icons/fi';
 import { BiCommentDetail, BiHeart, BiRepost } from 'react-icons/bi';
 import { formatDistance } from 'date-fns'
