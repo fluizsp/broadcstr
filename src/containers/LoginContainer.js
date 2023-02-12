@@ -27,7 +27,7 @@ import 'swiper/css';
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { setAccount } from '../actions/account';
-import { loadMyInfo } from '../actions/relay';
+import { getMyInfo } from '../actions/relay';
 
 
 
@@ -41,7 +41,7 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(setAccount(account));
         },
         loadAccountInfo: publicKey => {
-            dispatch(loadMyInfo(publicKey));
+            dispatch(getMyInfo(publicKey));
         }
     };
 };

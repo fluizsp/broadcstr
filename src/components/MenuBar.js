@@ -19,7 +19,7 @@ const MenuBar = (props) => {
     if (location.pathname === "/welcome")
         return null;
     return (<Show above="md">
-        <Box w={{ md: '100px', lg: '330px' }} h="100vh" p="40px" bg="whiteAlpha.700"
+        <Box w={{ md: '100px', lg: '330px' }} h="100vh" p="40px" bg="whiteAlpha.800"
             backdropFilter="auto" backdropBlur="6px" top="0" left="0" pos="fixed" zIndex="1"
             borderRight="1px" borderRightColor="white">
             <Center>

@@ -10,7 +10,7 @@ const TopBar = () => {
     if (location.pathname === "/welcome")
         return null;
     return (
-        <Box w="100vW" borderBottomRadius={['xl', 'xl', '0']} ml={['0', '0', '100px', '330px']} h="60px" bg="whiteAlpha.700" backdropFilter="auto" backdropBlur="6px"
+        <Box w="100vW" borderBottomRadius={['xl', 'xl', '0']} ml={['0', '0', '100px', '330px']} h="60px" bg="whiteAlpha.800" backdropFilter="auto" backdropBlur="6px"
             top="0" left="0" pos="fixed" zIndex="1" pr={['0', '0', '110px', '340px']}
             borderBottom="1px" borderBottomColor="white">
             <Grid templateColumns="repeat(12,1fr)">

@@ -1,0 +1,37 @@
+{
+    "content": "😜",
+    "created_at": 1674403117,
+    "id": "60a4a89cf71fca7ddea90ecebf46b7bb9774956f256d510e864a60ad88c92959",
+    "kind": 1,
+    "pubkey": "46fcbe3065eaf1ae7811465924e48923363ff3f526bd6f73d7c184b16bd8ce4d",
+    "sig": "b87ff4c4875bc569dd999293dc98546ac4f1b5183a6c4e175ef7adb967626aa27114b1cd2092c938a4456d171cc739cfe7663f4bab9be8a3e936ea2d12f31b72",
+    "tags": [
+        [
+            "p",
+            "b93049a6e2547a36a7692d90e4baa809012526175546a17337454def9ab69d30",
+            "wss://nostr-pub.wellorder.net"
+        ],
+        [
+            "p",
+            "3f770d65d3a764a9c5cb503ae123e62ec7598ad035d836e2a810f3877a745b24",
+            "wss://relay.nostr.info"
+        ],
+        [
+            "p",
+            "9989500413fb756d8437912cc32be0730dbe1bfc6b5d2eef759e1456c239f905",
+            "wss://nostr.bitcoiner.social"
+        ],
+        [
+            "e",
+            "2335bf179204339b411abd9bbce024bb2209448675406f9e787db27772f4836d",
+            "wss://nostr-pub.wellorder.net",
+            "root"
+        ],
+        [
+            "e",
+            "ca620c6588db51cdc785db7819ba11efa10491c04245dac8dc3ba71bfb6f7d53",
+            "wss://nostr-pub.wellorder.net",
+            "reply"
+        ]
+    ]
+}

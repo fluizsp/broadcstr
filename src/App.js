@@ -10,14 +10,16 @@ import { extendTheme } from "@chakra-ui/react"
 import { loadRelays } from './actions/relay';
 import AppContainer from './containers/AppContainer';
 import { saveState } from './localStorage';
+import { throttle } from 'lodash';
 
 const store = configureStore({
   reducer: rootReducer
 },)
 
-store.subscribe(()=>{
-  saveState(store.getState().user,'user');
-})
+store.subscribe(throttle(() => {
+  console.log('save state to storage')
+  saveState(store.getState().user, 'user');
+}, 60000));
 
 store.dispatch(loadRelays());
 
