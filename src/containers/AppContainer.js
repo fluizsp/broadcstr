@@ -15,6 +15,7 @@ import { connect } from 'react-redux';
 import WelcomeContainer from './WelcomeContainer';
 import AccountCreationContainer from './AccountCreationContainer';
 import LoginContainer from './LoginContainer';
+import NoteDetailContainer from './NoteDetailContainer';
 
 const mapDispatchToProps = (dispatch) => {
     return {};
@@ -37,17 +38,28 @@ const home = props => (
     </Box>
 )
 
+const noteDetail = props => (
+    <Box>
+        <MenuBar account={props.account} accountInfo={props.accountInfo} />
+        <TopBar account={props.account} accountInfo={props.accountInfo}/>
+        <BottomNavigation account={props.account} accountInfo={props.accountInfo}/>
+        <NoteDetailContainer/>
+    </Box>
+)
+
 const AppContainer = (props) => {
     return (<Box minH="100vH" bgGradient='linear(to-br, brand.purple, brand.green)'>
         <BrowserRouter>
             <Routes>
+                
                 <Route exact path="/welcome" element={<WelcomeContainer />} />
                 <Route exact path="/welcome/create" element={<AccountCreationContainer />} />
                 <Route exact path="/welcome/login" element={<LoginContainer />} />
                 <Route exact path="/" element={home(props)} />
+                <Route path="/note/:id" element={noteDetail(props)} />
             </Routes>
         </BrowserRouter>
     </Box>)
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(AppContainer)
+export default connect(mapStateToProps, mapDispatchToProps)(AppContainer);

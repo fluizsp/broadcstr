@@ -4,8 +4,7 @@ import { Component } from 'react';
 import { connect } from 'react-redux';
 import { throttle } from 'lodash';
 
-import { getFollowingFeed, getMyInfo, getNotesRelateds } from '../actions/relay';
-import Note from '../components/Note';
+import { addNoteRelatedToload, getFollowingFeed, getMyInfo, getNotesRelateds } from '../actions/relay';
 
 import LazyLoad from 'react-lazyload';
 import { Navigate } from 'react-router';
@@ -24,8 +23,11 @@ const mapDispatchToProps = (dispatch) => {
         loadUsersMetadata: () => {
             dispatch(getUsersMetadata());
         },
-        loadNotesRelateds: () => {
+        loadNoteRelateds: () => {
             dispatch(getNotesRelateds());
+        },
+        addNoteRelatedToload: id => {
+            dispatch(addNoteRelatedToload(id));
         }
     }
 };
@@ -62,8 +64,8 @@ class HomeContainer extends Component {
             }, 5000)
         }
         this.renderCount++;
-        /*if (this.state.feedType === '')
-            this.props.loadNotes.bind(this, 'following', this)();*/
+        if (this.state.feedType === '')
+            this.loadNotes('following');
     }
 
     loadNotes(feedType) {
@@ -77,6 +79,9 @@ class HomeContainer extends Component {
         let newLimit = this.state.limit + 25
         this.setState({ limit: newLimit });
     }
+    goToNoteDetails(id) {
+        this.props.router.Navigate(`/note/${id}`);
+    }
     render() {
         let feedType = this.state.feedType;
         let notes = [];
@@ -89,7 +94,7 @@ class HomeContainer extends Component {
             <Box minH="100vH" bgGradient='linear(to-br, brand.kindsteel1, brand.kindsteel2)'>
                 <Box ml={{ md: '100px', lg: '330px' }} >
                     {!this.props.loggedIn ? <Navigate to="/welcome" /> : ''}
-                    <SlideFade in={true}>
+                    <SlideFade in={true} offsetX="-1000" offsetY="0" unmountOnExit={true}>
                         <Container maxW='4xl' pt="80px" pb="20px" >
                             <Grid templateColumns='repeat(12, 1fr)' gap="3" mb="5">
                                 <Show above="md">
@@ -116,7 +121,6 @@ class HomeContainer extends Component {
                             <LazyLoad height="200px">
                                 <NoteList notes={notes} usersMetadata={this.props.usersMetadata} likes={this.props.likes} />
                             </LazyLoad>
-
                             <VStack mb="50px">
                                 <Spinner size="xl" color="blue.300" hidden={!this.state.isLoading} />
                                 <Button onClick={this.moreResults.bind(this)} >Next Results...</Button>

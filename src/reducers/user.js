@@ -36,7 +36,7 @@ const userReducer = createReducer(initialState, {
     },
     RECEIVED_USER_METADATA: (state, action) => {
         let userMetadata = action.data.userMetadata;
-        state.usersMetadata[action.data.publicKey] = {...userMetadata};
+        state.usersMetadata[action.data.publicKey] = userMetadata;
     }
 });
 

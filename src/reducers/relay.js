@@ -1,8 +1,11 @@
 import { createReducer } from '@reduxjs/toolkit'
 
 const initialState = {
-    addrs: ['wss://relay.nostr.info', 'wss://relay.damus.io', 'wss://nostr-pub.wellorder.net', 'wss://nostr.onsats.org', ' wss://nostr-pub.semisol.dev'],
+    addrs: ['wss://relay.nostr.info', 'wss://relay.damus.io', 'wss://nostr-pub.wellorder.net', 'wss://nostr-pub.semisol.dev'],
+    //'wss://nostr.onsats.org'
     notes: {},
+    relatedsToLoad: [],
+    relatedsRequested: [],
     loaded: null
 };
 
@@ -19,8 +22,8 @@ const treatEmbeds = (note) => {
     if (!ytRgx)
         ytRgx = new RegExp(/(https?:\/\/youtu.*be.*.)/, 'gmi').exec(note.content);
     if (ytRgx) {
-        let src=ytRgx[0].replace('youtube.com/','youtube.com/embed/');
-        src=src.replace('youtu.be/','youtube.com/embed/');
+        let src = ytRgx[0].replace('youtube.com/', 'youtube.com/embed/');
+        src = src.replace('youtu.be/', 'youtube.com/embed/');
         note.embed = { kind: 'youtube', src: src }
         note.content = note.content.replace(ytRgx[0], "");
     }
@@ -35,39 +38,61 @@ const treatEmbeds = (note) => {
 const relayReducer = createReducer(initialState, {
     RECEIVED_NOTE: (state, action) => {
         let newNote = action.data.notes;
-        if (newNote.kind === 6) {
-            let reposted_by = newNote.pubkey;
-            newNote = JSON.parse(newNote.content);
-            newNote.reposted_by = reposted_by;
+        if (state.notes[newNote.id] === undefined) {
+            if (newNote.kind === 6) {
+                let reposted_by = newNote.pubkey;
+                newNote = JSON.parse(newNote.content);
+                newNote.reposted_by = reposted_by;
+            }
+            newNote = treatImages(newNote);
+            newNote = treatEmbeds(newNote);
+            state.notes[newNote.id] = newNote;
         }
-        newNote = treatImages(newNote);
-        newNote = treatEmbeds(newNote);
-        state.notes[newNote.id] = newNote;
+    },
+    LOAD_NOTE_RELATED: (state, action) => {
+        let id = action.data;
+        if (state.relatedsToLoad.indexOf(id) === -1)
+            state.relatedsToLoad.push(id);
+    },
+    NOTE_RELATED_REQUESTED: (state, action) => {
+        console.log('NOTE_RELATED_REQUESTED');
+        let id = action.data;
+        if (state.relatedsRequested.indexOf(id) === -1)
+            state.relatedsRequested.push(id);
     },
     RECEIVED_NOTE_RELATED: (state, action) => {
         let noteId = action.data.event.tags.filter(tag => tag[0] === "e")[0][1];
-        switch (action.data.event.kind) {
-            case 1:
-                if (state.notes[noteId].replies)
-                    state.notes[noteId].replies.push(action.data.event)
-                else
-                    state.notes[noteId].replies = [action.data.event];
-                break;
-            case 6:
-                if (state.notes[noteId].reposts)
-                    state.notes[noteId].reposts.push(action.data.event)
-                else
-                    state.notes[noteId].reposts = [action.data.event];
-                break;
-            case 7:
-                if (state.notes[noteId].likes)
-                    state.notes[noteId].likes.push(action.data.event)
-                else
-                    state.notes[noteId].likes = [action.data.event];
-                break;
-            default:
+        if (state.notes[noteId])
+            switch (action.data.event.kind) {
+                case 1:
+                    let reply = action.data.event;
+                    reply = treatImages(reply);
+                    reply = treatEmbeds(reply);
+                    if (state.notes[noteId].replies) {
+                        if (!state.notes[noteId].replies.find(i => i.id === action.data.event.id))
+                            state.notes[noteId].replies.push(reply)
+                    } else
+                        state.notes[noteId].replies = [reply];
+                    break;
+                case 6:
+                    if (state.notes[noteId].reposts) {
+                        if (!state.notes[noteId].reposts.find(i => i.id === action.data.event.id))
+                            state.notes[noteId].reposts.push(action.data.event)
+                    }
+                    else
+                        state.notes[noteId].reposts = [action.data.event];
+                    break;
+                case 7:
+                    if (state.notes[noteId].likes) {
+                        if (!state.notes[noteId].likes.find(i => i.id === action.data.event.id))
+                            state.notes[noteId].likes.push(action.data.event)
+                    }
+                    else
+                        state.notes[noteId].likes = [action.data.event];
+                    break;
+                default:
 
-        }
+            }
 
     }
 });
