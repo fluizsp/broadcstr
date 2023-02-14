@@ -1,13 +1,13 @@
-import { Center, Box, Container, Spinner, SlideFade, VStack, Collapse, Fade } from '@chakra-ui/react'
-import { Component } from 'react';
+import { Box, Container, Spinner, SlideFade, VStack, Fade, Button,useColorModeValue } from '@chakra-ui/react'
+import { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { throttle } from 'lodash';
+
 
 import { getMyInfo, getNote, getNoteRelateds } from '../actions/relay';
 
-import withRouter from '../withRouter';
 import { getUsersMetadata } from '../actions/relay'
 import NoteList from '../components/NoteList';
+import { useParams } from 'react-router';
 
 const mapDispatchToProps = (dispatch) => {
     return {
@@ -26,83 +26,68 @@ const mapDispatchToProps = (dispatch) => {
     }
 };
 
-const mapStateToProps = throttle((state, ownProps) => {
-    const noteId = window.location.pathname.replace('/note/', '');
-    //console.log(noteId);
-    let last = new Date();
+const mapStateToProps = (state, ownProps) => {
     return {
-        note: state.relay.notes[noteId],
+        note: state.relay.notes[state.relay.lastId],
         usersMetadata: state.user.usersMetadata,
         account: state.user.account,
         likes: state.user.likes,
-        last: last
     }
-}, 1000);
+};
 
-class NoteDetailContainer extends Component {
-    renderCount = 0;
-    constructor(props) {
-        super(props);
-        //console.log(props);
-        this.state = {
-            isLoading: true,
-            limit: 25
-        }
+const NoteDetailContainer = props => {
+    const uiColor=useColorModeValue('brand.lightUi','brand.darkUi');
+    const bgGradient=useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)','linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
+    const params = useParams();
+    const [isLoading, setIsLoading] = useState(false);
+    const [limit, setLimit] = useState(25);
+    const moreResults = () => {
+        setLimit(limit + 25);
     }
-    componentDidUpdate() {
-        console.log('componentDidUpdate')
-        
+    useEffect(() => {
+        let loading = false;
+        if (!props.note || props.note.id !== params.id) {
+            props.loadNote(params.id);
+            loading = true;
+        }
+        if (!props.note || (!props.note.likes && !props.note.replies && !props.note.reposts)) {
+            loading = true
+            props.loadNoteRelateds(params.id);
+        }
+        if (!loading)
+            setIsLoading(loading);
 
-    }
-    componentDidMount() {
-        console.log(this.props.router.params.id);
-        if (!this.props.note)
-            this.props.loadNote(this.props.router.params.id);
-        else {
-            if (this.renderCount === 0 && this.props.account.publicKey) {
-                this.props.loadMyInfo(this.props.account.publicKey);
-                this.props.loadNoteRelateds(this.props.note.id);
-                setTimeout(() => {
-                    this.setState({ isLoading: false })
-                }, 5000)
-                setInterval(() => {
-                    this.props.loadUsersMetadata();
-                }, 5000)
-                this.renderCount++;
-            }
-        }
-    }
-    moreResults() {
-        let newLimit = this.state.limit + 25
-        this.setState({ limit: newLimit });
-    }
-    render() {
-        let note = this.props.note ?? {};
-        let noteReplies = [];
-        if (note.replies)
-            noteReplies = [...note.replies];
-        noteReplies.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
-        return (
-            <Box minH="100vH" bgGradient='linear(to-br, brand.kindsteel1, brand.kindsteel2)'>
-                <Box ml={{ md: '100px', lg: '330px' }} >
-                    <SlideFade in={true} offsetX="1000" offsetY="0" reverse={true} unmountOnExit={true}>
-                        <Container maxW='4xl' pt="80px" pb="20px" >
-                            {note && note.id ?
-                                <NoteList notes={[note]} usersMetadata={this.props.usersMetadata} isThread={true} likes={this.props.likes} /> : null}
-                            {noteReplies ?
-                                <NoteList notes={noteReplies} usersMetadata={this.props.usersMetadata} isReply={true} likes={this.props.likes} /> : null}
-                            <VStack>
-                                <Fade in={this.state.isLoading}>
-                                    <Spinner size="xl" color="blue.300" />
-                                </Fade>
-                            </VStack>
-                            {/*<Button onClick={this.moreResults.bind(this)} >Next Results...</Button>*/}
-                        </Container>
-                    </SlideFade>
-                </Box>
+    }, [props.loadNote, props.loadNoteRelateds, props.note, params.id,]);
+    useEffect(() => {
+        props.loadMyInfo(props.account.publicKey);
+    }, [props.loadMyInfo, props.account.publicKey])
+    let note = props.note ?? {};
+    let noteReplies = [];
+    if (note.replies)
+        noteReplies = [...note.replies];
+    let total = noteReplies.length;
+    noteReplies.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
+    noteReplies = noteReplies.slice(0, limit);
+    return (
+        <Box minH="100vH" bgGradient={bgGradient}>
+            <Box ml={{ md: '100px', lg: '330px' }} >
+                <SlideFade in={true} offsetX="1000" offsetY="0" reverse={true} unmountOnExit={true}>
+                    <Container maxW='4xl' pt="80px" pb="20px" >
+                        {note && note.id ?
+                            <NoteList notes={[note]} usersMetadata={props.usersMetadata} isThread={true} likes={props.likes} /> : null}
+                        {noteReplies ?
+                            <NoteList notes={noteReplies} usersMetadata={props.usersMetadata} isReply={true} likes={props.likes} /> : null}
+                        <VStack>
+                            {total > noteReplies.length ? <Button onClick={moreResults.bind(this)} >Show older replies...</Button> : null}
+                            <Fade in={isLoading}>
+                                <Spinner size="xl" color="blue.300" />
+                            </Fade>
+                        </VStack>
+                    </Container>
+                </SlideFade>
             </Box>
+        </Box>
 
-        )
-    }
+    )
 }
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(NoteDetailContainer));
+export default connect(mapStateToProps, mapDispatchToProps)(NoteDetailContainer);

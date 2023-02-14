@@ -28,6 +28,7 @@ class NoteList extends Component {
                 let liked = this.props.likes.filter(l => l === note.id).length > 0;
                 if (note)
                     return (<Note note={note} content={content} authorMetadata={authorMetadata} liked={liked} reposted_by={reposted_by} isThread={this.props.isThread} isReply={this.props.isReply} key={'Note' + note.id} />);
+                else return null
             }
             ))
     }

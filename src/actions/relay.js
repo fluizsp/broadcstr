@@ -15,13 +15,11 @@ export const NOTE_RELATED_REQUESTED = "NOTE_RELATED_REQUESTED";
 
 let relays = [];
 const requestedMetadatas = [];
-const notesWithoutRelateds = [];
-const requestedRelateds = [];
 
-export const receivedNote = (notes) => {
+export const receivedNote = (notes, lastId) => {
     return {
         type: RECEIVED_NOTE,
-        data: { notes: notes }
+        data: { notes: notes, lastId: lastId }
     }
 }
 
@@ -104,6 +102,10 @@ export const getFollowingFeed = (limit) => {
 
 export const getNote = (id) => {
     return ((dispatch, getState) => {
+        if (getState().relay.notes[id]) {
+            dispatch(receivedNote(getState().relay.notes[id], id));
+            return;
+        }
         relays.forEach(relay => {
             let sub = relay.sub([
                 {
@@ -113,8 +115,8 @@ export const getNote = (id) => {
                 }
             ])
             sub.on('event', async event => {
-                if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
-                    dispatch(receivedNote(event));
+                if (validateEvent(event)) {
+                    dispatch(receivedNote(event, event.id));
                     if (!getState().user.usersMetadata[event.pubkey]) {
                         await dispatch(receivedUserMetadata(event.pubkey, {}));
                     }
@@ -224,12 +226,11 @@ export const getNotesRelateds = () => {
                 });
             }
         })
-        console.log(listToRequest);
         if (listToRequest.length > 0)
             relays.forEach(relay => {
                 let sub = relay.sub([
                     {
-                        kinds: [1, 6, 7]
+                        kinds: [1]
                         , "#e": listToRequest
                     }
                 ])
@@ -245,14 +246,15 @@ export const getNotesRelateds = () => {
             });
     });
 }
-export const getNoteRelateds = (id) => {
+export const getNoteRelateds = (id, limit) => {
     return ((dispatch, getState) => {
         console.log(`getNoteRelateds for id:${id}`);
         relays.forEach(relay => {
             let sub = relay.sub([
                 {
-                    kinds: [1, 6, 7]
+                    kinds: [1]
                     , "#e": [id]
+                    , limit: limit ?? 50
                 }
             ])
             sub.on('event', async event => {

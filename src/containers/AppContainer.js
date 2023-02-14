@@ -4,7 +4,8 @@ import {
 } from '@chakra-ui/react';
 import {
     Route,
-    Routes
+    Routes,
+    useNavigate
 } from 'react-router';
 import { BrowserRouter } from 'react-router-dom';
 import TopBar from '../components/TopBar';
@@ -16,9 +17,14 @@ import WelcomeContainer from './WelcomeContainer';
 import AccountCreationContainer from './AccountCreationContainer';
 import LoginContainer from './LoginContainer';
 import NoteDetailContainer from './NoteDetailContainer';
+import { logout } from '../actions/account';
 
 const mapDispatchToProps = (dispatch) => {
-    return {};
+    return {
+        logout: () => {
+            dispatch(logout());
+        }
+    };
 };
 
 const mapStateToProps = (state, ownProps) => {
@@ -31,27 +37,28 @@ const mapStateToProps = (state, ownProps) => {
 
 const home = props => (
     <Box>
-        <MenuBar account={props.account} accountInfo={props.accountInfo} />
-        <TopBar account={props.account} accountInfo={props.accountInfo}/>
-        <BottomNavigation account={props.account} accountInfo={props.accountInfo}/>
+        <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
+        <TopBar account={props.account} accountInfo={props.accountInfo} />
+        <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
         <HomeContainer />
     </Box>
 )
 
-const noteDetail = props => (
-    <Box>
-        <MenuBar account={props.account} accountInfo={props.accountInfo} />
-        <TopBar account={props.account} accountInfo={props.accountInfo}/>
-        <BottomNavigation account={props.account} accountInfo={props.accountInfo}/>
-        <NoteDetailContainer/>
-    </Box>
-)
+const noteDetail = props => {
+    return (
+        <Box>
+            <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
+            <TopBar account={props.account} accountInfo={props.accountInfo} backLabel="Note" />
+            <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
+            <NoteDetailContainer />
+        </Box>
+    )
+}
 
 const AppContainer = (props) => {
     return (<Box minH="100vH" bgGradient='linear(to-br, brand.purple, brand.green)'>
         <BrowserRouter>
             <Routes>
-                
                 <Route exact path="/welcome" element={<WelcomeContainer />} />
                 <Route exact path="/welcome/create" element={<AccountCreationContainer />} />
                 <Route exact path="/welcome/login" element={<LoginContainer />} />

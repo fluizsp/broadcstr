@@ -11,6 +11,7 @@ import { loadRelays } from './actions/relay';
 import AppContainer from './containers/AppContainer';
 import { saveState } from './localStorage';
 import { throttle } from 'lodash';
+import { mode } from '@chakra-ui/theme-tools';
 
 const store = configureStore({
   reducer: rootReducer
@@ -29,11 +30,14 @@ const customTheme = extendTheme({
   },
   colors: {
     brand: {
-
+      darkUi: 'rgba(28,29,43,0.9)',
+      lightUi: 'rgba(255,255,255,0.8)',
       purple: "#874DF8",
       green: "#1EF0B2",
       kindsteel1: "#E9DEFA",
-      kindsteel2: "#FBFCDB"
+      kindsteel2: "#FBFCDB",
+      eternalConstance1:"#09203f",
+      eternalConstance2:"#537895"
     },
   },
 })

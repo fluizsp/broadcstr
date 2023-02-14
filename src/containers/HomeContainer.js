@@ -1,16 +1,15 @@
-import { Center, Box, Button, Container, Grid, GridItem, Spinner, Show, SlideFade, VStack } from '@chakra-ui/react'
-import { HiPlusCircle } from 'react-icons/hi';
-import { Component } from 'react';
+import { Center, Box, Button, Container, Spinner, SlideFade, VStack, Flex, Tab, TabList, Tabs } from '@chakra-ui/react'
+import { Component, useState } from 'react';
 import { connect } from 'react-redux';
 import { throttle } from 'lodash';
-
+import { useColorMode, useColorModeValue } from '@chakra-ui/react';
 import { addNoteRelatedToload, getFollowingFeed, getMyInfo, getNotesRelateds } from '../actions/relay';
 
 import LazyLoad from 'react-lazyload';
 import { Navigate } from 'react-router';
-import withRouter from '../withRouter';
 import NoteList from '../components/NoteList';
 import { getUsersMetadata } from '../actions/relay'
+import { useEffect } from 'react';
 
 const mapDispatchToProps = (dispatch) => {
     return {
@@ -43,94 +42,73 @@ const mapStateToProps = throttle((state, ownProps) => {
     }
 }, 1000)
 
-class HomeContainer extends Component {
-    renderCount = 0;
-    constructor(props) {
-        super(props);
-        this.state = {
-            isLoading: false,
-            feedType: '',
-            limit: 25
-        }
-    }
-    componentDidUpdate() {
+const HomeContainer = props => {
+    const uiColor=useColorModeValue('brand.lightUi','brand.darkUi');
+    const bgGradient=useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)','linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
+    const [isLoading, setIsLoading] = useState(false);
+    const [feedType, setFeedType] = useState('');
+    const [limit, setLimit] = useState(25);
+    useEffect(() => {
+        props.loadMyInfo(props.account.publicKey);
+        setInterval(() => {
+            props.loadUsersMetadata();
+        }, 5000)
+    }, [props.account.publicKey, props.loadMyInfo])
+    useEffect(() => {
+        props.loadNotes(feedType);
+    }, [feedType, props.loadNotes])
 
-    }
-    componentDidMount() {
-        if (this.renderCount === 0 && this.props.account.publicKey) {
-            this.props.loadMyInfo(this.props.account.publicKey);
-            setInterval(() => {
-                this.props.loadUsersMetadata();
-            }, 5000)
-        }
-        this.renderCount++;
-        if (this.state.feedType === '')
-            this.loadNotes('following');
-    }
-
-    loadNotes(feedType) {
+    const loadNotes = feedType => {
         this.setState({ isLoading: true, feedType: feedType });
-        this.props.loadNotes(feedType, this.state.limit);
+        props.loadNotes(feedType, this.state.limit);
         setTimeout(() => {
             this.setState({ isLoading: false })
         }, 5000);
     }
-    moreResults() {
-        let newLimit = this.state.limit + 25
-        this.setState({ limit: newLimit });
+    const moreResults = () => {
+        setLimit(limit + 25);
     }
-    goToNoteDetails(id) {
-        this.props.router.Navigate(`/note/${id}`);
-    }
-    render() {
-        let feedType = this.state.feedType;
-        let notes = [];
-        Object.keys(this.props.notes).forEach(key => {
-            notes.push(this.props.notes[key]);
-        });
-        notes = notes.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
-        notes = notes.slice(0, this.state.limit)
-        return (
-            <Box minH="100vH" bgGradient='linear(to-br, brand.kindsteel1, brand.kindsteel2)'>
-                <Box ml={{ md: '100px', lg: '330px' }} >
-                    {!this.props.loggedIn ? <Navigate to="/welcome" /> : ''}
-                    <SlideFade in={true} offsetX="-1000" offsetY="0" unmountOnExit={true}>
-                        <Container maxW='4xl' pt="80px" pb="20px" >
-                            <Grid templateColumns='repeat(12, 1fr)' gap="3" mb="5">
-                                <Show above="md">
-                                    <GridItem colSpan={7}>
-                                        <Box bg="whiteAlpha.700" h="54px" p="1">
-                                            <Center>
-                                                <Button leftIcon={<HiPlusCircle />} pl="10" pr="10" variant="ghost" size="lg" fontSize="md" color="gray.400">What's on your mind?</Button>
-                                            </Center>
-                                        </Box>
-                                    </GridItem>
-                                </Show>
-                                <GridItem colSpan={[12, 12, 5]}>
-                                    <Box bg="whiteAlpha.700" h="54px" p="4">
-                                        <Center>
-                                            <Button size="sm" variant="link" pr="5">Trending</Button>
-                                            <Button size="sm" variant="link" pr="5" color={feedType === "following" ? "blue.300" : ''} onClick={this.loadNotes.bind(this, 'following', this.state.limit)}>Following</Button>
-                                        </Center>
-                                    </Box>
-                                </GridItem>
-                            </Grid>
-                            <Center display={this.props.isLoading ? 'flex' : 'none'}>
-                                <Spinner size="xl" color="blue.300" />
-                            </Center>
-                            <LazyLoad height="200px">
-                                <NoteList notes={notes} usersMetadata={this.props.usersMetadata} likes={this.props.likes} />
-                            </LazyLoad>
-                            <VStack mb="50px">
-                                <Spinner size="xl" color="blue.300" hidden={!this.state.isLoading} />
-                                <Button onClick={this.moreResults.bind(this)} >Next Results...</Button>
-                            </VStack>
-                        </Container>
-                    </SlideFade>
-                </Box>
+    let notes = [];
+    Object.keys(props.notes).forEach(key => {
+        notes.push(props.notes[key]);
+    });
+    notes = notes.filter(note => (note.kind === 1 && note.tags.filter(tag => { return tag[0] === "e" }).length === 0) || note.kind === 6);
+    notes = notes.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
+    notes = notes.slice(0, limit)
+    return (
+        <Box minH="100vH" bgGradient={bgGradient}>
+            <Box ml={{ md: '100px', lg: '330px' }} >
+                {!props.loggedIn ? <Navigate to="/welcome" /> : ''}
+                <SlideFade in={true} offsetX="-1000" offsetY="0" unmountOnExit={true}>
+                    <Container maxW='4xl' pt="80px" pb="20px" >
+                        <Flex mb="5">
+                            <Box bg={uiColor} h="50px" p="2" flex="1">
+                                <Center>
+                                    <Tabs index={feedType === "following" ? 1 : -1}>
+                                        <TabList>
+                                            <Tab isDisabled>Trending</Tab>
+                                            <Tab onClick={loadNotes.bind(this, 'following', limit)}>Following</Tab>
+                                        </TabList>
+                                    </Tabs>
+                                    {/*<Button size="sm" variant="link" pr="5" color={feedType === "following" ? "blue.300" : ''} onClick={this.loadNotes.bind(this, 'following', this.state.limit)}>Following</Button>*/}
+                                </Center>
+                            </Box>
+                        </Flex>
+                        <Center display={props.isLoading ? 'flex' : 'none'}>
+                            <Spinner size="xl" color="blue.300" />
+                        </Center>
+                        <LazyLoad height="200px">
+                            <NoteList notes={notes} usersMetadata={props.usersMetadata} likes={props.likes} />
+                        </LazyLoad>
+                        <VStack mb="50px">
+                            <Spinner size="xl" color="blue.300" hidden={!isLoading} />
+                            <Button onClick={moreResults.bind(this)} >Next Results...</Button>
+                        </VStack>
+                    </Container>
+                </SlideFade>
             </Box>
+        </Box>
 
-        )
-    }
+    )
 }
-export default connect(mapStateToProps, mapDispatchToProps)(withRouter(HomeContainer));
+export default connect(mapStateToProps, mapDispatchToProps)(HomeContainer);

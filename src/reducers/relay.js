@@ -38,6 +38,8 @@ const treatEmbeds = (note) => {
 const relayReducer = createReducer(initialState, {
     RECEIVED_NOTE: (state, action) => {
         let newNote = action.data.notes;
+        if (action.data.lastId)
+            state.lastId = action.data.lastId;
         if (state.notes[newNote.id] === undefined) {
             if (newNote.kind === 6) {
                 let reposted_by = newNote.pubkey;
@@ -76,19 +78,17 @@ const relayReducer = createReducer(initialState, {
                     break;
                 case 6:
                     if (state.notes[noteId].reposts) {
-                        if (!state.notes[noteId].reposts.find(i => i.id === action.data.event.id))
-                            state.notes[noteId].reposts.push(action.data.event)
+                        state.notes[noteId].reposts++
                     }
                     else
-                        state.notes[noteId].reposts = [action.data.event];
+                        state.notes[noteId].reposts = 1;
                     break;
                 case 7:
                     if (state.notes[noteId].likes) {
-                        if (!state.notes[noteId].likes.find(i => i.id === action.data.event.id))
-                            state.notes[noteId].likes.push(action.data.event)
+                        state.notes[noteId].likes++;
                     }
                     else
-                        state.notes[noteId].likes = [action.data.event];
+                        state.notes[noteId].likes = 1;
                     break;
                 default:
 
