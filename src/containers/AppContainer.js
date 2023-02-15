@@ -18,6 +18,7 @@ import AccountCreationContainer from './AccountCreationContainer';
 import LoginContainer from './LoginContainer';
 import NoteDetailContainer from './NoteDetailContainer';
 import { logout } from '../actions/account';
+import ProfileContainer from './ProfileContainer';
 
 const mapDispatchToProps = (dispatch) => {
     return {
@@ -54,6 +55,16 @@ const noteDetail = props => {
         </Box>
     )
 }
+const profile = props => {
+    return (
+        <Box>
+            <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
+            <TopBar account={props.account} accountInfo={props.accountInfo} backLabel="Profile" />
+            <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
+            <ProfileContainer />
+        </Box>
+    )
+}
 
 const AppContainer = (props) => {
     return (<Box minH="100vH" bgGradient='linear(to-br, brand.purple, brand.green)'>
@@ -64,6 +75,7 @@ const AppContainer = (props) => {
                 <Route exact path="/welcome/login" element={<LoginContainer />} />
                 <Route exact path="/" element={home(props)} />
                 <Route path="/note/:id" element={noteDetail(props)} />
+                <Route path="/profile/:id" element={profile(props)} />
             </Routes>
         </BrowserRouter>
     </Box>)

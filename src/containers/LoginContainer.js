@@ -12,7 +12,8 @@ import {
     Input,
     InputGroup,
     InputLeftAddon,
-    FormLabel
+    FormLabel,
+    LightMode
 } from '@chakra-ui/react';
 import logo from '../BadgeLogo.svg';
 import { connect } from 'react-redux';
@@ -68,27 +69,29 @@ class LoginContainer extends Component {
     render() {
         return (
             <Fade in={true}>
-                <Box textAlign="center" overflow="hidden">
-                    <Box pt={50} minH="100vH" bgGradient='linear(to-br, brand.purple, brand.green)'>
-                        <VStack spacing="8">
-                            <Image src={logo} w="24" />
-                            <Heading size="md" color="white">Start you session</Heading>
-                            <Fade in={true}>
-                                <Card p="50px" w="350px" bg="whiteAlpha.200" textAlign="center" color="white">
-                                    <VStack spacing="5">
-                                        <Avatar name='Visitor' bg="blue.300" size="md" color="white" />
-                                        <FormLabel htmlFor='privateKey'>Private Key:</FormLabel>
-                                        <InputGroup>
-                                            <InputLeftAddon color="blue.700" children="@" />
-                                            <Input variant="filled" id="privateKey" type="password" placeholder='nsec...' onChange={e => { this.setState({ privateKey: e.target.value }) }}></Input>
-                                        </InputGroup>
-                                        <Button variant="solid" color="blue.700" size="lg" fontSize="md" leftIcon={<HiArrowCircleRight color="blue.700" />} onClick={this.next.bind(this)}>Next</Button>
-                                    </VStack>
-                                </Card>
-                            </Fade>
-                        </VStack>
+                <LightMode>
+                    <Box textAlign="center" overflow="hidden">
+                        <Box pt={50} minH="100vH" bgGradient='linear(to-br, brand.purple, brand.green)'>
+                            <VStack spacing="8">
+                                <Image src={logo} w="24" />
+                                <Heading size="md" color="white">Start you session</Heading>
+                                <Fade in={true}>
+                                    <Card p="50px" w="350px" bg="whiteAlpha.200" textAlign="center" color="white">
+                                        <VStack spacing="5">
+                                            <Avatar name='Visitor' bg="blue.300" size="md" color="white" />
+                                            <FormLabel htmlFor='privateKey'>Private Key:</FormLabel>
+                                            <InputGroup>
+                                                <InputLeftAddon color="blue.700" children="@" />
+                                                <Input variant="filled" id="privateKey" type="password" placeholder='nsec...' onChange={e => { this.setState({ privateKey: e.target.value }) }}></Input>
+                                            </InputGroup>
+                                            <Button variant="solid" color="blue.700" size="lg" fontSize="md" leftIcon={<HiArrowCircleRight color="blue.700" />} onClick={this.next.bind(this)}>Next</Button>
+                                        </VStack>
+                                    </Card>
+                                </Fade>
+                            </VStack>
+                        </Box>
                     </Box>
-                </Box>
+                </LightMode>
             </Fade >
         )
     }

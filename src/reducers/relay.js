@@ -1,5 +1,6 @@
 import { createReducer } from '@reduxjs/toolkit'
 
+
 const initialState = {
     addrs: ['wss://relay.nostr.info', 'wss://relay.damus.io', 'wss://nostr-pub.wellorder.net', 'wss://nostr-pub.semisol.dev'],
     //'wss://nostr.onsats.org'
@@ -93,7 +94,9 @@ const relayReducer = createReducer(initialState, {
                 default:
 
             }
-
+    },
+    RECEIVED_USER_ID: (state, action) => {
+        state.lastUserId = action.data;
     }
 });
 

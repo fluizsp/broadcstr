@@ -8,7 +8,8 @@ import {
     Button,
     Text,
     Heading,
-    Card
+    Card,
+    LightMode
 } from '@chakra-ui/react';
 import logo from '../BadgeLogo.svg';
 import { connect } from 'react-redux';
@@ -53,39 +54,41 @@ class WelcomeContainer extends Component {
     render() {
         return (
             <Fade in={true}>
-                <Box textAlign="center" overflow="hidden">
-                    <Box pt={50}>
-                        <VStack spacing="10">
-                            <Image src={logo} w="24" />
-                            <Box width="400px" textAlign="center">
-                                <Swiper
-                                    spaceBetween={0}
-                                    slidesPerView={1}
-                                    pagination={true}
-                                    navigation={true}
-                                    modules={[Navigation, Pagination]}
-                                >
-                                    <SwiperSlide>
-                                        {featureCard({ src: decentralized, heading: 'Privacy', text:"All acount data are optional. Start by just creaing a pair of keys."})}
-                                    </SwiperSlide>
-                                    <SwiperSlide>
-                                        {featureCard({ src: decentralized, heading: 'Decentralized!', children:<p>No Big Techs! You control where you consume and post information. <br/>Built on Nostr.</p>})}
-                                    </SwiperSlide>
-                                    <SwiperSlide>
-                                        {featureCard({ src: decentralized, heading: 'End to End Encryption!', text: "Encrypted messages that only you have the key, no one can break into your messages. Ever!" })}
-                                    </SwiperSlide>
-                                    <SwiperSlide>
-                                        {featureCard({ src: decentralized, heading: 'Earn Cryptocurrency!', text: "Liked your friends post? Tip it! And stack SATS with Bitcoin ⚡ network." })}
-                                    </SwiperSlide>
-                                </Swiper>
-                            </Box>
-                            <VStack spacing="5">>
-                                <Button variant="solid" color="blue.700" size="lg" fontSize="md" leftIcon={<HiUserAdd color="blue.700" />} onClick={()=>{this.props.router.navigate('/welcome/create')}}>Create account</Button>
-                                <Button variant="link" color="blue.700" size="lg" fontSize="md" onClick={()=>{this.props.router.navigate('/welcome/login')}}>Start session</Button>
+                <LightMode>
+                    <Box textAlign="center" overflow="hidden">
+                        <Box pt={50}>
+                            <VStack spacing="10">
+                                <Image src={logo} w="24" />
+                                <Box width="400px" textAlign="center">
+                                    <Swiper
+                                        spaceBetween={0}
+                                        slidesPerView={1}
+                                        pagination={true}
+                                        navigation={true}
+                                        modules={[Navigation, Pagination]}
+                                    >
+                                        <SwiperSlide>
+                                            {featureCard({ src: decentralized, heading: 'Privacy', text: "All acount data are optional. Start by just creaing a pair of keys." })}
+                                        </SwiperSlide>
+                                        <SwiperSlide>
+                                            {featureCard({ src: decentralized, heading: 'Decentralized!', children: <p>No Big Techs! You control where you consume and post information. <br />Built on Nostr.</p> })}
+                                        </SwiperSlide>
+                                        <SwiperSlide>
+                                            {featureCard({ src: decentralized, heading: 'End to End Encryption!', text: "Encrypted messages that only you have the key, no one can break into your messages. Ever!" })}
+                                        </SwiperSlide>
+                                        <SwiperSlide>
+                                            {featureCard({ src: decentralized, heading: 'Earn Cryptocurrency!', text: "Liked your friends post? Tip it! And stack SATS with Bitcoin ⚡ network." })}
+                                        </SwiperSlide>
+                                    </Swiper>
+                                </Box>
+                                <VStack spacing="5">>
+                                    <Button variant="solid" color="blue.700" size="lg" fontSize="md" leftIcon={<HiUserAdd color="blue.700" />} onClick={() => { this.props.router.navigate('/welcome/create') }}>Create account</Button>
+                                    <Button variant="link" color="blue.700" size="lg" fontSize="md" onClick={() => { this.props.router.navigate('/welcome/login') }}>Start session</Button>
+                                </VStack>
                             </VStack>
-                        </VStack>
+                        </Box>
                     </Box>
-                </Box>
+                </LightMode>
             </Fade >
         )
     }

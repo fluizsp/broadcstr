@@ -1,9 +1,7 @@
 import { Box, Button, Center, Grid, GridItem, Hide, Avatar,useColorModeValue } from '@chakra-ui/react'
 import { IoIosHome, IoIosSearch } from 'react-icons/io';
 import { FaHashtag } from 'react-icons/fa';
-import { Component } from 'react';
 import withRouter from '../withRouter';
-
 
 const BottomNavigation = props => {
         const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');

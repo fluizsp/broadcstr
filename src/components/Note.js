@@ -1,14 +1,15 @@
-import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, Input, useColorModeValue } from '@chakra-ui/react'
+import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, Input, useColorModeValue, LinkOverlay, LinkBox } from '@chakra-ui/react'
 import { FiMoreHorizontal } from 'react-icons/fi';
 import { BiCommentDetail, BiHeart, BiRepost, BiExpand } from 'react-icons/bi';
 import { IoIosHeart } from 'react-icons/io';
 import { formatDistanceStrict } from 'date-fns'
 import { nip19 } from 'nostr-tools';
-import { Link as DomLink } from 'react-router-dom';
+import { Link as DomLink, useNavigate } from 'react-router-dom';
 import format from 'date-fns/format';
 
 const Note = props => {
-    const uiColor=useColorModeValue('brand.lightUi','brand.darkUi');
+    const navigate = useNavigate();
+    const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     let note = props.note ?? {};
     //console.log(`render note ${note.content}`)
     let created = note ? new Date(note.created_at * 1000) : new Date();
@@ -18,17 +19,17 @@ const Note = props => {
     timeDistance = timeDistance.replace(/ minute[s]?/, 'min');
     timeDistance = timeDistance.replace(/ day[s]?/, 'd');
     timeDistance = timeDistance.replace(/ month[s]?/, 'm');
+    timeDistance = timeDistance.replace(/ second[s]?/, 's');
     return (
         <Fade in={true}>
             <Card mb="5" bg={uiColor} ml={props.isReply ? '24px' : '0'} >
                 {props.isReply ? <Box width="1px" height="110%" borderLeftColor={uiColor} borderLeftWidth={2} borderLeftStyle="dashed" position="absolute" left="-18px" top="-20px"></Box> : ''}
                 {props.isReply ? <Box width="18px" height="1px" borderTopColor={uiColor} borderTopWidth={2} borderTopStyle="dashed" position="absolute" left="-18px" top="44px"></Box> : ''}
                 <VStack align="left">
-
                     <Box p="5" pb="0">
                         <Grid templateColumns='repeat(12, 1fr)'>
                             <GridItem colSpan="11">
-                                <HStack>
+                                <HStack cursor="pointer" onClick={()=>{navigate(`/profile/${nip19.npubEncode(note.pubkey)}`)}}>
                                     <Avatar size="md" src={userMetadata.picture ?? ''} name={userMetadata.display_name ?? userMetadata.name ?? ''} />
                                     <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{userMetadata.display_name ?? userMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
                                     <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">@{userMetadata.nip05 ? userMetadata.nip05.split('@')[0] : userMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
@@ -43,21 +44,19 @@ const Note = props => {
                             </GridItem>
                         </Grid>
                     </Box>
-
-
-                    {/*!note.reposted_by && props.eTag ?
-                            <HStack p="5" h="5" spacing={1}>
-                                <Text fontSize="xs" color="gray.500">
-                                    In response to
-                                </Text>
-                                <Text as="b" fontSize="xs" w="150px " color="blue.300" noOfLines={1}>
-                                    {note.tags.filter(tag => tag[0] === 'p').map(tag => {
-                                        let name = props.usersMetadata[tag[1]].name ?? tag[1];
-                                        return name
-                                    }).join(', ')}
-                                </Text>
-                            </HStack>
-                                : ''*/}
+                    {!note.reposted_by && props.eTag ?
+                        <HStack p="5" h="5" spacing={1}>
+                            <Text fontSize="xs" color="gray.500">
+                                In response to
+                            </Text>
+                            <Text as="b" fontSize="xs" w="150px " color="blue.300" noOfLines={1}>
+                                {note.tags.filter(tag => tag[0] === 'p').map(tag => {
+                                    let name = props.usersMetadata[tag[1]].name ?? tag[1];
+                                    return name
+                                }).join(', ')}
+                            </Text>
+                        </HStack>
+                        : ''}
                     {props.reposted_by ?
                         <HStack p="5" h="5" spacing={1}>
                             <Text fontSize="xs" color="gray.500">
@@ -75,7 +74,6 @@ const Note = props => {
                             })}
                         </Text>
                     </DomLink>
-
                     {/*<Code p="5" fontSize={['xs', 'sm', 'md']}>
                     {note? JSON.stringify(note) : ''}
                 </Code>*/}
@@ -109,13 +107,6 @@ const Note = props => {
                                 </DomLink>
                             </Tooltip> : ''}
                         </GridItem>
-                        {/*note.replies ? <Text fontSize="sm">{note.replies.length}</Text> :
-                                null*/}
-
-
-
-                        {/*note.reposts ? <Text fontSize="sm">{note.reposts.length}</Text> :
-                                null*/}
                     </Grid>
                 </VStack>
             </Card>

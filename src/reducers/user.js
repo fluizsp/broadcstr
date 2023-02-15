@@ -11,6 +11,11 @@ const initialState = storageState ? storageState : {
     likes: []
 };
 
+function removeEmpty(obj) {
+    return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != null && v !== ""));
+}
+
+
 const userReducer = createReducer(initialState, {
     SET_ACCOUNT: (state, action) => {
         if (action.data.account) {
@@ -36,7 +41,8 @@ const userReducer = createReducer(initialState, {
     },
     RECEIVED_USER_METADATA: (state, action) => {
         let userMetadata = action.data.userMetadata;
-        state.usersMetadata[action.data.publicKey] = userMetadata;
+        userMetadata=removeEmpty(userMetadata);
+        state.usersMetadata[action.data.publicKey] = Object.assign({}, state.usersMetadata[action.data.publicKey], userMetadata);
     },
     LOGOUT: (state, action) => {
         state.loggedIn = false;

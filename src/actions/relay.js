@@ -12,6 +12,7 @@ export const RECEIVED_USER_METADATA = "RECEIVED_USER_METADATA";
 export const RECEIVED_NOTE_RELATED = "RECEIVED_NOTE_RELATED";
 export const LOAD_NOTE_RELATED = "LOAD_NOTE_RELATED";
 export const NOTE_RELATED_REQUESTED = "NOTE_RELATED_REQUESTED";
+export const RECEIVED_USER_ID = "RECEIVED_USER_ID";
 
 let relays = [];
 const requestedMetadatas = [];
@@ -136,35 +137,36 @@ export const getNote = (id) => {
 
 export const getMyInfo = (publicKey) => {
     return ((dispatch, getState) => {
-        relays.forEach(relay => {
-            let sub = relay.sub([
-                {
-                    kinds: [0, 3, 7],
-                    authors: [nip19.decode(publicKey).data]
-                }
-            ])
-            sub.on('event', event => {
-                if (event.kind === 0) {
-                    let accountInfo = JSON.parse(event.content);
-                    dispatch(setAccount(null, accountInfo));
-                }
-                if (event.kind === 3) {
-                    let following = event.tags.map(t => {
-                        return t[1];
-                    })
-                    dispatch(setAccount(null, null, following));
-                }
-                if (event.kind === 7) {
-                    let likes = event.tags.map(t => {
-                        return t[1];
-                    });
-                    dispatch(setAccount(null, null, null, likes));
-                }
-            })
-            sub.on('eose', () => {
-                sub.unsub()
-            })
-        });
+        if (publicKey)
+            relays.forEach(relay => {
+                let sub = relay.sub([
+                    {
+                        kinds: [0, 3, 7],
+                        authors: [nip19.decode(publicKey).data]
+                    }
+                ])
+                sub.on('event', event => {
+                    if (event.kind === 0) {
+                        let accountInfo = JSON.parse(event.content);
+                        dispatch(setAccount(null, accountInfo));
+                    }
+                    if (event.kind === 3) {
+                        let following = event.tags.map(t => {
+                            return t[1];
+                        })
+                        dispatch(setAccount(null, null, following));
+                    }
+                    if (event.kind === 7) {
+                        let likes = event.tags.map(t => {
+                            return t[1];
+                        });
+                        dispatch(setAccount(null, null, null, likes));
+                    }
+                })
+                sub.on('eose', () => {
+                    sub.unsub()
+                })
+            });
     });
 }
 
@@ -173,7 +175,7 @@ export const getUsersMetadata = () => {
         let usersMetadata = getState().user.usersMetadata;
         let emptyUsersMetadata = [];
         Object.keys(usersMetadata).forEach(key => {
-            if (!usersMetadata[key].name && requestedMetadatas.indexOf(key) === -1)
+            if ((!usersMetadata[key].name || usersMetadata[key].load) && requestedMetadatas.indexOf(key) === -1)
                 emptyUsersMetadata.push(key);
         });
         if (emptyUsersMetadata.length > 50)
@@ -191,6 +193,7 @@ export const getUsersMetadata = () => {
                 ])
                 sub.on('event', event => {
                     let userMetadata = JSON.parse(event.content);
+                    userMetadata.load=false;
                     dispatch(receivedUserMetadata(event.pubkey, userMetadata));
                 })
                 sub.on('eose', () => {
