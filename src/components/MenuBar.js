@@ -20,13 +20,13 @@ const MenuBar = (props) => {
     function goSplash() {
         navigate('/welcome');
     }
-    function logout(){
+    function logout() {
         props.logout();
         navigate('/welcome');
     }
 
     function goHome() {
-        navigate('/');
+        window.location = '/';
     }
     if (location.pathname === "/welcome")
         return null;
@@ -71,19 +71,22 @@ const MenuBar = (props) => {
             {/* ACCOUNT */}
             <Box w={{ md: '100px', lg: '330px' }} h="75px" p="4" bottom="0" left="0" pos="fixed" bg={uiColor} verticalAlign="middle">
                 <Flex wrap="wrap">
-                    <Avatar src={props.accountInfo.picture ?? ''} name={props.accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" ml={{ md: 2, lg: 0 }} />
+                    <Avatar src={props.accountInfo.picture ?? ''} name={props.accountInfo.display_name ?? props.accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" ml={{ md: 2, lg: 0 }} />
                     <VStack spacing="0" align="left" pl="2">
-                        <HStack><Text fontSize="md">{props.accountInfo.name ?? 'Visitor'}</Text><Text as="b" fontSize="xs">{props.accountInfo.nip05 ?? ''}</Text></HStack>
-                        <Text w="180px" noOfLines="1" fontSize="xs">{props.account ? props.account.publicKey : 'no pub key'}</Text>
+                        <HStack>
+                            <Text fontSize="md">{props.accountInfo.display_name ?? props.accountInfo.name ?? 'Visitor'}</Text>
+                            <Text as="b" fontSize="xs">@{props.accountInfo.name ?? ''}</Text>
+                        </HStack>
+                        <Text w="180px" noOfLines="1" fontSize="xs">{props.accountInfo.nip05 && props.accountInfo.nip05 !== '' ? props.accountInfo.nip05 : props.account.publicKey}</Text>
                     </VStack>
                     <VStack align="right" w="60px">
                         <Menu>
                             <MenuButton as={Button} variant="ghost"><IoMdArrowDropup /></MenuButton>
                             <MenuList>
-                                <MenuItem icon={<IoIosPerson/>}>Profile</MenuItem>
-                                <MenuItem icon={<IoIosSettings/>}>Settings</MenuItem>
-                                <MenuItem icon={colorMode.colorMode==='light'?<MoonIcon/>:<SunIcon/>} onClick={colorMode.toggleColorMode}>Toggle Color Mode</MenuItem>
-                                <MenuDivider/>
+                                <MenuItem icon={<IoIosPerson />}>Profile</MenuItem>
+                                <MenuItem icon={<IoIosSettings />}>Settings</MenuItem>
+                                <MenuItem icon={colorMode.colorMode === 'light' ? <MoonIcon /> : <SunIcon />} onClick={colorMode.toggleColorMode}>Toggle Color Mode</MenuItem>
+                                <MenuDivider />
                                 <MenuItem onClick={logout.bind(this)} icon={<BiDoorOpen />}>Logout</MenuItem>
                             </MenuList>
                         </Menu>

@@ -32,7 +32,7 @@ const mapStateToProps = (state, ownProps) => {
     return {
         loggedIn: state.user.loggedIn,
         account: state.user.account,
-        accountInfo: state.user.accountInfo
+        accountInfo: state.user.accountInfo ?? {}
     };
 }
 

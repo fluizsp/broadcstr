@@ -3,7 +3,7 @@ import { Component, useState } from 'react';
 import { connect } from 'react-redux';
 import { throttle } from 'lodash';
 import { useColorMode, useColorModeValue } from '@chakra-ui/react';
-import { addNoteRelatedToload, getFollowingFeed, getMyInfo, getNotesRelateds } from '../actions/relay';
+import { addNoteRelatedToload, getFollowingFeed, getMyInfo, getNotesRelateds, UNLOAD_NOTES } from '../actions/relay';
 
 import LazyLoad from 'react-lazyload';
 import { Navigate } from 'react-router';
@@ -27,6 +27,9 @@ const mapDispatchToProps = (dispatch) => {
         },
         addNoteRelatedToload: id => {
             dispatch(addNoteRelatedToload(id));
+        },
+        unloadNotes: () => {
+            dispatch({ type: UNLOAD_NOTES });
         }
     }
 };
@@ -43,26 +46,33 @@ const mapStateToProps = throttle((state, ownProps) => {
 }, 1000)
 
 const HomeContainer = props => {
-    const uiColor=useColorModeValue('brand.lightUi','brand.darkUi');
-    const bgGradient=useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)','linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
-    const [isLoading, setIsLoading] = useState(false);
-    const [feedType, setFeedType] = useState('');
+    const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
+    const bgGradient = useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
+    const [isLoading, setIsLoading] = useState(true);
+    const [feedType, setFeedType] = useState('following');
     const [limit, setLimit] = useState(25);
+    const publicKey = props.account.publicKey;
     useEffect(() => {
-        props.loadMyInfo(props.account.publicKey);
+        props.loadMyInfo(publicKey);
         setInterval(() => {
-            props.loadUsersMetadata();
         }, 5000)
-    }, [props.account.publicKey, props.loadMyInfo])
+    }, [publicKey])
     useEffect(() => {
-        props.loadNotes(feedType);
-    }, [feedType, props.loadNotes])
+        props.unloadNotes();
+        props.loadNotes('following');
+        props.loadUsersMetadata();
+    }, [])
+    useEffect(() => {
+        if (Object.keys(props.notes).length > 0)
+            setIsLoading(false);
+    }, [Object.keys(props.notes).length])
 
     const loadNotes = feedType => {
-        this.setState({ isLoading: true, feedType: feedType });
-        props.loadNotes(feedType, this.state.limit);
+        console.log('loadNotes');
+        setFeedType(feedType);
+        props.loadNotes(feedType, limit * 4);
         setTimeout(() => {
-            this.setState({ isLoading: false })
+            setIsLoading(true);
         }, 5000);
     }
     const moreResults = () => {
@@ -86,8 +96,8 @@ const HomeContainer = props => {
                                 <Center>
                                     <Tabs index={feedType === "following" ? 1 : -1}>
                                         <TabList>
-                                            <Tab isDisabled>Trending</Tab>
-                                            <Tab onClick={loadNotes.bind(this, 'following', limit)}>Following</Tab>
+                                            <Tab >Trending</Tab>
+                                            <Tab onClick={loadNotes.bind(this, 'following')}>Following</Tab>
                                         </TabList>
                                     </Tabs>
                                     {/*<Button size="sm" variant="link" pr="5" color={feedType === "following" ? "blue.300" : ''} onClick={this.loadNotes.bind(this, 'following', this.state.limit)}>Following</Button>*/}

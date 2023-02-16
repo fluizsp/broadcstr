@@ -5,9 +5,13 @@ const initialState = {
     addrs: ['wss://relay.nostr.info', 'wss://relay.damus.io', 'wss://nostr-pub.wellorder.net', 'wss://nostr-pub.semisol.dev'],
     //'wss://nostr.onsats.org'
     notes: {},
+    selectedNotes: [],
     relatedsToLoad: [],
     relatedsRequested: [],
-    loaded: null
+    loaded: null,
+    limit: 25,
+    lastUserId: null,
+    selectedMetadata: {}
 };
 
 const treatImages = (note) => {
@@ -97,6 +101,34 @@ const relayReducer = createReducer(initialState, {
     },
     RECEIVED_USER_ID: (state, action) => {
         state.lastUserId = action.data;
+    },
+    UNLOAD_NOTES: (state, action) => {
+        state.notes = {};
+        state.selectedNotes = [];
+    },
+    SET_FEED_TYPE: (state, action) => {
+        state.feedType = action.data;
+    },
+    SET_LIMIT: (state, action) => {
+        state.limit = action.data;
+    },
+    SELECT_NOTES: (state, action) => {
+        let selectedNotes = Object.keys(state.notes).map(key => {
+            return state.notes[key];
+        });
+        if(action.data.from)
+            selectedNotes = selectedNotes.filter(note => (note.pubkey===action.data.from))
+        if (action.data.excludeReplies)
+            selectedNotes = selectedNotes.filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
+        if (action.data.onlyReplies)
+            selectedNotes = selectedNotes.filter(note => note.kind === 1 && note.tags.filter(t => t[0] === "e").length > 0)
+        selectedNotes = selectedNotes.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
+        if (action.data.limit)
+            selectedNotes = selectedNotes.slice(0, action.data.limit ?? 50);
+        state.selectedNotes = selectedNotes;
+    },
+    SELECT_METADATA: (state, action) => {
+        state.selectedMetadata = action.data;
     }
 });
 

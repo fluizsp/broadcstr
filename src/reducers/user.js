@@ -35,13 +35,14 @@ const userReducer = createReducer(initialState, {
             state.following = action.data.following;
         if (action.data.likes)
             action.data.likes.forEach(l => {
-                state.likes === null ? state.likes = [l] : state.likes.push(l);
+                if (!state.likes || state.likes.indexOf(l)===-1)
+                    state.likes === null ? state.likes = [l] : state.likes.push(l);
             });
 
     },
     RECEIVED_USER_METADATA: (state, action) => {
         let userMetadata = action.data.userMetadata;
-        userMetadata=removeEmpty(userMetadata);
+        userMetadata = removeEmpty(userMetadata);
         state.usersMetadata[action.data.publicKey] = Object.assign({}, state.usersMetadata[action.data.publicKey], userMetadata);
     },
     LOGOUT: (state, action) => {

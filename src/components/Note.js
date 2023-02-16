@@ -1,4 +1,4 @@
-import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, Input, useColorModeValue, LinkOverlay, LinkBox } from '@chakra-ui/react'
+import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, Input, useColorModeValue, LinkOverlay, LinkBox, Link } from '@chakra-ui/react'
 import { FiMoreHorizontal } from 'react-icons/fi';
 import { BiCommentDetail, BiHeart, BiRepost, BiExpand } from 'react-icons/bi';
 import { IoIosHeart } from 'react-icons/io';
@@ -6,14 +6,33 @@ import { formatDistanceStrict } from 'date-fns'
 import { nip19 } from 'nostr-tools';
 import { Link as DomLink, useNavigate } from 'react-router-dom';
 import format from 'date-fns/format';
+import { useSelector } from 'react-redux';
 
 const Note = props => {
     const navigate = useNavigate();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     let note = props.note ?? {};
+    let reposted_by = null;
+    let authorMetadata = useSelector(state => state.relay.selectedMetadata[note.pubkey])??{};
+    let repostedByMetadata = useSelector(state => state.relay.selectedMetadata[note.reposted_by])??{};
+    if (note.reposted_by) {
+        reposted_by = <Link color="blue.300" fontSize="sm" href={'/profile/' + nip19.npubEncode(note.reposted_by)}>@{repostedByMetadata.name ?? nip19.npubEncode(note.reposted_by)}</Link>
+    }
+    let content = note.content ?? '';
+    const mentionBreak = /(#\[[0-9]+\])/
+    content = content.split(mentionBreak);
+    let pTags = note.tags ? note.tags.filter(t => t[0] === "p") : [];
+    for (let iPTag = 0; iPTag < pTags.length; iPTag++) {
+        let pMetadata=null;//useSelector(state=>state.usersMetadata[pTags[iPTag][1]]);
+        let mentionedName = pMetadata ? pMetadata.name : pTags[iPTag][1]
+        for (let iC = 0; iC < content.length; iC++) {
+            if (content[iC] === `#[${iPTag}]`)
+                content[iC] = <Link color="blue.300" fontSize="sm" href={'/profile/' + nip19.npubEncode(pTags[iPTag][1])}>@{mentionedName}</Link>;
+        }
+    }
+    let liked = useSelector(state => state.user.likes.filter(l => l === note.id).length > 0);
     //console.log(`render note ${note.content}`)
     let created = note ? new Date(note.created_at * 1000) : new Date();
-    let userMetadata = props.authorMetadata;
     let timeDistance = formatDistanceStrict(created, new Date(), { addSuffix: false });
     timeDistance = timeDistance.replace(/ hour[s]?/, 'h');
     timeDistance = timeDistance.replace(/ minute[s]?/, 'min');
@@ -29,10 +48,10 @@ const Note = props => {
                     <Box p="5" pb="0">
                         <Grid templateColumns='repeat(12, 1fr)'>
                             <GridItem colSpan="11">
-                                <HStack cursor="pointer" onClick={()=>{navigate(`/profile/${nip19.npubEncode(note.pubkey)}`)}}>
-                                    <Avatar size="md" src={userMetadata.picture ?? ''} name={userMetadata.display_name ?? userMetadata.name ?? ''} />
-                                    <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{userMetadata.display_name ?? userMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
-                                    <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">@{userMetadata.nip05 ? userMetadata.nip05.split('@')[0] : userMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
+                                <HStack cursor="pointer" onClick={() => { navigate(`/profile/${nip19.npubEncode(note.pubkey)}`) }}>
+                                    <Avatar size="md" src={authorMetadata.picture ?? ''} name={authorMetadata.display_name ?? authorMetadata.name ?? ''} />
+                                    <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{authorMetadata.display_name ?? authorMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
+                                    <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">@{authorMetadata.name ?? ''}</Text>
                                     <Text fontSize="md" as="b">&middot;</Text>
                                     <Tooltip label={format(created, 'yyyy/MM/dd HH:mm')}>
                                         <Text fontSize="sm">{timeDistance}</Text>
@@ -57,19 +76,19 @@ const Note = props => {
                             </Text>
                         </HStack>
                         : ''}
-                    {props.reposted_by ?
+                    {reposted_by ?
                         <HStack p="5" h="5" spacing={1}>
                             <Text fontSize="xs" color="gray.500">
                                 Reposted By
                             </Text>
                             <Text as="b" fontSize="xs" w="150px " color="blue.300" noOfLines={1}>
-                                {props.reposted_by}
+                                {reposted_by}
                             </Text>
                         </HStack>
                         : ''}
                     <DomLink to={!props.isThread ? `/note/${note.id}` : null}>
                         <Text p="5" fontSize={['sm', 'sm', 'md', 'md']}>
-                            {props.content.map(c => {
+                            {content.map(c => {
                                 return c;
                             })}
                         </Text>
@@ -84,8 +103,8 @@ const Note = props => {
                             : note.embed.kind === 'mp4' ? <video src={note.embed.src} height="300" width="100%" controls /> : '' : ''}
                     <Grid templateColumns='repeat(12, 1fr)' bg={uiColor}>
                         <GridItem>
-                            <Tooltip label="Like" fontSize='md' hasArrow={true}>
-                                <Button isDisabled={props.liked} variant="ghost" size="md" >{props.liked ? <IoIosHeart color="red" /> : <BiHeart />}</Button>
+                            <Tooltip label={liked?"You liked!":"Like"} fontSize='md' hasArrow={true}>
+                                <Button isDisabled={liked} variant="ghost" size="md" >{liked ? <IoIosHeart color="red" /> : <BiHeart />}</Button>
                             </Tooltip>
                         </GridItem>
                         <GridItem colSpan={10} height="36px" alignItems="center">

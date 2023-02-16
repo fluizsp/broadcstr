@@ -13,6 +13,11 @@ export const RECEIVED_NOTE_RELATED = "RECEIVED_NOTE_RELATED";
 export const LOAD_NOTE_RELATED = "LOAD_NOTE_RELATED";
 export const NOTE_RELATED_REQUESTED = "NOTE_RELATED_REQUESTED";
 export const RECEIVED_USER_ID = "RECEIVED_USER_ID";
+export const UNLOAD_NOTES = "UNLOAD_NOTES";
+export const SET_FEED_TYPE = "SET_FEED_TYPE";
+export const SET_LIMIT = "SET_LIMIT";
+export const SELECT_NOTES = "SELECT_NOTES";
+export const SELECT_METADATA = "SELECT_METADATA";
 
 let relays = [];
 const requestedMetadatas = [];
@@ -84,8 +89,39 @@ export const getFollowingFeed = (limit) => {
             sub.on('event', async event => {
                 if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
                     dispatch(receivedNote(event));
-                    if (!getState().user.usersMetadata[event.pubkey]) {
-                        await dispatch(receivedUserMetadata(event.pubkey, {}));
+                    if (!getState().user.usersMetadata[event.pubKeyHex]) {
+                        await dispatch(receivedUserMetadata(event.pubKeyHex, {}));
+                    }
+                    event.tags.forEach(async tag => {
+                        if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
+                            await dispatch(receivedUserMetadata(tag[1], {}));
+                        }
+                    })
+                }
+            })
+            sub.on('eose', () => {
+                sub.unsub()
+            })
+        });
+    });
+}
+
+export const getUserNotes = (pubKeyHex, limit) => {
+    return ((dispatch, getState) => {
+        relays.forEach(relay => {
+            checkRelay(relay);
+            let sub = relay.sub([
+                {
+                    kinds: [1, 6]
+                    , authors: [pubKeyHex],
+                    limit: limit
+                }
+            ])
+            sub.on('event', async event => {
+                if (validateEvent(event)) {
+                    dispatch(receivedNote(event));
+                    if (!getState().user.usersMetadata[event.pubKeyHex]) {
+                        await dispatch(receivedUserMetadata(event.pubKeyHex, {}));
                     }
                     event.tags.forEach(async tag => {
                         if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
@@ -118,8 +154,8 @@ export const getNote = (id) => {
             sub.on('event', async event => {
                 if (validateEvent(event)) {
                     dispatch(receivedNote(event, event.id));
-                    if (!getState().user.usersMetadata[event.pubkey]) {
-                        await dispatch(receivedUserMetadata(event.pubkey, {}));
+                    if (!getState().user.usersMetadata[event.pubKeyHex]) {
+                        await dispatch(receivedUserMetadata(event.pubKeyHex, {}));
                     }
                     event.tags.forEach(async tag => {
                         if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
@@ -193,8 +229,8 @@ export const getUsersMetadata = () => {
                 ])
                 sub.on('event', event => {
                     let userMetadata = JSON.parse(event.content);
-                    userMetadata.load=false;
-                    dispatch(receivedUserMetadata(event.pubkey, userMetadata));
+                    userMetadata.load = false;
+                    dispatch(receivedUserMetadata(event.pubKeyHex, userMetadata));
                 })
                 sub.on('eose', () => {
                     sub.unsub()
@@ -262,8 +298,8 @@ export const getNoteRelateds = (id, limit) => {
             ])
             sub.on('event', async event => {
                 if (validateEvent(event)) {
-                    if (!getState().user.usersMetadata[event.pubkey]) {
-                        await dispatch(receivedUserMetadata(event.pubkey, {}));
+                    if (!getState().user.usersMetadata[event.pubKeyHex]) {
+                        await dispatch(receivedUserMetadata(event.pubKeyHex, {}));
                     }
                     event.tags.forEach(async tag => {
                         if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
@@ -278,4 +314,10 @@ export const getNoteRelateds = (id, limit) => {
             })
         });
     });
+}
+
+export const selectMetadatas = () => {
+    return (dispatch, getState) => {
+        dispatch({ type: SELECT_METADATA, data: getState().user.usersMetadata });
+    }
 }
