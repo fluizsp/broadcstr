@@ -1,7 +1,8 @@
 import {
     relayInit,
     nip19,
-    validateEvent
+    validateEvent,
+    SimplePool
 } from 'nostr-tools'
 import { setAccount } from './account';
 
@@ -24,6 +25,7 @@ export const LOCATED_USER = "LOCATED_USER";
 export const LOCATED_NOTE = "LOCATED_NOTE";
 
 let relays = [];
+const pool = new SimplePool();
 let searchSub = null;
 const requestedMetadatas = [];
 
@@ -48,74 +50,36 @@ export const receivedNoteRelated = (event) => {
     }
 }
 
-export const loadRelays = () => {
-    return ((dispatch, getState) => {
-        relays.push(relayInit(getState().content.addrs[0]));
-        relays.push(relayInit(getState().content.addrs[1]));
-        relays.push(relayInit(getState().content.addrs[2]));
-        relays.push(relayInit(getState().content.addrs[3]));
-        relays.forEach(async relay => {
-            relay.on('connect', () => {
-                console.log(`connected to ${relay.url}`)
-            })
-            relay.on('error', () => {
-                console.log(`failed to connect to ${relay.url}`)
-            })
-            await relay.connect();
-        })
-    });
-};
-
-const checkRelay = relay => {
-    if (!relay.url)
-        return;
-    //console.log(`Checking relay ${relay.url}`)
-    //console.log(`Current state is ${relay.status}`);
-    if (relay.status === 2 || relay.status === 3) {
-        //console.log(`Restarting relay ${relay.url}`)
-        for (let iR = 0; iR < relays.length; iR++) {
-            if (relays[iR].url === relay.url)
-                relays[iR] = relayInit(relay.url);
-        }
-    }
-}
-
 export const getFollowingFeed = (limit) => {
     return ((dispatch, getState) => {
-        if (getState().user.following && getState().user.following.length > 0)
-            relays.forEach(relay => {
-                checkRelay(relay);
-                let sub = relay.sub([
-                    {
-                        kinds: [1, 6],
-                        authors: getState().user.following,
-                        limit: 200
+        if (getState().user.following && getState().user.following.length > 0) {
+            let relays = getState().content.relays;
+            let filters = [{
+                kinds: [1, 6],
+                authors: getState().user.following,
+                limit: 200
+            }];
+            let subs = pool.sub(relays, filters);
+            subs.on('event', async event => {
+                if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
+                    dispatch(receivedNote(event));
+                    if (!getState().user.usersMetadata[event.pubkey]) {
+                        await dispatch(receivedUserMetadata(event.pubkey, {}));
                     }
-                ])
-                sub.on('event', async event => {
-                    if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
-                        dispatch(receivedNote(event));
-                        if (!getState().user.usersMetadata[event.pubkey]) {
-                            await dispatch(receivedUserMetadata(event.pubkey, {}));
+                    event.tags.forEach(async tag => {
+                        if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
+                            await dispatch(receivedUserMetadata(tag[1], {}));
                         }
-                        event.tags.forEach(async tag => {
-                            if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
-                                await dispatch(receivedUserMetadata(tag[1], {}));
-                            }
-                        })
-                    }
-                })
-                sub.on('eose', () => {
-                    sub.unsub()
-                })
-            });
+                    })
+                }
+            })
+        }
     });
 }
 
 export const getUserNotes = (publicKeyHex, limit) => {
     return ((dispatch, getState) => {
         relays.forEach(relay => {
-            checkRelay(relay);
             let sub = relay.sub([
                 {
                     kinds: [1, 6]
@@ -146,7 +110,6 @@ export const getUserNotes = (publicKeyHex, limit) => {
 export const getUserFollowing = (publicKeyHex, limit) => {
     return ((dispatch, getState) => {
         relays.forEach(relay => {
-            checkRelay(relay);
             let sub = relay.sub([
                 {
                     kinds: [3]
@@ -176,7 +139,6 @@ export const getUserFollowers = (publicKeyHex, limit) => {
     return ((dispatch, getState) => {
         let testArr = [];
         relays.forEach(relay => {
-            checkRelay(relay);
             let sub = relay.sub([
                 {
                     kinds: [3],

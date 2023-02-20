@@ -2,7 +2,7 @@ import { createReducer } from '@reduxjs/toolkit'
 
 
 const initialState = {
-    addrs: ['wss://relay.nostr.info', 'wss://relay.damus.io', 'wss://nostr-pub.wellorder.net', 'wss://nostr-pub.semisol.dev'],
+    relays: ['wss://relay.nostr.info', 'wss://relay.damus.io', 'wss://nostr-pub.wellorder.net', 'wss://nostr-pub.semisol.dev'],
     //'wss://nostr.onsats.org'
     notes: {},
     selectedNotes: [],
@@ -52,7 +52,8 @@ const contentReducer = createReducer(initialState, {
         if (state.notes[newNote.id] === undefined) {
             if (newNote.kind === 6) {
                 let reposted_by = newNote.pubkey;
-                newNote = JSON.parse(newNote.content);
+                if (newNote.content)
+                    newNote = JSON.parse(newNote.content);
                 newNote.reposted_by = reposted_by;
             }
             newNote.pTags = newNote.tags.filter(t => t[0] === 'p').map(t => { return t[1] }) ?? [];
@@ -181,7 +182,7 @@ const contentReducer = createReducer(initialState, {
         newNote.eTags = newNote.tags.filter(t => t[0] === 'e').map(t => { return t[1] }) ?? [];
         newNote = treatImages(newNote);
         newNote = treatEmbeds(newNote);
-        if (state.locatedNotes.filter(n => n.id ===newNote.id).length === 0)
+        if (state.locatedNotes.filter(n => n.id === newNote.id).length === 0)
             state.locatedNotes.push(newNote);
     }
 });

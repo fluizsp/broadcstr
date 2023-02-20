@@ -22,8 +22,6 @@ store.subscribe(throttle(() => {
   saveState(store.getState().user, 'user');
 }, 30000));
 
-store.dispatch(loadRelays());
-
 if (!window.metadataInterval)
   window.metadataInterval = setInterval(() => {
     store.dispatch(getUsersMetadata());
