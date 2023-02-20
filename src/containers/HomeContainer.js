@@ -3,7 +3,7 @@ import { Component, useState } from 'react';
 import { connect } from 'react-redux';
 import { throttle } from 'lodash';
 import { useColorMode, useColorModeValue } from '@chakra-ui/react';
-import { addNoteRelatedToload, getFollowingFeed, getMyInfo, getNotesRelateds, UNLOAD_NOTES } from '../actions/relay';
+import { addNoteRelatedToload, getFollowingFeed, getMyInfo, getNotesRelateds, selectMetadatas, UNLOAD_NOTES } from '../actions/relay';
 
 import LazyLoad from 'react-lazyload';
 import { Navigate } from 'react-router';
@@ -22,23 +22,21 @@ const mapDispatchToProps = (dispatch) => {
         loadUsersMetadata: () => {
             dispatch(getUsersMetadata());
         },
-        loadNoteRelateds: () => {
-            dispatch(getNotesRelateds());
-        },
         addNoteRelatedToload: id => {
             dispatch(addNoteRelatedToload(id));
         },
         unloadNotes: () => {
             dispatch({ type: UNLOAD_NOTES });
+        },
+        selectMetadata: () => {
+            dispatch(selectMetadatas());
         }
     }
 };
 
 const mapStateToProps = throttle((state, ownProps) => {
     return {
-        notes: state.relay.notes,
-        usersMetadata: state.user.usersMetadata,
-        relayLoaded: state.relay.loaded,
+        notes: state.content.selectedNotes,
         loggedIn: state.user.loggedIn,
         account: state.user.account,
         likes: state.user.likes
@@ -47,33 +45,23 @@ const mapStateToProps = throttle((state, ownProps) => {
 
 const HomeContainer = props => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
-    const bgGradient = useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
-    const [isLoading, setIsLoading] = useState(true);
+    const bgGradient = useColorModeValue('linear(to-tl, brand.blessing1, brand.blessing2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const [feedType, setFeedType] = useState('following');
     const [limit, setLimit] = useState(25);
+    let metadataInterval = null;
     const publicKey = props.account.publicKey;
     useEffect(() => {
         props.loadMyInfo(publicKey);
-        setInterval(() => {
-        }, 5000)
     }, [publicKey])
     useEffect(() => {
         props.unloadNotes();
         props.loadNotes('following');
-        props.loadUsersMetadata();
     }, [])
-    useEffect(() => {
-        if (Object.keys(props.notes).length > 0)
-            setIsLoading(false);
-    }, [Object.keys(props.notes).length])
 
     const loadNotes = feedType => {
         console.log('loadNotes');
         setFeedType(feedType);
         props.loadNotes(feedType, limit * 4);
-        setTimeout(() => {
-            setIsLoading(true);
-        }, 5000);
     }
     const moreResults = () => {
         setLimit(limit + 25);
@@ -108,11 +96,11 @@ const HomeContainer = props => {
                             <Spinner size="xl" color="blue.300" />
                         </Center>
                         <LazyLoad height="200px">
-                            <NoteList notes={notes} usersMetadata={props.usersMetadata} likes={props.likes} />
+                            <NoteList notes={notes} />
                         </LazyLoad>
                         <VStack mb="50px">
-                            <Spinner size="xl" color="blue.300" hidden={!isLoading} />
-                            <Button onClick={moreResults.bind(this)} >Next Results...</Button>
+                            <Spinner size="xl" color="blue.300" hidden={notes.length!==0} />
+                            <Button  hidden={notes.length===0} onClick={moreResults.bind(this)} >Next Results...</Button>
                         </VStack>
                     </Container>
                 </SlideFade>

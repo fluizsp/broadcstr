@@ -8,7 +8,8 @@ const initialState = storageState ? storageState : {
     account: {},
     accountInfo: {},
     usersMetadata: {},
-    likes: []
+    likes: [],
+    following:[]
 };
 
 function removeEmpty(obj) {
@@ -32,10 +33,14 @@ const userReducer = createReducer(initialState, {
             }
         }
         if (action.data.following)
-            state.following = action.data.following;
+            action.data.following.forEach(f => {
+                if (state.following.indexOf(f) === -1)
+                    state.following.push(f);
+            })
+
         if (action.data.likes)
             action.data.likes.forEach(l => {
-                if (!state.likes || state.likes.indexOf(l)===-1)
+                if (!state.likes || state.likes.indexOf(l) === -1)
                     state.likes === null ? state.likes = [l] : state.likes.push(l);
             });
 
@@ -50,8 +55,13 @@ const userReducer = createReducer(initialState, {
         state.account = {};
         state.accountInfo = {};
         state.usersMetadata = {};
-        state.likes = []
-    }
+        state.likes = [];
+        state.following = [];
+    },
+    REMOVE_FOLLOWING: (state, action) => {
+        if (state.following.indexOf(action.data) >= 0)
+            state.following.splice(state.following.indexOf(action.data), 1)
+    },
 });
 
 export default userReducer;

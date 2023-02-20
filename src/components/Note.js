@@ -1,4 +1,4 @@
-import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, Input, useColorModeValue, LinkOverlay, LinkBox, Link } from '@chakra-ui/react'
+import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, Input, useColorModeValue, LinkOverlay, LinkBox, Link, Flex } from '@chakra-ui/react'
 import { FiMoreHorizontal } from 'react-icons/fi';
 import { BiCommentDetail, BiHeart, BiRepost, BiExpand } from 'react-icons/bi';
 import { IoIosHeart } from 'react-icons/io';
@@ -7,29 +7,27 @@ import { nip19 } from 'nostr-tools';
 import { Link as DomLink, useNavigate } from 'react-router-dom';
 import format from 'date-fns/format';
 import { useSelector } from 'react-redux';
+import MentionTag from './MentionTag';
+import { HiLightningBolt } from 'react-icons/hi';
 
 const Note = props => {
     const navigate = useNavigate();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     let note = props.note ?? {};
-    let reposted_by = null;
-    let authorMetadata = useSelector(state => state.relay.selectedMetadata[note.pubkey])??{};
-    let repostedByMetadata = useSelector(state => state.relay.selectedMetadata[note.reposted_by])??{};
-    if (note.reposted_by) {
-        reposted_by = <Link color="blue.300" fontSize="sm" href={'/profile/' + nip19.npubEncode(note.reposted_by)}>@{repostedByMetadata.name ?? nip19.npubEncode(note.reposted_by)}</Link>
-    }
+    let reposted_by = props.note.reposted_by;
+    let authorMetadata = useSelector(state => state.content.selectedMetadata[note.pubkey], (a, b) => { return a && a.name === b.name }) ?? {};
     let content = note.content ?? '';
     const mentionBreak = /(#\[[0-9]+\])/
     content = content.split(mentionBreak);
-    let pTags = note.tags ? note.tags.filter(t => t[0] === "p") : [];
-    for (let iPTag = 0; iPTag < pTags.length; iPTag++) {
-        let pMetadata=null;//useSelector(state=>state.usersMetadata[pTags[iPTag][1]]);
-        let mentionedName = pMetadata ? pMetadata.name : pTags[iPTag][1]
+    let mentionTags = note.pTags ?? [];
+    for (let mentionTag = 0; mentionTag < mentionTags.length; mentionTag++) {
         for (let iC = 0; iC < content.length; iC++) {
-            if (content[iC] === `#[${iPTag}]`)
-                content[iC] = <Link color="blue.300" fontSize="sm" href={'/profile/' + nip19.npubEncode(pTags[iPTag][1])}>@{mentionedName}</Link>;
+            if (content[iC] === `#[${mentionTag}]`)
+                content[iC] = <MentionTag publicKeyHex={mentionTags[mentionTag]} />;
         }
     }
+    let responseTags = note.eTags ?? [];
+    let responseUserTags = note.pTags ?? [];
     let liked = useSelector(state => state.user.likes.filter(l => l === note.id).length > 0);
     //console.log(`render note ${note.content}`)
     let created = note ? new Date(note.created_at * 1000) : new Date();
@@ -39,16 +37,19 @@ const Note = props => {
     timeDistance = timeDistance.replace(/ day[s]?/, 'd');
     timeDistance = timeDistance.replace(/ month[s]?/, 'm');
     timeDistance = timeDistance.replace(/ second[s]?/, 's');
+
+    let replyLevel = responseTags.length ?? 0;
+    //console.log("Render Note");
     return (
         <Fade in={true}>
-            <Card mb="5" bg={uiColor} ml={props.isReply ? '24px' : '0'} >
-                {props.isReply ? <Box width="1px" height="110%" borderLeftColor={uiColor} borderLeftWidth={2} borderLeftStyle="dashed" position="absolute" left="-18px" top="-20px"></Box> : ''}
-                {props.isReply ? <Box width="18px" height="1px" borderTopColor={uiColor} borderTopWidth={2} borderTopStyle="dashed" position="absolute" left="-18px" top="44px"></Box> : ''}
+            <Card mb="5" bg={uiColor} ml={props.isReply ? replyLevel * 10 + 'px' : 0} >
+                {/*props.isReply ? <Box width="1px" height="110%" borderLeftColor={uiColor} borderLeftWidth={2} borderLeftStyle="dashed" position="absolute" left="-18px"></Box> : ''*/}
+                {/*props.isReply ? <Box width="18px" height="1px" borderTopColor={uiColor} borderTopWidth={2} borderTopStyle="dashed" position="absolute" left="-18px" top="44px"></Box> : ''*/}
                 <VStack align="left">
                     <Box p="5" pb="0">
                         <Grid templateColumns='repeat(12, 1fr)'>
                             <GridItem colSpan="11">
-                                <HStack cursor="pointer" onClick={() => { navigate(`/profile/${nip19.npubEncode(note.pubkey)}`) }}>
+                                <HStack cursor="pointer" onClick={() => { navigate(`/profile/${authorMetadata.nip05??nip19.npubEncode(note.pubkey)}`) }}>
                                     <Avatar size="md" src={authorMetadata.picture ?? ''} name={authorMetadata.display_name ?? authorMetadata.name ?? ''} />
                                     <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{authorMetadata.display_name ?? authorMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
                                     <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">@{authorMetadata.name ?? ''}</Text>
@@ -63,17 +64,13 @@ const Note = props => {
                             </GridItem>
                         </Grid>
                     </Box>
-                    {!note.reposted_by && props.eTag ?
+                    {!props.isReply && responseTags.length > 0 ?
                         <HStack p="5" h="5" spacing={1}>
                             <Text fontSize="xs" color="gray.500">
-                                In response to
+                                Replying to
                             </Text>
-                            <Text as="b" fontSize="xs" w="150px " color="blue.300" noOfLines={1}>
-                                {note.tags.filter(tag => tag[0] === 'p').map(tag => {
-                                    let name = props.usersMetadata[tag[1]].name ?? tag[1];
-                                    return name
-                                }).join(', ')}
-                            </Text>
+                            <MentionTag href={`/note/${responseTags[0]}`} publicKeyHex={responseUserTags.slice(-1).pop()} />
+                            {/*<Text as="b" fontSize="xs" w="150px " color="blue.300" noOfLines={1}>{responseUserTags[0]??'*someone*'}</Text>*/}
                         </HStack>
                         : ''}
                     {reposted_by ?
@@ -82,17 +79,15 @@ const Note = props => {
                                 Reposted By
                             </Text>
                             <Text as="b" fontSize="xs" w="150px " color="blue.300" noOfLines={1}>
-                                {reposted_by}
+                                <MentionTag publicKeyHex={reposted_by} />
                             </Text>
                         </HStack>
                         : ''}
-                    <DomLink to={!props.isThread ? `/note/${note.id}` : null}>
-                        <Text p="5" fontSize={['sm', 'sm', 'md', 'md']}>
-                            {content.map(c => {
-                                return c;
-                            })}
-                        </Text>
-                    </DomLink>
+                    <Text p="5" fontSize={['sm', 'sm', 'md', 'md']}>
+                        {content.map(c => {
+                            return c;
+                        })}
+                    </Text>
                     {/*<Code p="5" fontSize={['xs', 'sm', 'md']}>
                     {note? JSON.stringify(note) : ''}
                 </Code>*/}
@@ -100,14 +95,17 @@ const Note = props => {
                     {note.embed ?
                         note.embed.kind === 'youtube' ?
                             <iframe title={note.embed.src} height="400px" width="100%" src={note.embed.src} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                            : note.embed.kind === 'mp4' ? <video src={note.embed.src} height="300" width="100%" controls /> : '' : ''}
-                    <Grid templateColumns='repeat(12, 1fr)' bg={uiColor}>
-                        <GridItem>
-                            <Tooltip label={liked?"You liked!":"Like"} fontSize='md' hasArrow={true}>
+                            : note.embed.kind === 'mp4' ? <video src={note.embed.src} muted height="300" width="100%" controls /> : '' : ''}
+                    <Flex bg={uiColor}>
+                        <Box w="100px">
+                            <Tooltip label={liked ? "You liked!" : "Like"} fontSize='md' hasArrow={true}>
                                 <Button isDisabled={liked} variant="ghost" size="md" >{liked ? <IoIosHeart color="red" /> : <BiHeart />}</Button>
                             </Tooltip>
-                        </GridItem>
-                        <GridItem colSpan={10} height="36px" alignItems="center">
+                            <Tooltip label="Zap" fontSize='md' hasArrow={true}>
+                                <Button variant="ghost" isDisabled size="md" ><HiLightningBolt /></Button>
+                            </Tooltip>
+                        </Box>
+                        <Box flex="1" height="36px">
                             {note.likes && props.isThread ? <Button isDisabled={true} leftIcon={<IoIosHeart />} size="md" variant="ghost">{note.likes}</Button> :
                                 null}
                             {note.replies && props.isThread ? <Button isDisabled={true} leftIcon={<BiCommentDetail />} size="md" variant="ghost">{note.replies.length}</Button> :
@@ -118,15 +116,15 @@ const Note = props => {
                                 {/*<Button leftIcon={<BiCommentDetail />} variant="ghost" size="md">Broadcst your response...</Button>*/}
                                 <Input variant="flushed" fontSize="sm" placeholder="Broadcst your response..." size="md"></Input>
                             </Tooltip> : ''}
-                        </GridItem>
-                        <GridItem textAlign="right">
+                        </Box>
+                        <Box>
                             {!props.isThread ? <Tooltip label="View full note" fontSize='md' hasArrow={true}>
                                 <DomLink to={`/note/${note.id}`}>
                                     <Button variant="ghost" size="md"><BiExpand /></Button>
                                 </DomLink>
                             </Tooltip> : ''}
-                        </GridItem>
-                    </Grid>
+                        </Box>
+                    </Flex>
                 </VStack>
             </Card>
         </Fade>

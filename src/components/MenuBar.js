@@ -10,6 +10,7 @@ import smallLogo from '../logo_small.svg';
 import { useColorModeValue, useColorMode, } from '@chakra-ui/react';
 import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 import { BiDoorOpen } from 'react-icons/bi';
+import { FiMessageSquare } from 'react-icons/fi';
 
 const MenuBar = (props) => {
     const location = useLocation();
@@ -26,7 +27,7 @@ const MenuBar = (props) => {
     }
 
     function goHome() {
-        window.location = '/';
+        navigate('/');
     }
     if (location.pathname === "/welcome")
         return null;
@@ -41,9 +42,11 @@ const MenuBar = (props) => {
                         <Image src={logoSelector} w="225px" />
                         <VStack spacing="1">
                             <Button leftIcon={<GoHome />} variant="ghost" color={location.path === "/" ? 'blue.300' : ''} size="lg" onClick={goHome} >Home</Button>
-                            <Button leftIcon={<IoMdSearch />} variant="ghost" color="gray.300" size="lg">Search</Button>
-                            <Button leftIcon={<FaHashtag />} variant="ghost" color="gray.300" size="lg">Discover</Button>
-                            <Button leftIcon={<AiFillRead />} variant="ghost" color="gray.300" size="lg" onClick={goSplash}>Read</Button>
+                            <Button leftIcon={<IoMdSearch />} variant="ghost" size="lg" onClick={()=>{navigate('/search')}}>Search</Button>
+                            <Button leftIcon={<FaHashtag />} variant="ghost" isDisabled size="lg">Discover</Button>
+                            <Tooltip label="Messages (not available yet)" fontSize='md'>
+                                <Button isDisabled leftIcon={<FiMessageSquare />} variant="ghost" size="lg">Messages</Button>
+                            </Tooltip>
                         </VStack>
                     </VStack>
                 </Show>
@@ -61,8 +64,8 @@ const MenuBar = (props) => {
                             <Tooltip label="Discover" fontSize='md'>
                                 <Link fontSize="2xl" color="gray.300"><FaHashtag /></Link>
                             </Tooltip>
-                            <Tooltip label="Read" fontSize='md'>
-                                <Link fontSize="2xl" color="gray.300"><AiFillRead /></Link>
+                            <Tooltip label="Messages (not available yet)" fontSize='md'>
+                                <Link fontSize="2xl" color="gray.300"><FiMessageSquare /></Link>
                             </Tooltip>
                         </VStack>
                     </VStack>

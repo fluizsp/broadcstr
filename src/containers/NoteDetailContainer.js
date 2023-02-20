@@ -1,4 +1,4 @@
-import { Box, Container, Spinner, SlideFade, VStack, Fade, Button,useColorModeValue } from '@chakra-ui/react'
+import { Box, Container, Spinner, SlideFade, VStack, Fade, Button, useColorModeValue } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 
@@ -28,7 +28,7 @@ const mapDispatchToProps = (dispatch) => {
 
 const mapStateToProps = (state, ownProps) => {
     return {
-        note: state.relay.notes[state.relay.lastId],
+        note: state.content.notes[state.content.lastId],
         usersMetadata: state.user.usersMetadata,
         account: state.user.account,
         likes: state.user.likes,
@@ -36,8 +36,8 @@ const mapStateToProps = (state, ownProps) => {
 };
 
 const NoteDetailContainer = props => {
-    const uiColor=useColorModeValue('brand.lightUi','brand.darkUi');
-    const bgGradient=useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)','linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
+    const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
+    const bgGradient = useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const params = useParams();
     const [isLoading, setIsLoading] = useState(false);
     const [limit, setLimit] = useState(25);
@@ -51,7 +51,7 @@ const NoteDetailContainer = props => {
             loading = true;
         }
         if (!props.note || (!props.note.likes && !props.note.replies && !props.note.reposts)) {
-            loading = true
+            loading = true;
             props.loadNoteRelateds(params.id);
         }
         if (!loading)
@@ -66,8 +66,29 @@ const NoteDetailContainer = props => {
     if (note.replies)
         noteReplies = [...note.replies];
     let total = noteReplies.length;
-    noteReplies.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
-    noteReplies = noteReplies.slice(0, limit);
+    //noteReplies.sort((a, b) => { return a.tags.filter(t => t[0] === 'p').length < b.tags.filter(t => t[0] === 'p').length ? -1 : 1 })
+    let sortedNoteReplies = [];
+    sortedNoteReplies = [...noteReplies.filter(r => r.eTags.length === 1)]
+    sortedNoteReplies.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
+    let sortedNoteRepliesIds = sortedNoteReplies.map(r => { return r.id });
+    let secondLevelReplies = noteReplies.filter(r => r.eTags.length === 2);
+    secondLevelReplies.forEach(r => {
+        let index = sortedNoteRepliesIds.indexOf(r.eTags[1])
+        if (index > 0){
+            sortedNoteReplies.splice(index + 1, 0, r)
+            sortedNoteRepliesIds.splice(index + 1, 0, r.id)
+        }
+    })
+    let thirdLevelReplies = noteReplies.filter(r => r.eTags.length === 3);
+    thirdLevelReplies.forEach(r => {
+        let index = sortedNoteRepliesIds.indexOf(r.eTags[2])
+        if (index > 0){
+            sortedNoteReplies.splice(index + 1, 0, r)
+            sortedNoteRepliesIds.splice(index + 1, 0, r.id)
+        }
+    })
+    sortedNoteReplies = sortedNoteReplies.slice(0, limit);
+    console.log("Render Note Details");
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
             <Box ml={{ md: '100px', lg: '330px' }} >
@@ -76,7 +97,7 @@ const NoteDetailContainer = props => {
                         {note && note.id ?
                             <NoteList notes={[note]} usersMetadata={props.usersMetadata} isThread={true} likes={props.likes} /> : null}
                         {noteReplies ?
-                            <NoteList notes={noteReplies} usersMetadata={props.usersMetadata} isReply={true} likes={props.likes} /> : null}
+                            <NoteList notes={sortedNoteReplies} usersMetadata={props.usersMetadata} isReply={true} likes={props.likes} /> : null}
                         <VStack>
                             {total > noteReplies.length ? <Button onClick={moreResults.bind(this)} >Show older replies...</Button> : null}
                             <Fade in={isLoading}>
