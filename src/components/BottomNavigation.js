@@ -3,17 +3,19 @@ import { IoIosHome, IoIosSearch } from 'react-icons/io';
 import { FaHashtag } from 'react-icons/fa';
 import withRouter from '../withRouter';
 import { useNavigate } from 'react-router';
+import { Link } from 'react-router-dom';
 
 const BottomNavigation = props => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const navigate = useNavigate();
 
     const isHome = props.router.location.pathname === "/";
-    const isSearch = props.router.location.pathname.substring(0, 7) === "/search";
+    const isSearch = props.router.location.pathname.includes("/search");
+    const isOwnProfile = props.router.location.pathname.includes(`/${props.accountInfo.nip05}`);
     if (props.router.location.pathname === "/welcome")
         return null;
     const goHome = () => {
-        window.location = '/'
+        navigate('/');
     }
     return (
         <Hide above="md" >
@@ -33,14 +35,14 @@ const BottomNavigation = props => {
                     </GridItem>
                     <GridItem p="4">
                         <Center>
-                            <Button variant="link" size="sm" fontSize="1xl"><FaHashtag /></Button>
+                            <Button variant="link" isDisabled size="sm" fontSize="1xl"><FaHashtag /></Button>
                         </Center>
                     </GridItem>
-                    <GridItem p="3">
+                    <GridItem p="4" mt="-2" bgGradient={isOwnProfile ? "linear(to-br, brand.purple, brand.green)" : ""} borderTopRadius="2xl">
                         <Center>
-                            <Button variant="link" size="sm">
-                                <Avatar src={props.accountInfo.picture ?? ''} name={props.accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" size="xs" />
-                            </Button>
+                            <Link to={`/${props.accountInfo.nip05??props.account.publicKey}`}>
+                                <Avatar src={props.accountInfo.picture ?? ''} name={props.accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" size="sm" />
+                            </Link>
                         </Center>
                     </GridItem>
                 </Grid>

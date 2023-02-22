@@ -5,8 +5,8 @@ import { addFollowing, getMyInfo, getUserFollowers, getUserFollowing, getUserNot
 import { useNavigate, useParams } from 'react-router';
 import { nip05, nip19 } from 'nostr-tools';
 import NoteList from '../components/NoteList';
-import defaultBanner from '../defaultbanner.jpeg';
-import { IoMdPersonAdd, IoMdRemove } from 'react-icons/io';
+import defaultBanner from '../defaultBanner.gif';
+import { IoMdPersonAdd, IoMdRemove, IoMdSettings } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
 
 const mapDispatchToProps = (dispatch, getState) => {
@@ -27,9 +27,6 @@ const mapDispatchToProps = (dispatch, getState) => {
         },
         unloadNotes: () => {
             dispatch({ type: UNLOAD_NOTES });
-        },
-        setLimit: newLimit => {
-            dispatch({ type: SET_LIMIT, data: newLimit });
         },
         addFollowing: publicKeyHex => {
             dispatch(addFollowing(publicKeyHex));
@@ -62,9 +59,12 @@ const mapDispatchToProps = (dispatch, getState) => {
 };
 
 const mapStateToProps = (state, ownProps) => {
+    console.log(nip19.decode(state.user.account.publicKey).data);
+    console.log(state.content.lastUserId);
+
     return {
         //userId: state.content.lastUserId,
-        user: state.content.selectedMetadata[state.content.lastUserId] ?? {},
+        user: nip19.decode(state.user.account.publicKey).data === state.content.lastUserId ? state.user.accountInfo : state.content.selectedMetadata[state.content.lastUserId] ?? {},
         account: state.user.account,
         limit: state.content.limit
     }
@@ -109,7 +109,7 @@ const ProfileContainer = props => {
     }, [params.id]);
     useEffect(() => {
         props.unloadNotes();
-        props.loadMyInfo(props.account.publicKey);
+        //props.loadMyInfo(props.account.publicKey);
         console.log('useEffect initial')
         if (params.id.includes('@'))
             nip05.queryProfile(params.id).then(value => {
@@ -120,18 +120,18 @@ const ProfileContainer = props => {
             })
         else
             setPublicKeyHex(nip19.decode(params.id).data);
-        console.log(params.id);
     }, [])
     useEffect(() => () => {
         props.unloadNotes();
     }, []);
     let notes = [];
     let replies = [];
+    let isOwnProfile = publicKeyHex === nip19.decode(props.account.publicKey).data;
     let isFollowing = useSelector(state => state.user.following.filter(f => f === publicKeyHex).length > 0);
     notes = useSelector(state => state.content.selectedNotes.filter(note => note.pubkey === publicKeyHex)
         .filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
-        .slice(0, limit), (a, b) => {
+        .slice(0, limit * 2), (a, b) => {
             if (!a)
                 return false;
             let aIds = a.map(aNote => { return aNote.id });
@@ -145,7 +145,7 @@ const ProfileContainer = props => {
         .filter(note => note.pubkey === publicKeyHex)
         .filter(note => note.kind === 1 && note.tags.filter(t => t[0] === "e").length > 0)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
-        .slice(0, limit), (a, b) => {
+        .slice(0, limit * 2), (a, b) => {
             if (!a)
                 return false;
             let aIds = a.map(aNote => { return aNote.id });
@@ -154,7 +154,6 @@ const ProfileContainer = props => {
             bIds = bIds.join(",");
             return aIds === bIds;
         });
-
     let following = useSelector(state => state.content.usersFollowing[publicKeyHex]) ?? [];
     let followers = useSelector(state => state.content.usersFollowers[publicKeyHex]) ?? [];
     console.log("Render Profile");
@@ -177,7 +176,9 @@ const ProfileContainer = props => {
                                 <GridItem colSpan={[12, 4]}>
                                     <VStack gap={5}>
                                         <Avatar size="2xl" src={props.user.picture} name={props.user.display_name ?? props.user.name} />
-                                        <Button m="10" onClick={followUnfollow} variant="solid" leftIcon={isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />} bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? "Unfollow" : "Follow"}</Button>
+                                        {isOwnProfile ?
+                                            <Button onClick={() => { navigate('/settings') }} variant="solid" leftIcon={<IoMdSettings />} bgGradient="linear(to-br, brand.purple, brand.green)">Settings</Button> :
+                                            <Button onClick={followUnfollow} variant="solid" leftIcon={isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />} bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? "Unfollow" : "Follow"}</Button>}
                                     </VStack>
                                 </GridItem>
                                 <GridItem colSpan={[12, 8]} textAlign="left" pl="5">
@@ -208,10 +209,10 @@ const ProfileContainer = props => {
                             </Tabs>
                         </Card>
                         <SlideFade in={activeView === 0} unmountOnExit>
-                            <NoteList notes={notes} />
+                            <NoteList notes={notes.slice(0, limit)} />
                         </SlideFade>
                         <SlideFade in={activeView === 1} unmountOnExit>
-                            <NoteList notes={replies} />
+                            <NoteList notes={replies.slice(0, limit)} />
                         </SlideFade>
                         <SlideFade in={activeView === 2} unmountOnExit >
                             {following.slice(0, limit).map(f => {
@@ -224,7 +225,7 @@ const ProfileContainer = props => {
                             })}
                         </SlideFade>
                         <VStack>
-                            {<Button onClick={moreResults} >Show more...</Button>}
+                            {<Button onClick={moreResults} hidden={(activeView === 0 && notes.length <= limit) || (activeView === 1 && replies.length <= limit)}>Show more...</Button>}
                             <Fade in={notes.length === 0 && replies.length === 0 && following.length === 0}>
                                 <Spinner size="xl" color="blue.300" />
                             </Fade>

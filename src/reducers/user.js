@@ -4,12 +4,35 @@ import { loadState } from '../localStorage';
 let storageState = loadState('user');
 
 const initialState = storageState ? storageState : {
+    //relays: ['wss://relay.nostr.info', 'wss://relay.damus.io', 'wss://nostr-pub.wellorder.net', 'wss://nostr-pub.semisol.dev'],
+    relays: [
+        {
+            url: 'wss://relay.nostr.info',
+            read: true,
+            write: true
+        },
+        {
+            url: 'wss://relay.damus.io',
+            read: true,
+            write: true
+        },
+        {
+            url: 'wss://nostr-pub.wellorder.net',
+            read: true,
+            write: true
+        },
+        {
+            url: 'wss://nostr-pub.semisol.dev',
+            read: true,
+            write: true
+        }
+    ],
     loggedIn: false,
     account: {},
     accountInfo: {},
     usersMetadata: {},
     likes: [],
-    following:[]
+    following: []
 };
 
 function removeEmpty(obj) {
@@ -27,9 +50,12 @@ const userReducer = createReducer(initialState, {
         if (action.data.accountInfo) {
             state.accountInfo = {
                 name: action.data.accountInfo.name,
-                nip05: action.data.accountInfo.nip05 ?? '',
-                picture: action.data.accountInfo.picture ?? '',
-                about: action.data.accountInfo.about ?? ''
+                display_name: action.data.accountInfo.display_name,
+                lud16: action.data.accountInfo.lud16,
+                nip05: action.data.accountInfo.nip05,
+                picture: action.data.accountInfo.picture,
+                banner: action.data.accountInfo.banner,
+                about: action.data.accountInfo.about
             }
         }
         if (action.data.following)
@@ -62,6 +88,10 @@ const userReducer = createReducer(initialState, {
         if (state.following.indexOf(action.data) >= 0)
             state.following.splice(state.following.indexOf(action.data), 1)
     },
+    SET_RELAYS: (state, action) => {
+        if (action.data)
+            state.relays = action.data;
+    }
 });
 
 export default userReducer;

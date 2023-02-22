@@ -15,7 +15,7 @@ const Note = props => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     let note = props.note ?? {};
     let reposted_by = props.note.reposted_by;
-    let authorMetadata = useSelector(state => state.content.selectedMetadata[note.pubkey], (a, b) => { return a && a.name === b.name }) ?? {};
+    let authorMetadata = useSelector(state => state.content.selectedMetadata[note.pubkey], (a, b) => { return a && b && a.name === b.name }) ?? {};
     let content = note.content ?? '';
     const mentionBreak = /(#\[[0-9]+\])/
     content = content.split(mentionBreak);
@@ -49,7 +49,7 @@ const Note = props => {
                     <Box p="5" pb="0">
                         <Grid templateColumns='repeat(12, 1fr)'>
                             <GridItem colSpan="11">
-                                <HStack cursor="pointer" onClick={() => { navigate(`/profile/${authorMetadata.nip05??nip19.npubEncode(note.pubkey)}`) }}>
+                                <HStack cursor="pointer" onClick={() => { navigate(`/${authorMetadata.nip05??nip19.npubEncode(note.pubkey)}`) }}>
                                     <Avatar size="md" src={authorMetadata.picture ?? ''} name={authorMetadata.display_name ?? authorMetadata.name ?? ''} />
                                     <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{authorMetadata.display_name ?? authorMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
                                     <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">@{authorMetadata.name ?? ''}</Text>
@@ -69,7 +69,7 @@ const Note = props => {
                             <Text fontSize="xs" color="gray.500">
                                 Replying to
                             </Text>
-                            <MentionTag href={`/note/${responseTags[0]}`} publicKeyHex={responseUserTags.slice(-1).pop()} />
+                            <MentionTag href={`/note/${nip19.noteEncode(responseTags[0])}`} publicKeyHex={responseUserTags.slice(-1).pop()} />
                             {/*<Text as="b" fontSize="xs" w="150px " color="blue.300" noOfLines={1}>{responseUserTags[0]??'*someone*'}</Text>*/}
                         </HStack>
                         : ''}
@@ -101,7 +101,7 @@ const Note = props => {
                             <Tooltip label={liked ? "You liked!" : "Like"} fontSize='md' hasArrow={true}>
                                 <Button isDisabled={liked} variant="ghost" size="md" >{liked ? <IoIosHeart color="red" /> : <BiHeart />}</Button>
                             </Tooltip>
-                            <Tooltip label="Zap" fontSize='md' hasArrow={true}>
+                            <Tooltip label="Zaps (coming soon!)" fontSize='md' hasArrow={true}>
                                 <Button variant="ghost" isDisabled size="md" ><HiLightningBolt /></Button>
                             </Tooltip>
                         </Box>
@@ -119,7 +119,7 @@ const Note = props => {
                         </Box>
                         <Box>
                             {!props.isThread ? <Tooltip label="View full note" fontSize='md' hasArrow={true}>
-                                <DomLink to={`/note/${note.id}`}>
+                                <DomLink to={`/note/${nip19.noteEncode(note.id)}`}>
                                     <Button variant="ghost" size="md"><BiExpand /></Button>
                                 </DomLink>
                             </Tooltip> : ''}

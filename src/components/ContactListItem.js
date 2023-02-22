@@ -26,9 +26,9 @@ const ContactListItem = props => {
             <Card mb="5" bg={uiColor} p="5">
                 <Grid templateColumns="repeat(12,1fr)" gap="5">
                     <GridItem>
-                        <Avatar size="md" src={metadata.picture} name={displayName} cursor="pointer" onClick={() => { navigate(`/profile/${metadata.nip05??npub}`) }} />
+                        <Avatar size="md" src={metadata.picture} name={displayName} cursor="pointer" onClick={() => { navigate(`/${metadata.nip05??npub}`) }} />
                     </GridItem>
-                    <GridItem colSpan="6" cursor="pointer" onClick={() => { navigate(`/profile/${metadata.nip05??npub}`) }}>
+                    <GridItem colSpan="6" cursor="pointer" onClick={() => { navigate(`/${metadata.nip05??npub}`) }}>
                         <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{displayName}</Text>
                         {/*<Skeleton width="150px" h={4} />*/}
                         <Text fontSize="sm" color="gray.400" maxW="150px" noOfLines="1" >{name}</Text>

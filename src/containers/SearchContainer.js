@@ -1,14 +1,11 @@
-import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button, Input, InputGroup, InputLeftAddon, InputLeftElement, FormLabel } from '@chakra-ui/react'
+import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Tabs, TabList, Tab, Button, Input, InputGroup, InputLeftElement, Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { addFollowing, CLEAR_SEARCH, getMyInfo, getUserFollowers, getUserFollowing, getUserNotes, receivedUserMetadata, RECEIVED_USER_ID, removeFollowing, search, SET_LIMIT, UNLOAD_NOTES } from '../actions/relay';
-import { useLocation, useParams } from 'react-router';
-import { nip19 } from 'nostr-tools';
+import { addFollowing, CLEAR_SEARCH, getMyInfo, getUserFollowers, getUserFollowing, getUserNotes, removeFollowing, search, UNLOAD_NOTES } from '../actions/relay';
+import { useParams } from 'react-router';
 import NoteList from '../components/NoteList';
-import defaultBanner from '../defaultbanner.jpeg';
-import { IoIosSearch, IoMdPersonAdd, IoMdRemove } from 'react-icons/io';
+import { IoIosSearch } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
-import { useNavigation } from 'react-router-dom'
 
 const mapDispatchToProps = (dispatch, getState) => {
     return {
@@ -37,8 +34,8 @@ const mapDispatchToProps = (dispatch, getState) => {
         search: (type, term) => {
             dispatch(search(type, term));
         },
-        clearSearch: () => {
-            dispatch({ type: CLEAR_SEARCH });
+        clearSearch: async () => {
+            await dispatch({ type: CLEAR_SEARCH });
         }
     }
 };
@@ -53,29 +50,24 @@ const SearchContainer = props => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const bgGradient = useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const params = useParams();
-    const [isLoading, setIsLoading] = useState(false);
     const [activeView, setActiveView] = useState(0);
     const [limit, setLimit] = useState(50);
-    const [searchTerm, setSearchTerm] = useState();
+    const [searchTerm, setSearchTerm] = useState(params.term);
+    const [noResults, setNoResults] = useState(false);
     const moreResults = () => {
         setLimit(limit + 50);
     }
 
     useEffect(() => {
         props.clearSearch();
-        props.loadMyInfo(props.account.publicKey);
-        console.log('useEffect publicKey')
-    }, [])
-    useEffect(() => async () => {
-        console.log('useEffect params.term')
+        console.log('useEffect initial')
         performSearch();
-
-    }, [params.term]);
+    }, [])
     let notes = [];
     let users = [];
     notes = useSelector(state => state.content.locatedNotes
         //.sort((a, b) => { return a && b && a.created_at > b.created_at ? -1 : 1 })
-        .slice(0, limit), (a, b) => {
+        .slice(0, limit * 2), (a, b) => {
             if (!a)
                 return false;
             let aIds = a.map(aNote => { return aNote.id });
@@ -83,24 +75,33 @@ const SearchContainer = props => {
             let bIds = b.map(bNote => { return bNote.id });
             bIds = bIds.join(",");
             return aIds === bIds;
-        })
+        }) ?? [];
     users = useSelector(state => state.content.locatedUsers);
     users = Object.keys(users).map(u => {
         return {
             publicKeyHex: u,
             metadata: users[u]
         }
-    }).slice(0, limit);
-    const performSearch = (term) => {
+    });
+    const performSearch = term => {
+
+        props.clearSearch();
         if (!term)
-            term = params.term;
-        console.log(term);
+            term = searchTerm;
         if (term && term.length >= 3) {
+            console.log(term);
+            setSearchTerm(term);
             props.search(activeView === 0 ? 'users' : 'notes', term)
-            setIsLoading(true);
+            setNoResults(false);
         }
-        setSearchTerm(term);
     }
+    const setTab = index => {
+        setLimit(25);
+        setActiveView(index);
+        setSearchTerm();
+        setNoResults(false);
+    }
+    const isLoading = searchTerm && searchTerm.length >= 3 && ((activeView === 0 && users.length === 0) || (activeView === 1 && notes.length === 0))
     console.log("Render Profile");
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
@@ -115,23 +116,44 @@ const SearchContainer = props => {
                             </InputGroup>
                             <Tabs ml="-12px" index={activeView} mr="-12px">
                                 <TabList>
-                                    <Tab w="50%" onClick={() => { setLimit(25); setActiveView(0); performSearch(); }}>Users</Tab>
-                                    <Tab w="50%" onClick={() => { setLimit(25); setActiveView(1); performSearch(); }}>Notes & Replies</Tab>
+                                    <Tab w="50%" onClick={() => { setTab(0) }}>Users</Tab>
+                                    <Tab w="50%" onClick={() => { setTab(1) }}>Notes & Replies</Tab>
                                 </TabList>
                             </Tabs>
                         </Card>
                         <SlideFade in={activeView === 0} unmountOnExit>
-                            {users.map(u => {
+                            {users.slice(0, limit).map(u => {
                                 return (<ContactListItem publicKeyHex={u.publicKeyHex} metadata={u.metadata} addFollowing={props.addFollowing} removeFollowing={props.removeFollowing} />)
                             })}
                         </SlideFade>
                         <SlideFade in={activeView === 1} unmountOnExit>
-                            <NoteList notes={notes} />
+                            <NoteList notes={notes.slice(0, limit)} />
                         </SlideFade>
                         <VStack>
-                            {notes.length > 0 || users.length > 0 ? <Button onClick={moreResults} >Show more...</Button> : null}
-                            <Fade in={notes.length === 0 && users.length === 0 && params.term && params.term.length >= 3}>
+                            {notes.length > limit || users.length > limit ? <Button onClick={moreResults} >Show more...</Button> : null}
+                            <Fade in={isLoading}>
                                 <Spinner size="xl" color="blue.300" />
+                            </Fade>
+                            <Fade in={noResults}>
+                                <Alert
+                                    status='warning'
+                                    variant='subtle'
+                                    flexDirection='column'
+                                    alignItems='center'
+                                    justifyContent='center'
+                                    textAlign='center'
+                                    height='400px'
+                                >
+                                    <AlertIcon boxSize='40px' mr={0} />
+                                    <AlertTitle mt={4} mb={1} fontSize='lg'>
+                                        No Results!
+                                    </AlertTitle>
+                                    <AlertDescription maxWidth='sm'>
+                                        Your search returned no results ): <br />
+                                        If you are searching for users, try the display name, username, or the NIP-05.<br />
+                                        If you are searching for notes, use tags without the "#" like: Bitcoin
+                                    </AlertDescription>
+                                </Alert>
                             </Fade>
                         </VStack>
                     </Container>

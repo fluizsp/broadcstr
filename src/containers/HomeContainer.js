@@ -17,7 +17,9 @@ const mapDispatchToProps = (dispatch) => {
             dispatch(getFollowingFeed(limit));
         },
         loadMyInfo: (publicKey) => {
-            dispatch((getMyInfo(publicKey)));
+            setTimeout(() => {
+                dispatch((getMyInfo(publicKey)));
+            }, 1000);
         },
         loadUsersMetadata: () => {
             dispatch(getUsersMetadata());
@@ -34,14 +36,14 @@ const mapDispatchToProps = (dispatch) => {
     }
 };
 
-const mapStateToProps = throttle((state, ownProps) => {
+const mapStateToProps = (state, ownProps) => {
     return {
         notes: state.content.selectedNotes,
         loggedIn: state.user.loggedIn,
         account: state.user.account,
         likes: state.user.likes
     }
-}, 1000)
+}
 
 const HomeContainer = props => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
@@ -49,13 +51,11 @@ const HomeContainer = props => {
     const [feedType, setFeedType] = useState('following');
     const [limit, setLimit] = useState(25);
     let metadataInterval = null;
-    const publicKey = props.account.publicKey;
-    useEffect(() => {
-        props.loadMyInfo(publicKey);
-    }, [publicKey])
+    //const publicKey = props.account.publicKey;
     useEffect(() => {
         props.unloadNotes();
         props.loadNotes('following');
+        props.loadMyInfo();
     }, [])
 
     const loadNotes = feedType => {
@@ -84,7 +84,7 @@ const HomeContainer = props => {
                                 <Center>
                                     <Tabs index={feedType === "following" ? 1 : -1}>
                                         <TabList>
-                                            <Tab >Trending</Tab>
+                                            <Tab isDisabled>Trending</Tab>
                                             <Tab onClick={loadNotes.bind(this, 'following')}>Following</Tab>
                                         </TabList>
                                     </Tabs>
@@ -99,8 +99,8 @@ const HomeContainer = props => {
                             <NoteList notes={notes} />
                         </LazyLoad>
                         <VStack mb="50px">
-                            <Spinner size="xl" color="blue.300" hidden={notes.length!==0} />
-                            <Button  hidden={notes.length===0} onClick={moreResults.bind(this)} >Next Results...</Button>
+                            <Spinner size="xl" color="blue.300" hidden={notes.length !== 0} />
+                            <Button hidden={notes.length === 0} onClick={moreResults.bind(this)} >Next Results...</Button>
                         </VStack>
                     </Container>
                 </SlideFade>

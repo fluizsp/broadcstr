@@ -1,9 +1,10 @@
 import { Box, Container, Spinner, SlideFade, VStack, Fade, Button, useColorModeValue } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
+import { connect, useSelector } from 'react-redux';
+import { nip19 } from 'nostr-tools';
 
 
-import { getMyInfo, getNote, getNoteRelateds } from '../actions/relay';
+import { getMyInfo, getNote, listNoteReplies } from '../actions/relay';
 
 import { getUsersMetadata } from '../actions/relay'
 import NoteList from '../components/NoteList';
@@ -14,8 +15,8 @@ const mapDispatchToProps = (dispatch) => {
         loadUsersMetadata: () => {
             dispatch(getUsersMetadata());
         },
-        loadNoteRelateds: (id) => {
-            dispatch(getNoteRelateds(id));
+        listNoteReplies: (id) => {
+            dispatch(listNoteReplies(id));
         },
         loadMyInfo: (publicKey) => {
             dispatch((getMyInfo(publicKey)));
@@ -28,8 +29,6 @@ const mapDispatchToProps = (dispatch) => {
 
 const mapStateToProps = (state, ownProps) => {
     return {
-        note: state.content.notes[state.content.lastId],
-        usersMetadata: state.user.usersMetadata,
         account: state.user.account,
         likes: state.user.likes,
     }
@@ -41,27 +40,21 @@ const NoteDetailContainer = props => {
     const params = useParams();
     const [isLoading, setIsLoading] = useState(false);
     const [limit, setLimit] = useState(25);
+    const noteId = nip19.decode(params.id).data;
     const moreResults = () => {
         setLimit(limit + 25);
     }
     useEffect(() => {
         let loading = false;
-        if (!props.note || props.note.id !== params.id) {
-            props.loadNote(params.id);
-            loading = true;
+        if (!props.note || props.note.id !== noteId) {
+            props.loadNote(noteId);
         }
         if (!props.note || (!props.note.likes && !props.note.replies && !props.note.reposts)) {
-            loading = true;
-            props.loadNoteRelateds(params.id);
+            props.listNoteReplies(noteId);
         }
-        if (!loading)
-            setIsLoading(loading);
 
-    }, [props.loadNote, props.loadNoteRelateds, props.note, params.id,]);
-    useEffect(() => {
-        props.loadMyInfo(props.account.publicKey);
-    }, [props.loadMyInfo, props.account.publicKey])
-    let note = props.note ?? {};
+    }, [noteId]);
+    let note = useSelector(state => state.content.notes[noteId]) ?? {};
     let noteReplies = [];
     if (note.replies)
         noteReplies = [...note.replies];
@@ -74,7 +67,7 @@ const NoteDetailContainer = props => {
     let secondLevelReplies = noteReplies.filter(r => r.eTags.length === 2);
     secondLevelReplies.forEach(r => {
         let index = sortedNoteRepliesIds.indexOf(r.eTags[1])
-        if (index > 0){
+        if (index > 0) {
             sortedNoteReplies.splice(index + 1, 0, r)
             sortedNoteRepliesIds.splice(index + 1, 0, r.id)
         }
@@ -82,7 +75,7 @@ const NoteDetailContainer = props => {
     let thirdLevelReplies = noteReplies.filter(r => r.eTags.length === 3);
     thirdLevelReplies.forEach(r => {
         let index = sortedNoteRepliesIds.indexOf(r.eTags[2])
-        if (index > 0){
+        if (index > 0) {
             sortedNoteReplies.splice(index + 1, 0, r)
             sortedNoteRepliesIds.splice(index + 1, 0, r.id)
         }
@@ -95,12 +88,12 @@ const NoteDetailContainer = props => {
                 <SlideFade in={true} offsetX="1000" offsetY="0" reverse={true} unmountOnExit={true}>
                     <Container maxW='4xl' pt="80px" pb="20px" >
                         {note && note.id ?
-                            <NoteList notes={[note]} usersMetadata={props.usersMetadata} isThread={true} likes={props.likes} /> : null}
+                            <NoteList notes={[note]} isThread={true} likes={props.likes} /> : null}
                         {noteReplies ?
-                            <NoteList notes={sortedNoteReplies} usersMetadata={props.usersMetadata} isReply={true} likes={props.likes} /> : null}
+                            <NoteList notes={sortedNoteReplies} isReply={true} likes={props.likes} /> : null}
                         <VStack>
-                            {total > noteReplies.length ? <Button onClick={moreResults.bind(this)} >Show older replies...</Button> : null}
-                            <Fade in={isLoading}>
+                            {total > sortedNoteReplies.length ? <Button onClick={moreResults} >Show older replies...</Button> : null}
+                            <Fade in={note === {} || sortedNoteReplies.length === 0}>
                                 <Spinner size="xl" color="blue.300" />
                             </Fade>
                         </VStack>

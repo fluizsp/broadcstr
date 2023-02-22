@@ -2,8 +2,6 @@ import { createReducer } from '@reduxjs/toolkit'
 
 
 const initialState = {
-    relays: ['wss://relay.nostr.info', 'wss://relay.damus.io', 'wss://nostr-pub.wellorder.net', 'wss://nostr-pub.semisol.dev'],
-    //'wss://nostr.onsats.org'
     notes: {},
     selectedNotes: [],
     relatedsToLoad: [],
@@ -167,7 +165,6 @@ const contentReducer = createReducer(initialState, {
         }
     },
     CLEAR_SEARCH: (state, action) => {
-        console.log("CLEAR SEARCH")
         state.locatedUsers = {};
         state.locatedNotes = [];
     },
@@ -176,7 +173,6 @@ const contentReducer = createReducer(initialState, {
             state.locatedUsers[action.data.publicKeyHex] = action.data.userMetadata;
     },
     LOCATED_NOTE: (state, action) => {
-        //console.log(action.data);
         let newNote = action.data;
         newNote.pTags = newNote.tags.filter(t => t[0] === 'p').map(t => { return t[1] }) ?? [];
         newNote.eTags = newNote.tags.filter(t => t[0] === 'e').map(t => { return t[1] }) ?? [];

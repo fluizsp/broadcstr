@@ -1,5 +1,5 @@
 import { Flex, Center, Box, Image, VStack, Button, Avatar, Text, Link, Show, Hide, Tooltip, HStack, Menu, MenuButton, MenuItem, MenuList, MenuDivider } from '@chakra-ui/react'
-import { FaHashtag } from 'react-icons/fa';
+import { FaHashtag, FaSignOutAlt } from 'react-icons/fa';
 import { GoHome } from 'react-icons/go';
 import { IoMdSearch, IoIosSettings, IoMdArrowDropup, IoIosPerson } from 'react-icons/io';
 import { AiFillRead } from 'react-icons/ai';
@@ -27,6 +27,7 @@ const MenuBar = (props) => {
     }
 
     function goHome() {
+        window.scrollTo(0, 0);
         navigate('/');
     }
     if (location.pathname === "/welcome")
@@ -42,9 +43,9 @@ const MenuBar = (props) => {
                         <Image src={logoSelector} w="225px" />
                         <VStack spacing="1">
                             <Button leftIcon={<GoHome />} variant="ghost" color={location.path === "/" ? 'blue.300' : ''} size="lg" onClick={goHome} >Home</Button>
-                            <Button leftIcon={<IoMdSearch />} variant="ghost" size="lg" onClick={()=>{navigate('/search')}}>Search</Button>
+                            <Button leftIcon={<IoMdSearch />} variant="ghost" size="lg" onClick={() => { navigate('/search') }}>Search</Button>
                             <Button leftIcon={<FaHashtag />} variant="ghost" isDisabled size="lg">Discover</Button>
-                            <Tooltip label="Messages (not available yet)" fontSize='md'>
+                            <Tooltip label="Messages (coming soon!)" fontSize='md'>
                                 <Button isDisabled leftIcon={<FiMessageSquare />} variant="ghost" size="lg">Messages</Button>
                             </Tooltip>
                         </VStack>
@@ -64,7 +65,7 @@ const MenuBar = (props) => {
                             <Tooltip label="Discover" fontSize='md'>
                                 <Link fontSize="2xl" color="gray.300"><FaHashtag /></Link>
                             </Tooltip>
-                            <Tooltip label="Messages (not available yet)" fontSize='md'>
+                            <Tooltip label="Messages (coming soon!)" fontSize='md'>
                                 <Link fontSize="2xl" color="gray.300"><FiMessageSquare /></Link>
                             </Tooltip>
                         </VStack>
@@ -74,7 +75,7 @@ const MenuBar = (props) => {
             {/* ACCOUNT */}
             <Box w={{ md: '100px', lg: '330px' }} h="75px" p="4" bottom="0" left="0" pos="fixed" bg={uiColor} verticalAlign="middle">
                 <Flex wrap="wrap">
-                    <Avatar src={props.accountInfo.picture ?? ''} name={props.accountInfo.display_name ?? props.accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" ml={{ md: 2, lg: 0 }} />
+                    <Avatar src={props.accountInfo.picture ?? ''} name={props.accountInfo.display_name ?? props.accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" ml={{ md: 2, lg: 0 }} onClick={()=>{navigate(`/${props.accountInfo.nip05??props.account.publicKey}`)}} cursor="pointer"></Avatar>
                     <VStack spacing="0" align="left" pl="2">
                         <HStack>
                             <Text fontSize="md">{props.accountInfo.display_name ?? props.accountInfo.name ?? 'Visitor'}</Text>
@@ -86,11 +87,11 @@ const MenuBar = (props) => {
                         <Menu>
                             <MenuButton as={Button} variant="ghost"><IoMdArrowDropup /></MenuButton>
                             <MenuList>
-                                <MenuItem icon={<IoIosPerson />}>Profile</MenuItem>
-                                <MenuItem icon={<IoIosSettings />}>Settings</MenuItem>
+                                <MenuItem icon={<IoIosPerson />} onClick={()=>{navigate(`/${props.accountInfo.nip05??props.account.publicKey}`)}}>Profile</MenuItem>
+                                <MenuItem icon={<IoIosSettings />} onClick={() => { navigate('/settings') }}>Settings</MenuItem>
                                 <MenuItem icon={colorMode.colorMode === 'light' ? <MoonIcon /> : <SunIcon />} onClick={colorMode.toggleColorMode}>Toggle Color Mode</MenuItem>
                                 <MenuDivider />
-                                <MenuItem onClick={logout.bind(this)} icon={<BiDoorOpen />}>Logout</MenuItem>
+                                <MenuItem onClick={logout.bind(this)} icon={<FaSignOutAlt />}>Sign out</MenuItem>
                             </MenuList>
                         </Menu>
                         {/*<Button variant="ghost" color="gray.400" onClick={colorMode.toggleColorMode}></Button>*/}

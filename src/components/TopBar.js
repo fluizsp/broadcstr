@@ -1,6 +1,6 @@
-import { Box, Image, Button, Tooltip, Grid, GridItem, Hide, InputGroup, InputLeftElement, Input, Show } from '@chakra-ui/react'
-import { IoMdAddCircleOutline, IoMdNotifications, IoMdArrowBack, IoIosSearch } from 'react-icons/io';
-import { BiMessage } from 'react-icons/bi';
+import { Box, Image, Button, Tooltip, Grid, GridItem, Hide, InputGroup, InputLeftElement, Input, Show, Collapse, Flex } from '@chakra-ui/react'
+import { IoMdAddCircleOutline, IoMdNotifications, IoMdArrowBack, IoIosSearch, IoIosClose, IoMdCloseCircle } from 'react-icons/io';
+import { BiMessage, BiNetworkChart } from 'react-icons/bi';
 import { Link as DomLink, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useColorModeValue } from '@chakra-ui/react';
 
@@ -8,12 +8,14 @@ import { useColorModeValue } from '@chakra-ui/react';
 import logo from '../logo_h.svg';
 import logoDark from '../logo_h_dark.svg';
 import { useState } from 'react';
+import { FaNetworkWired } from 'react-icons/fa';
 
 const TopBar = (props) => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const logoSelector = useColorModeValue(logo, logoDark);
     const location = useLocation();
     const [searchTerm, setSearchTerm] = useState(null);
+    const [composerActive, setComposerActive] = useState(false);
     const params = useParams();
     const navigate = useNavigate();
     if (location.pathname === "/welcome")
@@ -22,11 +24,11 @@ const TopBar = (props) => {
         navigate(`/search/${searchTerm}`);
     }
     return (
-        <Box w="100vW" borderBottomRadius={['xl', 'xl', '0']} ml={['0', '0', '100px', '330px']} h="60px" bg={uiColor} backdropFilter="auto" backdropBlur="6px"
+        <Box w="100vW" borderBottomRadius={['xl', 'xl', '0']} ml={['0', '0', '100px', '330px']} bg={uiColor} backdropFilter="auto" backdropBlur="6px"
             top="0" left="0" pos="fixed" zIndex="1" pr={['0', '0', '110px', '340px']}
-            borderBottom="1px" borderBottomColor={uiColor}>
-            <Grid templateColumns="repeat(12,1fr)">
-                <GridItem colSpan={6} p="3.5" >
+            borderBottom="1px" borderBottomColor={uiColor} dropShadow="lg">
+            <Flex h="60px">
+                <Box flex={1} p="3.5" >
                     {props.backLabel ?
                         <Button onClick={() => { navigate(-1) }} mt="-1" variant="ghost" leftIcon={<IoMdArrowBack />}>{props.backLabel}</Button>
                         :
@@ -42,17 +44,24 @@ const TopBar = (props) => {
                             </Show>
                         </Box>
                     }
-
-                </GridItem>
-                <GridItem p="4" colSpan={6} textAlign="right">
-                    <Tooltip label="What's on your mind?" fontSize='md'>
-                        <Button variant="ghost" size="sm" fontSize="2xl" ><IoMdAddCircleOutline /></Button>
+                </Box>
+                <Box p="4" w="180px" textAlign="right">
+                    <Tooltip label={`You are connected to ${props.relays.length} relays`} fontSize='md'>
+                        <Button variant="ghost" color="blue.300" leftIcon={<BiNetworkChart />} onClick={() => { navigate('/settings/relays') }} size="sm" fontSize="xs">{props.relays.length}</Button>
                     </Tooltip>
-                    <Tooltip label="Notifications (not available yet)" fontSize='md'>
+                    <Tooltip label="What's on your mind?" fontSize='md'>
+                        <Button variant="ghost" size="sm" fontSize="2xl" onClick={() => { setComposerActive(!composerActive) }}>{composerActive ? <IoMdCloseCircle /> : <IoMdAddCircleOutline />}</Button>
+                    </Tooltip>
+                    <Tooltip label="Notifications (coming soon!)" fontSize='md'>
                         <Button variant="ghost" size="sm" isDisabled fontSize="2xl" ><IoMdNotifications /></Button>
                     </Tooltip>
-                </GridItem>
-            </Grid>
+                </Box>
+            </Flex>
+            <Collapse in={composerActive}>
+                <Box h={['100vH', '100vH', '500px']} p="10">
+                    Composer
+                </Box>
+            </Collapse>
         </Box>
     )
 }

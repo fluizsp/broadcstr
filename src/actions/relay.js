@@ -2,8 +2,9 @@ import {
     relayInit,
     nip19,
     validateEvent,
-    SimplePool
 } from 'nostr-tools'
+import { BroadcstrPool } from '../utils/BroadcstrPool';
+
 import { setAccount } from './account';
 
 export const RECEIVED_NOTE = "RECEIVED_NOTE";
@@ -24,9 +25,7 @@ export const CLEAR_SEARCH = "CLEAR_SEARCH";
 export const LOCATED_USER = "LOCATED_USER";
 export const LOCATED_NOTE = "LOCATED_NOTE";
 
-let relays = [];
-const pool = new SimplePool();
-let searchSub = null;
+const myPool = new BroadcstrPool();
 const requestedMetadatas = [];
 
 export const receivedNote = (notes, lastId) => {
@@ -53,14 +52,14 @@ export const receivedNoteRelated = (event) => {
 export const getFollowingFeed = (limit) => {
     return ((dispatch, getState) => {
         if (getState().user.following && getState().user.following.length > 0) {
-            let relays = getState().content.relays;
+            let relays = getState().user.relays.map(r => { return r.url });
             let filters = [{
                 kinds: [1, 6],
                 authors: getState().user.following,
                 limit: 200
             }];
-            let subs = pool.sub(relays, filters);
-            subs.on('event', async event => {
+            let sub = myPool.sub(relays, filters);
+            sub.on('event', async event => {
                 if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
                     dispatch(receivedNote(event));
                     if (!getState().user.usersMetadata[event.pubkey]) {
@@ -70,38 +69,33 @@ export const getFollowingFeed = (limit) => {
                         if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
                             await dispatch(receivedUserMetadata(tag[1], {}));
                         }
-                    })
+                    });
                 }
-            })
+            });
         }
     });
 }
 
 export const getUserNotes = (publicKeyHex, limit) => {
     return ((dispatch, getState) => {
-        relays.forEach(relay => {
-            let sub = relay.sub([
-                {
-                    kinds: [1, 6]
-                    , authors: [publicKeyHex],
-                    limit: limit ?? 200
+        let relays = getState().user.relays.map(r => { return r.url });
+        let filters = [
+            {
+                kinds: [1, 6],
+                authors: [publicKeyHex],
+                limit: limit ?? 200
+            }
+        ];
+        let sub = myPool.sub(relays, filters);
+        sub.on('event', async event => {
+            dispatch(receivedNote(event));
+            if (!getState().user.usersMetadata[event.pubkey]) {
+                await dispatch(receivedUserMetadata(event.pubkey, {}));
+            }
+            event.tags.forEach(async tag => {
+                if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
+                    await dispatch(receivedUserMetadata(tag[1], {}));
                 }
-            ])
-            sub.on('event', async event => {
-                if (validateEvent(event)) {
-                    dispatch(receivedNote(event));
-                    if (!getState().user.usersMetadata[event.pubkey]) {
-                        await dispatch(receivedUserMetadata(event.pubkey, {}));
-                    }
-                    event.tags.forEach(async tag => {
-                        if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
-                            await dispatch(receivedUserMetadata(tag[1], {}));
-                        }
-                    })
-                }
-            })
-            sub.on('eose', () => {
-                sub.unsub()
             })
         });
     });
@@ -109,66 +103,60 @@ export const getUserNotes = (publicKeyHex, limit) => {
 
 export const getUserFollowing = (publicKeyHex, limit) => {
     return ((dispatch, getState) => {
-        relays.forEach(relay => {
-            let sub = relay.sub([
-                {
-                    kinds: [3]
-                    , authors: [publicKeyHex],
-                    limit: limit ?? 1000
-                }
-            ])
-            sub.on('event', async event => {
-                if (validateEvent(event)) {
-
-                    event.tags.forEach(async t => {
-                        if (!getState().user.usersMetadata[event.pubkey]) {
-                            await dispatch(receivedUserMetadata(event.pubkey, {}));
+        let relays = getState().user.relays.map(r => { return r.url });
+        let filters = [
+            {
+                kinds: [3]
+                , authors: [publicKeyHex],
+                limit: limit ?? 1000
+            }
+        ];
+        myPool.list(relays, filters).then(results => {
+            results.forEach(event => {
+                event.tags.forEach(t => {
+                    if (t[0] === "p")
+                        if (!getState().user.usersMetadata[t[1]]) {
+                            dispatch(receivedUserMetadata(t[1], {}));
                         }
-                    })
-                    dispatch({ type: USER_FOLLOWING, data: event });
-                }
-            })
-            sub.on('eose', () => {
-                sub.unsub()
-            })
+                })
+                dispatch({ type: USER_FOLLOWING, data: event });
+            });
         });
-    });
+    })
 }
 
 export const getUserFollowers = (publicKeyHex, limit) => {
     return ((dispatch, getState) => {
-        let testArr = [];
-        relays.forEach(relay => {
-            let sub = relay.sub([
-                {
-                    kinds: [3],
-                    "#p": [publicKeyHex],
-                    limit: limit ?? 1000
-                }
-            ])
-            sub.on('event', async event => {
-                if (validateEvent(event)) {
-                    event.tags.forEach(async t => {
-                        if (!getState().user.usersMetadata[event.pubkey]) {
-                            await dispatch(receivedUserMetadata(event.pubkey, {}));
-                        }
-                    })
-                    testArr.push({ type: USER_FOLLOWER, data: { publicKeyHex: publicKeyHex, follower: event.pubkey } });
-                    if (testArr.length > 100) {
-                        testArr.forEach(e => {
-                            dispatch(e);
-                        })
-                        testArr = [];
-                    }
-                }
-            })
-            sub.on('eose', () => {
-                testArr.forEach(e => {
+        let followersBatch = [];
+        let relays = getState().user.relays.map(r => { return r.url });
+        let filters = [
+            {
+                kinds: [3],
+                "#p": [publicKeyHex],
+                limit: limit ?? 1000
+            }
+        ];
+        let sub = myPool.sub(relays, filters);
+        sub.on('event', event => {
+            if (!getState().user.usersMetadata[event.pubkey]) {
+                dispatch(receivedUserMetadata(event.pubkey, {}));
+            }
+            followersBatch.push({ type: USER_FOLLOWER, data: { publicKeyHex: publicKeyHex, follower: event.pubkey } });
+            if (followersBatch.length > 100) {
+                followersBatch.forEach(e => {
                     dispatch(e);
                 })
-                sub.unsub()
-            })
+                followersBatch = [];
+            }
         });
+        sub.on('eose', () => {
+            if (followersBatch.length > 0) {
+                followersBatch.forEach(e => {
+                    dispatch(e);
+                })
+                followersBatch = [];
+            }
+        })
     });
 }
 
@@ -178,66 +166,64 @@ export const getNote = (id) => {
             dispatch(receivedNote(getState().content.notes[id], id));
             return;
         }
-        relays.forEach(relay => {
-            let sub = relay.sub([
-                {
-                    kinds: [1, 6],
-                    ids: [id],
-                    limit: 1
+        let relays = getState().user.relays.map(r => { return r.url });
+        let filters = [
+            {
+                kinds: [1, 6],
+                ids: [id],
+                limit: 1
+            }
+        ];
+        myPool.list(relays, filters).then(results => {
+            let event = results[0];
+            if (validateEvent(event)) {
+                dispatch(receivedNote(event, event.id));
+                if (!getState().user.usersMetadata[event.pubkey]) {
+                    dispatch(receivedUserMetadata(event.pubkey, {}));
                 }
-            ])
-            sub.on('event', async event => {
-                if (validateEvent(event)) {
-                    dispatch(receivedNote(event, event.id));
-                    if (!getState().user.usersMetadata[event.pubkey]) {
-                        await dispatch(receivedUserMetadata(event.pubkey, {}));
+                event.tags.forEach(async tag => {
+                    if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
+                        await dispatch(receivedUserMetadata(tag[1], {}));
                     }
-                    event.tags.forEach(async tag => {
-                        if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
-                            await dispatch(receivedUserMetadata(tag[1], {}));
-                        }
-                    })
-                }
-            })
-            sub.on('eose', () => {
-                sub.unsub()
-            })
+                })
+            }
+
         });
     });
 }
 
 export const getMyInfo = (publicKey) => {
     return ((dispatch, getState) => {
-        if (publicKey)
-            relays.forEach(relay => {
-                let sub = relay.sub([
-                    {
-                        kinds: [0, 3, 7],
-                        authors: [nip19.decode(publicKey).data]
-                    }
-                ])
-                sub.on('event', event => {
-                    if (event.kind === 0) {
-                        let accountInfo = JSON.parse(event.content);
-                        dispatch(setAccount(null, accountInfo));
-                    }
-                    if (event.kind === 3) {
-                        let following = event.tags.map(t => {
-                            return t[1];
-                        })
-                        dispatch(setAccount(null, null, following));
-                    }
-                    if (event.kind === 7) {
-                        let likes = event.tags.map(t => {
-                            return t[1];
-                        });
-                        dispatch(setAccount(null, null, null, likes));
-                    }
-                })
-                sub.on('eose', () => {
-                    sub.unsub()
-                })
-            });
+        if (publicKey) {
+            let relays = getState().user.relays.map(r => { return r.url });
+            let filters = [{
+                kinds: [0, 3, 7],
+                authors: [nip19.decode(publicKey).data]
+            }];
+            let sub = myPool.sub(relays, filters);//.then(results => {
+            sub.on('event', event => {
+                //results.forEach(event => {
+                if (event.kind === 0) {
+                    let accountInfo = JSON.parse(event.content);
+                    dispatch(setAccount(null, accountInfo));
+                }
+                if (event.kind === 3) {
+                    let following = event.tags.map(t => {
+                        return t[1];
+                    })
+                    dispatch(setAccount(null, null, following));
+                }
+                if (event.kind === 7) {
+                    let likes = event.tags.map(t => {
+                        return t[1];
+                    });
+                    dispatch(setAccount(null, null, null, likes));
+                }
+                //});
+            });/*.catch(err => {
+                console.log(err);
+            })*/
+        }
     });
 }
 
@@ -254,23 +240,21 @@ export const getUsersMetadata = () => {
         emptyUsersMetadata.forEach(key => {
             requestedMetadatas.push(key)
         });
-        if (emptyUsersMetadata.length > 0)
-            relays.forEach(relay => {
-                let sub = relay.sub([
-                    {
-                        kinds: [0],
-                        authors: emptyUsersMetadata
-                    }
-                ])
-                sub.on('event', event => {
-                    let userMetadata = JSON.parse(event.content);
-                    userMetadata.load = false;
-                    dispatch(receivedUserMetadata(event.pubkey, userMetadata));
-                })
-                sub.on('eose', () => {
-                    sub.unsub()
-                })
+        if (emptyUsersMetadata.length > 0) {
+            let relays = getState().user.relays.map(r => { return r.url });
+            let filters = [
+                {
+                    kinds: [0],
+                    authors: emptyUsersMetadata
+                }
+            ];
+            let sub = myPool.sub(relays, filters);
+            sub.on('event', event => {
+                let userMetadata = JSON.parse(event.content);
+                userMetadata.load = false;
+                dispatch(receivedUserMetadata(event.pubkey, userMetadata));
             });
+        }
     });
 }
 
@@ -283,70 +267,29 @@ export const addNoteRelatedToload = (id) => {
     })
 }
 
-export const getNotesRelateds = () => {
+export const listNoteReplies = (id, limit) => {
     return ((dispatch, getState) => {
-
-        let count = 0;
-        let listToRequest = []
-        //console.log(getState().content.relatedsToLoad);
-        //console.log(getState().content.relatedsRequested);
-        getState().content.relatedsToLoad.forEach(async id => {
-            if (getState().content.relatedsRequested.indexOf(id) === -1 && count < 50) {
-                count++;
-                listToRequest.push(id);
-                dispatch({
-                    type: NOTE_RELATED_REQUESTED,
-                    data: id
-                });
+        console.log(`listNoteReplies for id:${id} `);
+        let relays = getState().user.relays.map(r => { return r.url });
+        let filters = [
+            {
+                kinds: [1]
+                , "#e": [id]
+                , limit: limit ?? 50
             }
-        })
-        if (listToRequest.length > 0)
-            relays.forEach(relay => {
-                let sub = relay.sub([
-                    {
-                        kinds: [1]
-                        , "#e": listToRequest
-                    }
-                ])
-                sub.on('event', async event => {
-                    if (validateEvent(event)) {
-                        //console.log(event);
-                        dispatch(receivedNoteRelated(event));
+        ];
+        myPool.list(relays, filters).then(results => {
+            results.forEach(event => {
+                if (!getState().user.usersMetadata[event.pubkey]) {
+                    dispatch(receivedUserMetadata(event.pubkey, {}));
+                }
+                event.tags.forEach(async tag => {
+                    if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
+                        await dispatch(receivedUserMetadata(tag[1], {}));
                     }
                 })
-                sub.on('eose', () => {
-                    sub.unsub()
-                })
+                dispatch(receivedNoteRelated(event));
             });
-    });
-}
-export const getNoteRelateds = (id, limit) => {
-    return ((dispatch, getState) => {
-        console.log(`getNoteRelateds for id:${id}`);
-        relays.forEach(relay => {
-            let sub = relay.sub([
-                {
-                    kinds: [1]
-                    , "#e": [id]
-                    , limit: limit ?? 50
-                }
-            ])
-            sub.on('event', async event => {
-                if (validateEvent(event)) {
-                    if (!getState().user.usersMetadata[event.pubkey]) {
-                        await dispatch(receivedUserMetadata(event.pubkey, {}));
-                    }
-                    event.tags.forEach(async tag => {
-                        if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
-                            await dispatch(receivedUserMetadata(tag[1], {}));
-                        }
-                    })
-                    dispatch(receivedNoteRelated(event));
-                }
-            })
-            sub.on('eose', () => {
-                sub.unsub()
-            })
         });
     });
 }
@@ -374,8 +317,7 @@ const performContentSearch = (term, note) => {
 
 export const search = (type, term) => {
     return ((dispatch, getState) => {
-        dispatch({ type: CLEAR_SEARCH });
-        console.log(`Search, type: ${type}, term:${term}`)
+        console.log(`Search, type: ${type}, term:${term} `)
         let kinds = type === "users" ? [0] : [1, 6];
         if (type === "users") {
             let cachedUsers = getState().user.usersMetadata;
@@ -385,51 +327,44 @@ export const search = (type, term) => {
                 }
             })
         }
-        relays.forEach(relay => {
-            let query = {
+        let relays = getState().user.relays.map(r => { return r.url });
+        let filters = [
+            {
                 kinds: kinds,
                 limit: 5000,
-
             }
-            if (type === "notes")
-                query["#t"] = [term];
-            let sub = relay.sub([query])
-            sub.on('event', async event => {
-                if (type === "users") {
-                    let userMetadata = JSON.parse(event.content);
-                    if (performUserSearch(term, userMetadata)) {
-                        if (validateEvent(event)) {
-                            if (!getState().user.usersMetadata[event.pubkey]) {
-                                await dispatch(receivedUserMetadata(event.pubkey, userMetadata));
-                            }
-                            dispatch({ type: LOCATED_USER, data: { publicKeyHex: event.pubkey, userMetadata: userMetadata } })
+        ];
+        if (type === "notes")
+            filters[0]["#t"] = [term];
+        let sub = myPool.sub(relays, filters);
+        sub.on('event', event => {
+            if (type === "users") {
+                let userMetadata = JSON.parse(event.content);
+                if (performUserSearch(term, userMetadata)) {
+                    if (validateEvent(event)) {
+                        if (!getState().user.usersMetadata[event.pubkey]) {
+                            dispatch(receivedUserMetadata(event.pubkey, userMetadata));
                         }
-                    }
-                } else {
-                    let note = event;
-                    if (event.kind === 6) {
-                        note = JSON.parse(event.content);
-                        note.reposted_by = event.pubkey;
-                        note.created_at = event.created_at;
-                    }
-                    if (performContentSearch(term, note)) {
-                        if (validateEvent(note)) {
-                            if (!getState().user.usersMetadata[event.pubkey]) {
-                                await dispatch(receivedUserMetadata(event.pubkey, {}));
-                            }
-                            dispatch({ type: LOCATED_NOTE, data: note })
-                        }
+                        dispatch({ type: LOCATED_USER, data: { publicKeyHex: event.pubkey, userMetadata: userMetadata } })
                     }
                 }
-            })
-            sub.on('eose', () => {
-                sub.unsub()
-            })
-            setTimeout(() => {
-                console.log('Ending Search with 30 sec.')
-                sub.unsub();
-            }, 30000)
-        });
+            } else {
+                let note = event;
+                if (event.kind === 6) {
+                    note = JSON.parse(event.content);
+                    note.reposted_by = event.pubkey;
+                    note.created_at = event.created_at;
+                }
+                if (performContentSearch(term, note)) {
+                    if (validateEvent(note)) {
+                        if (!getState().user.usersMetadata[event.pubkey]) {
+                            dispatch(receivedUserMetadata(event.pubkey, {}));
+                        }
+                        dispatch({ type: LOCATED_NOTE, data: note })
+                    }
+                }
+            }
+        })
     });
 }
 

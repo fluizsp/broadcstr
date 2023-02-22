@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     Box
 } from '@chakra-ui/react';
@@ -20,11 +20,16 @@ import NoteDetailContainer from './NoteDetailContainer';
 import { logout } from '../actions/account';
 import ProfileContainer from './ProfileContainer';
 import SearchContainer from './SearchContainer';
+import { getMyInfo } from '../actions/relay';
+import SettingsContainer from './SettingsContainer';
 
 const mapDispatchToProps = (dispatch) => {
     return {
         logout: () => {
             dispatch(logout());
+        },
+        loadMyInfo: (publicKey) => {
+            dispatch(getMyInfo(publicKey));
         }
     };
 };
@@ -33,16 +38,26 @@ const mapStateToProps = (state, ownProps) => {
     return {
         loggedIn: state.user.loggedIn,
         account: state.user.account,
-        accountInfo: state.user.accountInfo ?? {}
+        accountInfo: state.user.accountInfo ?? {},
+        relays: state.user.relays
     };
 }
 
 const home = props => (
     <Box>
         <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
-        <TopBar account={props.account} accountInfo={props.accountInfo} />
+        <TopBar account={props.account} accountInfo={props.accountInfo}  relays={props.relays} />
         <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
         <HomeContainer />
+    </Box>
+)
+
+const settings = props => (
+    <Box>
+        <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
+        <TopBar account={props.account} accountInfo={props.accountInfo}  relays={props.relays} />
+        <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
+        <SettingsContainer />
     </Box>
 )
 
@@ -50,7 +65,7 @@ const noteDetail = props => {
     return (
         <Box>
             <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
-            <TopBar account={props.account} accountInfo={props.accountInfo} backLabel="Note" />
+            <TopBar account={props.account} accountInfo={props.accountInfo} relays={props.relays} backLabel="Note" />
             <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
             <NoteDetailContainer />
         </Box>
@@ -60,7 +75,7 @@ const profile = props => {
     return (
         <Box>
             <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
-            <TopBar account={props.account} accountInfo={props.accountInfo} backLabel="Profile" />
+            <TopBar account={props.account} accountInfo={props.accountInfo} relays={props.relays}  backLabel="Profile" />
             <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
             <ProfileContainer />
         </Box>
@@ -71,7 +86,7 @@ const search = props => {
     return (
         <Box>
             <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
-            <TopBar account={props.account} accountInfo={props.accountInfo} backLabel="Search" />
+            <TopBar account={props.account} accountInfo={props.accountInfo} relays={props.relays} backLabel="Search" />
             <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
             <SearchContainer />
         </Box>
@@ -79,6 +94,11 @@ const search = props => {
 }
 
 const AppContainer = (props) => {
+
+    useEffect(() => {
+        if (props.account && props.account.publicKey)
+            props.loadMyInfo(props.account.publicKey);
+    }, [props.account])
     return (<Box minH="100vH" bgGradient='linear(to-br, brand.purple, brand.green)'>
         <BrowserRouter>
             <Routes>
@@ -86,8 +106,9 @@ const AppContainer = (props) => {
                 <Route exact path="/welcome/create" element={<AccountCreationContainer />} />
                 <Route exact path="/welcome/login" element={<LoginContainer />} />
                 <Route exact path="/" element={home(props)} />
+                <Route exact path="/settings/:area?" element={settings(props)} />
                 <Route path="/note/:id" element={noteDetail(props)} />
-                <Route path="/profile/:id" element={profile(props)} />
+                <Route exact path="/:id" element={profile(props)} />
                 <Route path="/search/:term?" element={search(props)} />
             </Routes>
         </BrowserRouter>
