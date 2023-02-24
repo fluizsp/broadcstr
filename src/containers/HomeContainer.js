@@ -2,16 +2,12 @@ import { Center, Box, Button, Container, Spinner, SlideFade, VStack, Flex, Tab, 
 import { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useColorModeValue } from '@chakra-ui/react';
-import { addNoteRelatedToload, getHomeFeed, getMyInfo, selectMetadatas, UNLOAD_NOTES } from '../actions/relay';
+import { addNoteRelatedToload, getHomeFeed, getMyInfo, selectMetadatas } from '../actions/relay';
 
-import LazyLoad from 'react-lazyload';
 import { Navigate } from 'react-router';
 import NoteList from '../components/NoteList';
 import { getUsersMetadata } from '../actions/relay'
 import { useEffect } from 'react';
-import { AiOutlineReload } from 'react-icons/ai';
-import { ReloadCircle } from 'react-ionicons';
-import ReloadOutline from 'react-ionicons/lib/ReloadOutline';
 import { HiRefresh } from 'react-icons/hi';
 
 const mapDispatchToProps = (dispatch) => {
@@ -103,9 +99,7 @@ const HomeContainer = props => {
                                 <Button size="sm" variant="ghost" onClick={loadNotes.bind(this, feedType)}><HiRefresh /></Button>
                             </Box>
                         </Flex>
-                        <LazyLoad height="200px">
-                            <NoteList notes={notes.slice(0, limit)} />
-                        </LazyLoad>
+                        <NoteList notes={notes.slice(0, limit)} />
                         <VStack mb="50px">
                             <Spinner size="xl" color="blue.300" hidden={notes.length !== 0} />
                             <Button hidden={notes.length === 0 || notes.length < limit} onClick={moreResults.bind(this)} >Next Results...</Button>

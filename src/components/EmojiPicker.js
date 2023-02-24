@@ -1,8 +1,6 @@
-import { Button, Collapse, Fade, Grid, GridItem, HStack, Popover, PopoverArrow, PopoverContent, PopoverTrigger, Portal, Tab, TabPanel, Tabs, TabsProvider, useColorModeValue } from "@chakra-ui/react"
-import { useContext, useRef, useState } from "react";
+import { Button, Fade, Grid, GridItem, HStack, Popover, PopoverArrow, PopoverContent, PopoverTrigger, Tab, Tabs, useColorModeValue } from "@chakra-ui/react"
+import { useRef, useState } from "react";
 import { HiEmojiHappy } from "react-icons/hi"
-import LazyLoad from "react-lazyload";
-import { Provider } from "react-redux";
 
 const EmojiPicker = (props) => {
     const popoverRef = useRef();
