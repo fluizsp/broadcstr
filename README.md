@@ -4,6 +4,8 @@
 
 Broadcstr is the social media that you control and define the boundaries.  
 
+#### You can experience it right now! Already deployed in https://www.broadcstr.com !
+
 It is built using **Nostr**: A simple, open protocol that enables a truly censorship-resistant and global social network.  
 
 ## Why Broadcstr?
@@ -50,6 +52,8 @@ Want to know more about Nostr? Start here
 
 ### Stack
 Broadcstr was built using React.js and Chakra-ui.
+
+Since it's the first release, the code is still messy and needing a ton of refactor and improvements, I will soon update this section also.
 
 ### Available Scripts
 
