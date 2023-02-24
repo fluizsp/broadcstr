@@ -29,6 +29,7 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { saveToStorage, setAccount } from '../actions/account';
 import { getMyInfo } from '../actions/relay';
+import { BrowsersOutline } from 'react-ionicons';
 
 
 
@@ -76,6 +77,14 @@ class LoginContainer extends Component {
         this.props.saveToStorage();
         this.props.router.navigate('/');
     }
+    async extensionLogin() {
+        let publicKey = await window.nostr.getPublicKey();
+        publicKey = nip19.npubEncode(publicKey);
+        this.props.setAccount({ publicKey: publicKey});
+        this.props.loadAccountInfo(publicKey);
+        this.props.saveToStorage();
+        this.props.router.navigate('/');
+    }
     render() {
         return (
             <Fade in={true}>
@@ -95,6 +104,7 @@ class LoginContainer extends Component {
                                                 <Input variant="filled" id="privateKey" type="password" placeholder='nsec...' onChange={e => { this.setState({ privateKey: e.target.value }) }}></Input>
                                             </InputGroup>
                                             <Button variant="solid" color="blue.700" size="lg" fontSize="md" leftIcon={<HiArrowCircleRight color="blue.700" />} onClick={this.next.bind(this)}>Next</Button>
+                                            <Button variant="solid" color="blue.700" size="lg" fontSize="md" leftIcon={<BrowsersOutline color="blue.700" />} onClick={this.extensionLogin.bind(this)}>Enter with extension</Button>
                                         </VStack>
                                     </Card>
                                 </Fade>

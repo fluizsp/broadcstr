@@ -61,6 +61,22 @@ const getWriteRelaysUrls = relays => {
     return relays.filter(r => r.write).map(r => { return r.url });
 }
 
+const sign = async (event, account) => {
+    return new Promise((resolve, reject) => {
+        if (!account.privateKey) {
+            window.nostr.signEvent(event).then(signedEvent => {
+                resolve(signedEvent);
+            }).catch(err => {
+                reject(err);
+            });
+        } else if (account.privateKey) {
+            event.sig = signEvent(event, nip19.decode(account.privateKey).data);
+            resolve(event);
+        }
+    });
+
+}
+
 export const getHomeFeed = (feedType, limit) => {
     return ((dispatch, getState) => {
         let eventBulk = [];
@@ -461,15 +477,18 @@ export const publishNote = draftNote => {
                 }
             })
         event.id = getEventHash(event)
-        event.sig = signEvent(event, nip19.decode(getState().user.account.privateKey).data);
-        let relaysUrls = getWriteRelaysUrls(getState().user.relays);
-        let pubs = myPool.publish(relaysUrls, event);
-        pubs.forEach(pub => {
-            pub.on('ok', () => {
-                console.log('Sucessfull published profile');
+        sign(event, getState().user.account).then(signedEvent => {
+            let relaysUrls = getWriteRelaysUrls(getState().user.relays);
+            let pubs = myPool.publish(relaysUrls, signedEvent);
+            pubs.forEach(pub => {
+                pub.on('ok', () => {
+                    console.log('Sucessfull published profile');
+                });
             });
+        }).catch(err => {
+            console.log(err);
         });
-        //dispatch({ type: RECEIVED_NOTE, data: { feedType: 'homeFeed', notes: event } });
+
     }
 }
 
@@ -484,13 +503,16 @@ export const likeNote = note => {
         };
         event.tags.push(['e', note.id]);
         event.id = getEventHash(event)
-        event.sig = signEvent(event, nip19.decode(getState().user.account.privateKey).data)
-        let relaysUrls = getWriteRelaysUrls(getState().user.relays);
-        let pubs = myPool.publish(relaysUrls, event);
-        pubs.forEach(pub => {
-            pub.on('ok', () => {
-                console.log('Sucessfull published profile');
+        sign(event, getState().user.account).then(signedEvent => {
+            let relaysUrls = getWriteRelaysUrls(getState().user.relays);
+            let pubs = myPool.publish(relaysUrls, signedEvent);
+            pubs.forEach(pub => {
+                pub.on('ok', () => {
+                    console.log('Sucessfull published profile');
+                });
             });
+        }).catch(err => {
+            console.log(err);
         });
         dispatch(setAccount(null, null, null, [note.id]));
     }
@@ -507,13 +529,16 @@ export const repostNote = note => {
         };
         event.tags.push(['e', note.id]);
         event.id = getEventHash(event)
-        event.sig = signEvent(event, nip19.decode(getState().user.account.privateKey).data)
-        let relaysUrls = getWriteRelaysUrls(getState().user.relays);
-        let pubs = myPool.publish(relaysUrls, event);
-        pubs.forEach(pub => {
-            pub.on('ok', () => {
-                console.log('Sucessfull published profile');
+        sign(event, getState().user.account).then(signedEvent => {
+            let relaysUrls = getWriteRelaysUrls(getState().user.relays);
+            let pubs = myPool.publish(relaysUrls, signedEvent);
+            pubs.forEach(pub => {
+                pub.on('ok', () => {
+                    console.log('Sucessfull published profile');
+                });
             });
+        }).catch(err => {
+            console.log(err);
         });
         //dispatch({ type: RECEIVED_NOTE, data: { feedType: 'homeFeed', notes: event } });
     }
@@ -528,13 +553,16 @@ export const publishProfile = profile => {
             pubkey: nip19.decode(getState().user.account.publicKey).data
         };
         event.id = getEventHash(event)
-        event.sig = signEvent(event, nip19.decode(getState().user.account.privateKey).data)
-        let relaysUrls = getWriteRelaysUrls(getState().user.relays);
-        let pubs = myPool.publish(relaysUrls, event);
-        pubs.forEach(pub => {
-            pub.on('ok', () => {
-                console.log('Sucessfull published profile');
+        sign(event, getState().user.account).then(signedEvent => {
+            let relaysUrls = getWriteRelaysUrls(getState().user.relays);
+            let pubs = myPool.publish(relaysUrls, signedEvent);
+            pubs.forEach(pub => {
+                pub.on('ok', () => {
+                    console.log('Sucessfull published profile');
+                });
             });
+        }).catch(err => {
+            console.log(err);
         });
     }
 }
@@ -560,13 +588,16 @@ export const addFollowing = (publicKeyHex) => {
         })
         event.tags.push(['p', publicKeyHex]);
         event.id = getEventHash(event)
-        event.sig = signEvent(event, nip19.decode(getState().user.account.privateKey).data);
-        let relaysUrls = getWriteRelaysUrls(getState().user.relays);
-        let pubs = myPool.publish(relaysUrls, event);
-        pubs.forEach(pub => {
-            pub.on('ok', () => {
-                console.log('Sucessfull published profile');
+        sign(event, getState().user.account).then(signedEvent => {
+            let relaysUrls = getWriteRelaysUrls(getState().user.relays);
+            let pubs = myPool.publish(relaysUrls, signedEvent);
+            pubs.forEach(pub => {
+                pub.on('ok', () => {
+                    console.log('Sucessfull published profile');
+                });
             });
+        }).catch(err => {
+            console.log(err);
         });
         dispatch(setAccount(null, null, [publicKeyHex]));
     }

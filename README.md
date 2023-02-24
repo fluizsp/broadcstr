@@ -19,6 +19,10 @@ Because it is like your social network, but:
 
 ## Version info:
 
+**Version 0.1.1!**
+
+- Implemented login and event signing with extension (nos2x);
+
 **Version 0.1.0 - First Release!**
 
 #### Main features/nips implemented on this version:
