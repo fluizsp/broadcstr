@@ -4,7 +4,7 @@ import { connect, useSelector } from 'react-redux';
 import { nip19 } from 'nostr-tools';
 
 
-import { getMyInfo, getNote, listNoteReplies } from '../actions/relay';
+import { getNote, listNoteReplies } from '../actions/relay';
 
 import { getUsersMetadata } from '../actions/relay'
 import NoteList from '../components/NoteList';
@@ -18,9 +18,6 @@ const mapDispatchToProps = (dispatch) => {
         listNoteReplies: (id) => {
             dispatch(listNoteReplies(id));
         },
-        loadMyInfo: (publicKey) => {
-            dispatch((getMyInfo(publicKey)));
-        },
         loadNote: (id) => {
             dispatch(getNote(id));
         }
@@ -30,6 +27,7 @@ const mapDispatchToProps = (dispatch) => {
 const mapStateToProps = (state, ownProps) => {
     return {
         account: state.user.account,
+        accountInfo: state.user.accountInfo,
         likes: state.user.likes,
     }
 };
@@ -52,6 +50,7 @@ const NoteDetailContainer = props => {
         if (!props.note || (!props.note.likes && !props.note.replies && !props.note.reposts)) {
             props.listNoteReplies(noteId);
         }
+        document.title=`Brodcstr - Note - ${params.id}`;
 
     }, [noteId]);
     let note = useSelector(state => state.content.notes[noteId]) ?? {};
@@ -80,7 +79,6 @@ const NoteDetailContainer = props => {
             sortedNoteRepliesIds.splice(index + 1, 0, r.id)
         }
     })
-    sortedNoteReplies = sortedNoteReplies.slice(0, limit);
     console.log("Render Note Details");
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
@@ -89,10 +87,15 @@ const NoteDetailContainer = props => {
                     <Container maxW='4xl' pt="80px" pb="20px" >
                         {note && note.id ?
                             <NoteList notes={[note]} isThread={true} likes={props.likes} /> : null}
+                        {/*<Box ml="10px">
+                            <Card p="5" bg={uiColor} mb={5}>
+                                <Button size="sm" leftIcon={<GoReply />} variant="ghost">Reply this note</Button>
+                            </Card>
+                        </Box>*/}
                         {noteReplies ?
-                            <NoteList notes={sortedNoteReplies} isReply={true} likes={props.likes} /> : null}
+                            <NoteList notes={sortedNoteReplies.slice(0, limit)} isReply={true} likes={props.likes} /> : null}
                         <VStack>
-                            {total > sortedNoteReplies.length ? <Button onClick={moreResults} >Show older replies...</Button> : null}
+                            {sortedNoteReplies.length > limit ? <Button onClick={moreResults} >Show older replies...</Button> : null}
                             <Fade in={note === {} || sortedNoteReplies.length === 0}>
                                 <Spinner size="xl" color="blue.300" />
                             </Fade>

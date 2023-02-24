@@ -6,13 +6,13 @@ import _ from 'underscore';
 
 const MentionTag = (props) => {
     const navigate = useNavigate();
-    let metadata = useSelector(state => state.content.selectedMetadata[props.publicKeyHex], (a, b) => { return a && a.name === b.name }) ?? {}
+    let metadata = useSelector(state => state.user.usersMetadata[props.publicKeyHex], (a, b) => { return a && a.name === b.name }) ?? {}
     //console.log("Render MentionTag");
     if (props.publicKeyHex)
         try {
             return (
                 <Link fontSize="sm" as="b" onClick={() => { navigate(props.href ?? '/' + metadata.nip05 ?? nip19.npubEncode(props.publicKeyHex)) }}>
-                    {metadata.display_name ?? '@' + metadata.name ?? nip19.npubEncode(props.publicKeyHex)}
+                    {metadata.display_name ?? metadata.name? '@' + metadata.name : 'a note'}
                 </Link>
             )
         } catch {

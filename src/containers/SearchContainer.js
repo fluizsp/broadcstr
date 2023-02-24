@@ -112,7 +112,7 @@ const SearchContainer = props => {
                             {/*<FormLabel color="gray.400" mb="5">Searching for: "{params.term}"</FormLabel>*/}
                             <InputGroup variant="unstyçed" mb="5">
                                 <InputLeftElement children={<IoIosSearch />}></InputLeftElement>
-                                <Input bg="transparent" variant="unstyçed" placeholder={searchTerm === undefined ? 'Search for users and notes...' : `Searching for: "${searchTerm}"`} onKeyUp={async k => { if (k.key === "Enter") { performSearch(k.target.value) } }}></Input>
+                                <Input bg="transparent" variant="unstyçed" placeholder={searchTerm === undefined ? activeView===0?'Search for users handle/username or display name':'Search for hashtags, like #bitcoin' : `Searching for: "${searchTerm}"`} onKeyUp={async k => { if (k.key === "Enter") { performSearch(k.target.value) } }}></Input>
                             </InputGroup>
                             <Tabs ml="-12px" index={activeView} mr="-12px">
                                 <TabList>

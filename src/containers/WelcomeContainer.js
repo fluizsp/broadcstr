@@ -11,11 +11,14 @@ import {
     Card,
     LightMode
 } from '@chakra-ui/react';
-import logo from '../BadgeLogo.svg';
+import logo from '../LogoWelcome.png';
 import { connect } from 'react-redux';
 import { HiUserAdd } from 'react-icons/hi';
 import withRouter from '../withRouter';
-import decentralized from '../decentralized.png'
+import privacy from '../privacy.png'
+import decentralized from '../censorship-resistant.png'
+import encrypted from '../encrypted.png'
+import value4value from '../value4value.png'
 
 
 // Import Swiper React components
@@ -40,10 +43,10 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 const featureCard = (props) => {
-    return (<Card ml="50px" mr="50px" p="50px" h="400px" bg="whiteAlpha.200">
-        <VStack color="white" >
+    return (<Card ml="50px" mr="50px" p="50px" h="400px" bg="white" >
+        <VStack gap={1} >
             <Image src={props.src} w="150px" />
-            <Heading size="sm" color="green.100">{props.heading}</Heading>
+            <Heading size="sm" color="green.400">{props.heading}</Heading>
             <Text>{props.text}</Text>
             {props.children}
         </VStack>
@@ -55,10 +58,10 @@ class WelcomeContainer extends Component {
         return (
             <Fade in={true}>
                 <LightMode>
-                    <Box textAlign="center" overflow="hidden">
-                        <Box pt={50}>
+                    <Box textAlign="center" overflow="hidden" >
+                        <Box p={50}>
                             <VStack spacing="10">
-                                <Image src={logo} w="24" />
+                                <Image src={logo} w={['250px', '250px', '400px']} />
                                 <Box width="400px" textAlign="center">
                                     <Swiper
                                         spaceBetween={0}
@@ -68,16 +71,16 @@ class WelcomeContainer extends Component {
                                         modules={[Navigation, Pagination]}
                                     >
                                         <SwiperSlide>
-                                            {featureCard({ src: decentralized, heading: 'Privacy', text: "All acount data are optional. Start by just creaing a pair of keys." })}
+                                            {featureCard({ src: privacy, heading: 'Private!', text: "Your account doesn't require e-mails or phone numbers. Start just with your pair of keys;" })}
                                         </SwiperSlide>
                                         <SwiperSlide>
-                                            {featureCard({ src: decentralized, heading: 'Decentralized!', children: <p>No Big Techs! You control where you consume and post information. <br />Built on Nostr.</p> })}
+                                            {featureCard({ src: decentralized, heading: 'Decentralized!', text: "Censorship resistance means no Big Techs! You control where your consume and post information. Built on Nostr." })}
                                         </SwiperSlide>
                                         <SwiperSlide>
-                                            {featureCard({ src: decentralized, heading: 'End to End Encryption!', text: "Encrypted messages that only you have the key, no one can break into your messages. Ever!" })}
+                                            {featureCard({ src: encrypted, heading: 'Encrypted!', text: "Content signed with YOUR private key! Messages encrypted with the same key. No one will ever get into your messages without your authorization. Ever" })}
                                         </SwiperSlide>
                                         <SwiperSlide>
-                                            {featureCard({ src: decentralized, heading: 'Earn Cryptocurrency!', text: "Liked your friends post? Tip it! And stack SATS with Bitcoin ⚡ network." })}
+                                            {featureCard({ src: value4value, heading: 'Value4Value', text: "Reward your favorite content with Bitcoin Lightning Network! Tip and stack sats;" })}
                                         </SwiperSlide>
                                     </Swiper>
                                 </Box>

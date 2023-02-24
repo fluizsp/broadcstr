@@ -25,9 +25,9 @@ store.subscribe(throttle(() => {
 if (!window.metadataInterval)
   window.metadataInterval = setInterval(() => {
     store.dispatch(getUsersMetadata());
-    store.dispatch(selectMetadatas());
-    store.dispatch({ type: SELECT_NOTES, data: {} });
-  }, 2000)
+    //store.dispatch(selectMetadatas());
+    //store.dispatch({ type: SELECT_NOTES, data: {} });
+  }, 5000)
 
 // 2. Call `extendTheme` and pass your custom values
 const customTheme = extendTheme({

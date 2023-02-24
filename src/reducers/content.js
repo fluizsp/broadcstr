@@ -3,20 +3,23 @@ import { createReducer } from '@reduxjs/toolkit'
 
 const initialState = {
     notes: {},
-    selectedNotes: [],
-    relatedsToLoad: [],
-    relatedsRequested: [],
-    loaded: null,
-    limit: 25,
+    homeFeed: {},
+    profileFeed: {},
+    //selectedNotes: [],
+    //relatedsToLoad: [],
+    //relatedsRequested: [],
+    //loaded: null,
+    //limit: 25,
     lastUserId: null,
-    selectedMetadata: {},
+    //selectedMetadata: {},
     usersFollowing: {},
     usersFollowers: {},
     locatedUsers: {},
-    locatedNotes: []
+    locatedNotes: [],
+    draftEvents: []
 };
 
-const treatImages = (note) => {
+export const treatImages = (note) => {
     let imgRgx = new RegExp(/(https?:\/\/.*\.(?:png|jpg|jpeg|webp|gif|svg))/, 'gmi').exec(note.content);
     if (imgRgx) {
         note.image = imgRgx[1];
@@ -24,7 +27,7 @@ const treatImages = (note) => {
     }
     return note;
 }
-const treatEmbeds = (note) => {
+export const treatEmbeds = (note) => {
     let ytRgx = new RegExp(/(https?:\/\/.*youtube.*.)/, 'gmi').exec(note.content);
     if (!ytRgx)
         ytRgx = new RegExp(/(https?:\/\/youtu.*be.*.)/, 'gmi').exec(note.content);
@@ -52,13 +55,19 @@ const contentReducer = createReducer(initialState, {
                 let reposted_by = newNote.pubkey;
                 if (newNote.content)
                     newNote = JSON.parse(newNote.content);
+                newNote.id = action.data.notes.id;
                 newNote.reposted_by = reposted_by;
             }
             newNote.pTags = newNote.tags.filter(t => t[0] === 'p').map(t => { return t[1] }) ?? [];
             newNote.eTags = newNote.tags.filter(t => t[0] === 'e').map(t => { return t[1] }) ?? [];
             newNote = treatImages(newNote);
             newNote = treatEmbeds(newNote);
-            state.notes[newNote.id] = newNote;
+            if (action.data.feedType && action.data.feedType === 'homeFeed')
+                state.homeFeed[newNote.id] = newNote;
+            else if (action.data.feedType && action.data.feedType === 'profileFeed')
+                state.profileFeed[newNote.id] = newNote;
+            else
+                state.notes[newNote.id] = newNote;
         }
     },
     LOAD_NOTE_RELATED: (state, action) => {
@@ -180,6 +189,9 @@ const contentReducer = createReducer(initialState, {
         newNote = treatEmbeds(newNote);
         if (state.locatedNotes.filter(n => n.id === newNote.id).length === 0)
             state.locatedNotes.push(newNote);
+    },
+    REPLY_TO: (state, action) => {
+        state.replyTo = action.data;
     }
 });
 

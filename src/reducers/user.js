@@ -4,7 +4,6 @@ import { loadState } from '../localStorage';
 let storageState = loadState('user');
 
 const initialState = storageState ? storageState : {
-    //relays: ['wss://relay.nostr.info', 'wss://relay.damus.io', 'wss://nostr-pub.wellorder.net', 'wss://nostr-pub.semisol.dev'],
     relays: [
         {
             url: 'wss://relay.nostr.info',
@@ -23,6 +22,26 @@ const initialState = storageState ? storageState : {
         },
         {
             url: 'wss://nostr-pub.semisol.dev',
+            read: true,
+            write: true
+        },
+        {
+            url: 'wss://eden.nostr.land',
+            read: true,
+            write: true
+        },
+        {
+            url: 'wss://offchain.pub',
+            read: true,
+            write: true
+        },
+        {
+            url: 'wss://relay.snort.social',
+            read: true,
+            write: true
+        },
+        {
+            url: 'wss://nostr.relayer.se',
             read: true,
             write: true
         }
@@ -80,7 +99,6 @@ const userReducer = createReducer(initialState, {
         state.loggedIn = false;
         state.account = {};
         state.accountInfo = {};
-        state.usersMetadata = {};
         state.likes = [];
         state.following = [];
     },

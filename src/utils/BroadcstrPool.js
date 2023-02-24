@@ -130,6 +130,24 @@ export class BroadcstrPool {
             if (relay) relay.close()
         })
     }
+
+    publish = (relaysUrls, event) => {
+        return relaysUrls.map(url => {
+            let r = this._conn[this.normalizeURL(url)]
+            if (!r) return this.badPub(url)
+            let s = r.publish(event)
+            return s
+        })
+    }
+    
+    badPub = (relayUrl) => {
+        return {
+            on(typ, cb) {
+                if (typ === 'failed') cb(`relay ${relayUrl} not connected`)
+            },
+            off() { }
+        }
+    }
 }
 /*const _conn 
   private _conn: { [url: string]: Relay }

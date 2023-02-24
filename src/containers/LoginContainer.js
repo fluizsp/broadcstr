@@ -27,7 +27,7 @@ import { getPublicKey, nip19 } from 'nostr-tools';
 import 'swiper/css';
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import { setAccount } from '../actions/account';
+import { saveToStorage, setAccount } from '../actions/account';
 import { getMyInfo } from '../actions/relay';
 
 
@@ -39,10 +39,19 @@ const mapDispatchToProps = (dispatch) => {
                 publicKey: state.publicKey,
                 privateKey: state.privateKey,
             }
-            dispatch(setAccount(account));
+            dispatch(setAccount(account, null, ['5bbb8e97d5c68afc68e46d7f858aefc73d161c85264fbfb99d91ed83bf1b9d23',
+                '4523be58d395b1b196a9b8c82b038b6895cb02b683d0c253a955068dba1facd0',
+                '32e1827635450ebb3c5a7d12c1f8e7b2b514439ac10a67eef3d9fd9c5c68e245',
+                '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d',
+                '52b4a076bcbbbdc3a1aefa3735816cf74993b1b8db202b01c883c58be7fad8bd',
+                '3f770d65d3a764a9c5cb503ae123e62ec7598ad035d836e2a810f3877a745b24',
+                '00000000827ffaa94bfea288c3dfce4422c794fbb96625b6b31e9049f729d700']));
         },
         loadAccountInfo: publicKey => {
             dispatch(getMyInfo(publicKey));
+        },
+        saveToStorage: () => {
+            dispatch(saveToStorage());
         }
     };
 };
@@ -64,6 +73,7 @@ class LoginContainer extends Component {
         });
         this.props.setAccount(this.state);
         this.props.loadAccountInfo(publicKey);
+        this.props.saveToStorage();
         this.props.router.navigate('/');
     }
     render() {

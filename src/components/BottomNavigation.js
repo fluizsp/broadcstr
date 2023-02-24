@@ -8,7 +8,6 @@ import { Link } from 'react-router-dom';
 const BottomNavigation = props => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const navigate = useNavigate();
-
     const isHome = props.router.location.pathname === "/";
     const isSearch = props.router.location.pathname.includes("/search");
     const isOwnProfile = props.router.location.pathname.includes(`/${props.accountInfo.nip05}`);

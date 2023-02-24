@@ -9,8 +9,9 @@ import { HiLightningBolt } from "react-icons/hi";
 import { connect } from "react-redux";
 import defaultBanner from '../defaultBanner.gif';
 import { useNavigate, useParams } from "react-router";
-import { LOGOUT, setAccount, SET_RELAYS } from "../actions/account";
+import { LOGOUT, saveToStorage, setAccount, SET_RELAYS } from "../actions/account";
 import { UploadPicture } from "../services/NostrBuildService";
+import { publishProfile } from "../actions/relay";
 
 const mapStateToProps = (state, ownProps) => {
     return {
@@ -26,6 +27,7 @@ const mapDispatchToProps = () => {
         return {
             signOut: () => {
                 dispatch({ type: LOGOUT });
+                dispatch(saveToStorage());
             },
             signIn: (account) => {
                 dispatch(setAccount(account));
@@ -35,6 +37,7 @@ const mapDispatchToProps = () => {
             },
             saveProfile: (accountInfo) => {
                 dispatch(setAccount(null, accountInfo));
+                dispatch(publishProfile(accountInfo));
             },
         };
     });
@@ -135,12 +138,18 @@ const SettingsContainer = (props) => {
         toast({ description: "Relays configuration saved!", status: "success" })
     }
     const changeBannerImage = event => {
-        setNewBannerImage(URL.createObjectURL(event.target.files[0]))
-        setNewBannerFile(event.target.files[0]);
+        if (event.target.files) {
+            setNewBannerImage(URL.createObjectURL(event.target.files[0]))
+            setNewBannerFile(event.target.files[0]);
+        } else if (event.target.value !== "")
+            setNewBannerImage(event.target.value)
     }
     const changeProfileImage = event => {
-        setNewProfileImage(URL.createObjectURL(event.target.files[0]))
-        setNewProfileFile(event.target.files[0]);
+        if (event.target.files) {
+            setNewProfileImage(URL.createObjectURL(event.target.files[0]))
+            setNewProfileFile(event.target.files[0]);
+        } else if (event.target.value !== "")
+            setNewProfileImage(event.target.value)
     }
     const changeDisplayName = event => {
         let newInfo = {};
@@ -184,6 +193,7 @@ const SettingsContainer = (props) => {
     }
     const saveProfile = async () => {
         let newInfo = {};
+        console.log(accountInfo);
         Object.keys(accountInfo).forEach(k => {
             newInfo[k] = accountInfo[k];
         });
@@ -192,12 +202,16 @@ const SettingsContainer = (props) => {
             setNewProfileImage();
             setNewProfileFile();
             newInfo.picture = uploadedUrl;
+        } else if (newProfileImage && newProfileImage !== "") {
+            newInfo.picture = newProfileImage;
         }
         if (newBannerFile) {
             let uploadedUrl = await UploadPicture(newBannerFile);
-            setNewProfileImage();
-            setNewProfileFile();
+            setNewBannerImage();
+            setNewBannerFile();
             newInfo.banner = uploadedUrl;
+        } else if (newBannerImage && newBannerImage !== "") {
+            newInfo.banner = newBannerImage;
         }
         setAccountInfo(newInfo);
         props.saveProfile(newInfo);
@@ -263,17 +277,21 @@ const SettingsContainer = (props) => {
                                                 maskImage: "linear-gradient(180deg, #fff 75%, #ffffff00 100%);"
                                             }}>
                                             <Center>
-                                                <FormLabel mt={24} htmlFor="bannerImage" bg={uiColor} p={3} cursor="pointer" borderRadius="md">Change banner image</FormLabel>
-                                                <Input id="bannerImage" accept="image/*" type="file" hidden onChange={changeBannerImage.bind(this)}></Input>
+                                                <VStack mt="50px">
+                                                    <FormLabel htmlFor="bannerImage" bg={uiColor} p={3} cursor="pointer" borderRadius="md">Upload banner image</FormLabel>
+                                                    <Input id="bannerImage" accept="image/*" type="file" hidden onChange={changeBannerImage.bind(this)}></Input>
+                                                    <Input size='xs' w="150px" variant="solid" placeholder="...or enter image url" onBlur={changeBannerImage.bind(this)}></Input>
+                                                </VStack>
                                             </Center>
 
                                         </Box>
                                         <Card m={[5, 5, 50]} mt={[160, 160, 160]} p={[5, 5, 50]} bg={uiColor}>
                                             <Grid templateColumns="repeat(12,1fr)">
                                                 <GridItem colSpan={[12, 4]}>
-                                                    <VStack gap={5}>
+                                                    <VStack gap={2}>
                                                         <Avatar size="2xl" src={newProfileImage ?? accountInfo.picture} name={accountInfo.display_name ?? accountInfo.name} />
-                                                        <FormLabel htmlFor="profileImage" bg={uiColor} p={3} cursor="pointer" borderRadius="md">Change profile image</FormLabel>
+                                                        <FormLabel htmlFor="profileImage" bg={uiColor} p={3} cursor="pointer" borderRadius="md">Upload profile image...</FormLabel>
+                                                        <Input size='xs' variant="flushed" placeholder="...or enter image url" onChange={changeProfileImage.bind(this)}></Input>
                                                         <Input id="profileImage" accept="image/*" type="file" hidden onChange={changeProfileImage.bind(this)} hidden></Input>
                                                     </VStack>
                                                 </GridItem>
@@ -297,7 +315,7 @@ const SettingsContainer = (props) => {
                                                     <Textarea variant="flushed" defaultValue={accountInfo.about} placeholder="Tell a little about yourself! What your interests and hobbies! Show Nostr users what your profile is up to!" onChange={changeAbout.bind(this)}></Textarea>
                                                     <InputGroup>
                                                         <InputLeftElement children={<HiLightningBolt color="yellow" />}></InputLeftElement>
-                                                        <Input color="green.400" variant="flushed" defaultValue={accountInfo.s} placeholder="Bitcoin Lightning LUD-06 address" onChange={changeLud16.bind(this)}></Input>
+                                                        <Input color="green.400" variant="flushed" defaultValue={accountInfo.lud16} placeholder="Bitcoin Lightning LUD-06 address" onChange={changeLud16.bind(this)}></Input>
                                                     </InputGroup>
                                                 </GridItem>
                                             </Grid>

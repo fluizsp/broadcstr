@@ -1,21 +1,25 @@
-import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, Input, useColorModeValue, LinkOverlay, LinkBox, Link, Flex } from '@chakra-ui/react'
-import { FiMoreHorizontal } from 'react-icons/fi';
+import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, Input, useColorModeValue, LinkOverlay, LinkBox, Link, Flex, Textarea } from '@chakra-ui/react'
+import { FiMaximize, FiMoreHorizontal } from 'react-icons/fi';
 import { BiCommentDetail, BiHeart, BiRepost, BiExpand } from 'react-icons/bi';
 import { IoIosHeart } from 'react-icons/io';
 import { formatDistanceStrict } from 'date-fns'
 import { nip19 } from 'nostr-tools';
 import { Link as DomLink, useNavigate } from 'react-router-dom';
 import format from 'date-fns/format';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import MentionTag from './MentionTag';
-import { HiLightningBolt } from 'react-icons/hi';
+import { HiLightningBolt, HiReply } from 'react-icons/hi';
+import { FaRetweet } from 'react-icons/fa';
+import { likeNote, REPLY_TO, repostNote } from '../actions/relay';
+import { GoBroadcast } from 'react-icons/go';
 
 const Note = props => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     let note = props.note ?? {};
     let reposted_by = props.note.reposted_by;
-    let authorMetadata = useSelector(state => state.content.selectedMetadata[note.pubkey], (a, b) => { return a && b && a.name === b.name }) ?? {};
+    let authorMetadata = useSelector(state => state.user.usersMetadata[note.pubkey], (a, b) => { return a && b && a.name === b.name }) ?? {};
     let content = note.content ?? '';
     const mentionBreak = /(#\[[0-9]+\])/
     content = content.split(mentionBreak);
@@ -37,11 +41,21 @@ const Note = props => {
     timeDistance = timeDistance.replace(/ day[s]?/, 'd');
     timeDistance = timeDistance.replace(/ month[s]?/, 'm');
     timeDistance = timeDistance.replace(/ second[s]?/, 's');
-
     let replyLevel = responseTags.length ?? 0;
+
+    const reply = () => {
+        dispatch({ type: REPLY_TO, data: { note: note, author: authorMetadata, originalResponseTags: responseTags } });
+    }
+    const like = () => {
+        dispatch(likeNote(note));
+    }
+    const repost = () => {
+        dispatch(repostNote(note));
+    }
     //console.log("Render Note");
     return (
-        <Fade in={true}>
+
+        < Fade in={true}>
             <Card mb="5" bg={uiColor} ml={props.isReply ? replyLevel * 10 + 'px' : 0} >
                 {/*props.isReply ? <Box width="1px" height="110%" borderLeftColor={uiColor} borderLeftWidth={2} borderLeftStyle="dashed" position="absolute" left="-18px"></Box> : ''*/}
                 {/*props.isReply ? <Box width="18px" height="1px" borderTopColor={uiColor} borderTopWidth={2} borderTopStyle="dashed" position="absolute" left="-18px" top="44px"></Box> : ''*/}
@@ -49,7 +63,7 @@ const Note = props => {
                     <Box p="5" pb="0">
                         <Grid templateColumns='repeat(12, 1fr)'>
                             <GridItem colSpan="11">
-                                <HStack cursor="pointer" onClick={() => { navigate(`/${authorMetadata.nip05??nip19.npubEncode(note.pubkey)}`) }}>
+                                <HStack cursor="pointer" onClick={() => { navigate(`/${authorMetadata.nip05 ?? nip19.npubEncode(note.pubkey)}`) }}>
                                     <Avatar size="md" src={authorMetadata.picture ?? ''} name={authorMetadata.display_name ?? authorMetadata.name ?? ''} />
                                     <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{authorMetadata.display_name ?? authorMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
                                     <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">@{authorMetadata.name ?? ''}</Text>
@@ -60,7 +74,12 @@ const Note = props => {
                                 </HStack>
                             </GridItem>
                             <GridItem align="right">
-                                <Button variant="ghost" color="gray.400" alignSelf="right"><FiMoreHorizontal /></Button>
+                                {!props.isThread ? <Tooltip label="View full note" fontSize='md' hasArrow={true}>
+                                    <DomLink to={`/note/${nip19.noteEncode(note.id)}`}>
+                                        <Button variant="ghost" size="md"><FiMaximize /></Button>
+                                    </DomLink>
+                                </Tooltip> : ''}
+                                {/*<Button variant="ghost" color="gray.400" alignSelf="right"><FiMoreHorizontal /></Button>*/}
                             </GridItem>
                         </Grid>
                     </Box>
@@ -75,8 +94,9 @@ const Note = props => {
                         : ''}
                     {reposted_by ?
                         <HStack p="5" h="5" spacing={1}>
+                            <GoBroadcast />
                             <Text fontSize="xs" color="gray.500">
-                                Reposted By
+                                Broadcstd By
                             </Text>
                             <Text as="b" fontSize="xs" w="150px " color="blue.300" noOfLines={1}>
                                 <MentionTag publicKeyHex={reposted_by} />
@@ -97,37 +117,35 @@ const Note = props => {
                             <iframe title={note.embed.src} height="400px" width="100%" src={note.embed.src} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
                             : note.embed.kind === 'mp4' ? <video src={note.embed.src} muted height="300" width="100%" controls /> : '' : ''}
                     <Flex bg={uiColor}>
-                        <Box w="100px">
+                        <Box w="200px">
                             <Tooltip label={liked ? "You liked!" : "Like"} fontSize='md' hasArrow={true}>
-                                <Button isDisabled={liked} variant="ghost" size="md" >{liked ? <IoIosHeart color="red" /> : <BiHeart />}</Button>
+                                <Button onClick={like} isDisabled={liked} variant="ghost" size="md" >{liked ? <IoIosHeart color="red" /> : <BiHeart />}</Button>
                             </Tooltip>
-                            <Tooltip label="Zaps (coming soon!)" fontSize='md' hasArrow={true}>
+                            <Tooltip label="Zap! (coming soon)" fontSize='md' hasArrow={true}>
                                 <Button variant="ghost" isDisabled size="md" ><HiLightningBolt /></Button>
                             </Tooltip>
+                            <Tooltip label="Reply" fontSize='md' hasArrow={true}>
+                                <Button variant="ghost" size="md" onClick={reply}><HiReply /></Button>
+                            </Tooltip>
+                            <Tooltip label="Broadcst (repost)" fontSize='md' hasArrow={true}>
+                                <Button onClick={repost} variant="ghost" size="md" ><GoBroadcast /></Button>
+                            </Tooltip>
                         </Box>
-                        <Box flex="1" height="36px">
+                        <Box flex="1">
                             {note.likes && props.isThread ? <Button isDisabled={true} leftIcon={<IoIosHeart />} size="md" variant="ghost">{note.likes}</Button> :
                                 null}
                             {note.replies && props.isThread ? <Button isDisabled={true} leftIcon={<BiCommentDetail />} size="md" variant="ghost">{note.replies.length}</Button> :
                                 null}
                             {note.reposts && props.isThread ? <Button isDisabled={true} leftIcon={<BiRepost />} size="md" variant="ghost">{note.reposts}</Button> :
                                 null}
-                            {!props.isReply && !props.isThread ? <Tooltip label="Reply" fontSize='md' hasArrow={true}>
-                                {/*<Button leftIcon={<BiCommentDetail />} variant="ghost" size="md">Broadcst your response...</Button>*/}
-                                <Input variant="flushed" fontSize="sm" placeholder="Broadcst your response..." size="md"></Input>
-                            </Tooltip> : ''}
                         </Box>
                         <Box>
-                            {!props.isThread ? <Tooltip label="View full note" fontSize='md' hasArrow={true}>
-                                <DomLink to={`/note/${nip19.noteEncode(note.id)}`}>
-                                    <Button variant="ghost" size="md"><BiExpand /></Button>
-                                </DomLink>
-                            </Tooltip> : ''}
+
                         </Box>
                     </Flex>
                 </VStack>
             </Card>
-        </Fade>
+        </Fade >
     )
 }
 export default Note;

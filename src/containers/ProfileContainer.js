@@ -1,4 +1,4 @@
-import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button } from '@chakra-ui/react'
+import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button, Link } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { addFollowing, getMyInfo, getUserFollowers, getUserFollowing, getUserNotes, receivedUserMetadata, RECEIVED_USER_ID, removeFollowing, SET_LIMIT, UNLOAD_NOTES } from '../actions/relay';
@@ -59,12 +59,9 @@ const mapDispatchToProps = (dispatch, getState) => {
 };
 
 const mapStateToProps = (state, ownProps) => {
-    console.log(nip19.decode(state.user.account.publicKey).data);
-    console.log(state.content.lastUserId);
-
     return {
         //userId: state.content.lastUserId,
-        user: nip19.decode(state.user.account.publicKey).data === state.content.lastUserId ? state.user.accountInfo : state.content.selectedMetadata[state.content.lastUserId] ?? {},
+        user: nip19.decode(state.user.account.publicKey).data === state.content.lastUserId ? state.user.accountInfo : state.user.usersMetadata[state.content.lastUserId] ?? {},
         account: state.user.account,
         limit: state.content.limit
     }
@@ -111,6 +108,7 @@ const ProfileContainer = props => {
         props.unloadNotes();
         //props.loadMyInfo(props.account.publicKey);
         console.log('useEffect initial')
+        document.title = `Brodcstr - Profile - ${params.id}`;
         if (params.id.includes('@'))
             nip05.queryProfile(params.id).then(value => {
                 if (value)
@@ -128,7 +126,8 @@ const ProfileContainer = props => {
     let replies = [];
     let isOwnProfile = publicKeyHex === nip19.decode(props.account.publicKey).data;
     let isFollowing = useSelector(state => state.user.following.filter(f => f === publicKeyHex).length > 0);
-    notes = useSelector(state => state.content.selectedNotes.filter(note => note.pubkey === publicKeyHex)
+    notes = useSelector(state => Object.keys(state.content.profileFeed).map(k => { return state.content.profileFeed[k] })
+        .filter(note => note.pubkey === publicKeyHex)
         .filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
         .slice(0, limit * 2), (a, b) => {
@@ -141,7 +140,7 @@ const ProfileContainer = props => {
             return aIds === bIds;
         })
 
-    replies = useSelector(state => state.content.selectedNotes
+    replies = useSelector(state => Object.keys(state.content.profileFeed).map(k => { return state.content.profileFeed[k] })
         .filter(note => note.pubkey === publicKeyHex)
         .filter(note => note.kind === 1 && note.tags.filter(t => t[0] === "e").length > 0)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
@@ -184,7 +183,7 @@ const ProfileContainer = props => {
                                 <GridItem colSpan={[12, 8]} textAlign="left" pl="5">
                                     <HStack mt="5">
                                         {userLoaded ?
-                                            <Text fontSize="xl" as="b" maxW="150px" noOfLines="1">{props.user.display_name ?? props.user.name}</Text>
+                                            <Text fontSize="xl" as="b" maxW="150px" noOfLines="1">{props.user.display_name ?? props.user.name ?? "Nostr User"}</Text>
                                             : <Skeleton width="150px" h={4} />}
                                         <Text fontSize="lg" color="gray.400" maxW="150px" noOfLines="1" >@{props.user.name}</Text>
                                     </HStack>
@@ -197,6 +196,7 @@ const ProfileContainer = props => {
                                             <Skeleton w="300px" h={3} mb="5" />
                                             <Skeleton w="300px" h={3} mb="5" />
                                         </Box>}
+                                        {props.user.lud16?<Link as="b" color="green.400" href={`lightning:${props.user.lud16}`} fontSize="sm">⚡{props.user.lud16}</Link>:''}
                                 </GridItem>
                             </Grid>
                             <Tabs ml="-25px" index={activeView} mt="50px" mr="-25px">
@@ -225,7 +225,7 @@ const ProfileContainer = props => {
                             })}
                         </SlideFade>
                         <VStack>
-                            {<Button onClick={moreResults} hidden={(activeView === 0 && notes.length <= limit) || (activeView === 1 && replies.length <= limit)}>Show more...</Button>}
+                            {<Button onClick={moreResults} hidden={(activeView === 0 && notes.length < limit) || (activeView === 1 && replies.length < limit)}>Show more...</Button>}
                             <Fade in={notes.length === 0 && replies.length === 0 && following.length === 0}>
                                 <Spinner size="xl" color="blue.300" />
                             </Fade>

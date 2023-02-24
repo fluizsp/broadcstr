@@ -8,7 +8,7 @@ import { useNavigate } from "react-router";
 const ContactListItem = props => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const navigate = useNavigate();
-    const metadata = useSelector(state => state.content.selectedMetadata[props.publicKeyHex], (a, b) => {
+    const metadata = useSelector(state => state.user.usersMetadata[props.publicKeyHex], (a, b) => {
         return a && b && a.name === b.name;
     }) ?? {};
     const isFollowing = useSelector(state => state.user.following.indexOf(props.publicKeyHex) !== -1);
@@ -37,7 +37,7 @@ const ContactListItem = props => {
                         <Tooltip label={isFollowing ? "Unfollow" : "Follow"}>
                             <Button onClick={followUnfollow} variant="solid" size="sm" bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />}</Button>
                         </Tooltip>
-                        <Button variant="ghost" size="sm"><IoIosMore /></Button>
+                        {/*<Button variant="ghost" size="sm"><IoIosMore /></Button>*/}
                     </GridItem>
                 </Grid>
             </Card>
