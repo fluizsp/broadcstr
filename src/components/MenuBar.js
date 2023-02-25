@@ -83,10 +83,10 @@ const MenuBar = (props) => {
                     <Avatar src={props.accountInfo.picture ?? ''} name={props.accountInfo.display_name ?? props.accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" ml={{ md: 2, lg: 0 }} onClick={() => { navigate(`/${props.accountInfo.nip05 ?? props.account.publicKey}`) }} cursor="pointer"></Avatar>
                     <VStack spacing="0" align="left" pl="2">
                         <HStack>
-                            <Text fontSize="md">{props.accountInfo.display_name ?? props.accountInfo.name ?? 'Nostr User'}</Text>
-                            <Text as="b" fontSize="xs">@{props.accountInfo.name ?? ''}</Text>
+                            <Text fontSize="md" maxW="180px" noOfLines={1}>{props.accountInfo.display_name ?? props.accountInfo.name ?? 'Nostr User'}</Text>
+                            {/*<Text as="b" fontSize="xs">@{props.accountInfo.name ?? ''}</Text>*/}
                         </HStack>
-                        <Text w="180px" noOfLines="1" fontSize="xs">{props.accountInfo.nip05 && props.accountInfo.nip05 !== '' ? props.accountInfo.nip05 : props.account.publicKey}</Text>
+                        <Text w="180px" noOfLines="1" fontSize="xs">{props.accountInfo.nip05 && props.accountInfo.nip05 !== '' ? props.accountInfo.nip05 : '@'+props.accountInfo.name}</Text>
                     </VStack>
                     <VStack align="right" w="60px">
                         <Menu>

@@ -1,4 +1,4 @@
-import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, Input, useColorModeValue, LinkOverlay, LinkBox, Link, Flex, Textarea } from '@chakra-ui/react'
+import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, Input, useColorModeValue, LinkOverlay, LinkBox, Link, Flex, Textarea, Popover, PopoverTrigger, PopoverContent, PopoverArrow, Code } from '@chakra-ui/react'
 import { FiMaximize, FiMoreHorizontal } from 'react-icons/fi';
 import { BiCommentDetail, BiHeart, BiRepost, BiExpand } from 'react-icons/bi';
 import { IoIosHeart } from 'react-icons/io';
@@ -11,25 +11,17 @@ import MentionTag from './MentionTag';
 import { HiLightningBolt, HiReply } from 'react-icons/hi';
 import { FaRetweet } from 'react-icons/fa';
 import { likeNote, REPLY_TO, repostNote } from '../actions/relay';
-import { GoBroadcast } from 'react-icons/go';
+import { GoBroadcast, GoCheck } from 'react-icons/go';
+import { useState } from 'react';
 
 const Note = props => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const [reposted, setReposted] = useState(false);
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     let note = props.note ?? {};
     let reposted_by = props.note.reposted_by;
     let authorMetadata = useSelector(state => state.user.usersMetadata[note.pubkey], (a, b) => { return a && b && a.name === b.name }) ?? {};
-    let content = note.content ?? '';
-    const mentionBreak = /(#\[[0-9]+\])/
-    content = content.split(mentionBreak);
-    let mentionTags = note.pTags ?? [];
-    for (let mentionTag = 0; mentionTag < mentionTags.length; mentionTag++) {
-        for (let iC = 0; iC < content.length; iC++) {
-            if (content[iC] === `#[${mentionTag}]`)
-                content[iC] = <MentionTag publicKeyHex={mentionTags[mentionTag]} />;
-        }
-    }
     let responseTags = note.eTags ?? [];
     let responseUserTags = note.pTags ?? [];
     let liked = useSelector(state => state.user.likes.filter(l => l === note.id).length > 0);
@@ -42,7 +34,34 @@ const Note = props => {
     timeDistance = timeDistance.replace(/ month[s]?/, 'm');
     timeDistance = timeDistance.replace(/ second[s]?/, 's');
     let replyLevel = responseTags.length ?? 0;
-
+    const lineBreakRgx = /\n/;
+    const mentionBreak = /(#\[[0-9]+\])/
+    const urlBreak = new RegExp(/(http[s]?:\/\/[-a-zA-Z0-9()@:%_\+.~#?&//=]*)/, 'gmi');
+    let contentElements = note.content.split(lineBreakRgx);
+    contentElements = contentElements.map(element => {
+        return element.split(mentionBreak).map(mBElement => {
+            return mBElement.split(urlBreak).map(uBEllement => {
+                return uBEllement;
+            }).flat();
+        }).flat();
+    }).flat();
+    contentElements = contentElements.map(element => {
+        let lineBreak = lineBreakRgx.exec(element);
+        let mention = mentionBreak.exec(element);
+        let link = urlBreak.exec(element);
+        if (lineBreak)
+            return <br />;
+        else if (mention) {
+            let mentionIndex = /#\[([0-9]+)\]/.exec(element)[1];
+            let mentioned = note.pTags[mentionIndex];
+            return mentioned ? <MentionTag publicKeyHex={mentioned} /> : element;
+        }
+        else if (link)
+            return <Link target="_blank" href={element}>{element}</Link>;
+        else
+            return element;
+    });
+    //console.log(contentElements);
     const reply = () => {
         dispatch({ type: REPLY_TO, data: { note: note, author: authorMetadata, originalResponseTags: responseTags } });
     }
@@ -51,10 +70,10 @@ const Note = props => {
     }
     const repost = () => {
         dispatch(repostNote(note));
+        setReposted(true);
     }
     //console.log("Render Note");
     return (
-
         < Fade in={true}>
             <Card mb="5" bg={uiColor} ml={props.isReply ? replyLevel * 10 + 'px' : 0} >
                 {/*props.isReply ? <Box width="1px" height="110%" borderLeftColor={uiColor} borderLeftWidth={2} borderLeftStyle="dashed" position="absolute" left="-18px"></Box> : ''*/}
@@ -103,14 +122,14 @@ const Note = props => {
                             </Text>
                         </HStack>
                         : ''}
-                    <Text p="5" fontSize={['sm', 'sm', 'md', 'md']}>
-                        {content.map(c => {
-                            return c;
+                    <Box p="5" fontSize={['sm', 'sm', 'md', 'md']}>
+                        {contentElements.map(el => {
+                            return (el)
                         })}
-                    </Text>
+                    </Box>
                     {/*<Code p="5" fontSize={['xs', 'sm', 'md']}>
-                    {note? JSON.stringify(note) : ''}
-                </Code>*/}
+                        {note.content}
+                    </Code>*/}
                     <Image fit="scale-down" maxH="500px" src={note ? note.image : ''} />
                     {note.embed ?
                         note.embed.kind === 'youtube' ?
@@ -127,9 +146,16 @@ const Note = props => {
                             <Tooltip label="Reply" fontSize='md' hasArrow={true}>
                                 <Button variant="ghost" size="md" onClick={reply}><HiReply /></Button>
                             </Tooltip>
-                            <Tooltip label="Broadcst (repost)" fontSize='md' hasArrow={true}>
-                                <Button onClick={repost} variant="ghost" size="md" ><GoBroadcast /></Button>
-                            </Tooltip>
+                            <Popover>
+                                <PopoverTrigger>
+                                    <Button variant="ghost" size="md" ><GoBroadcast /></Button>
+                                </PopoverTrigger>
+                                <PopoverContent>
+                                    <PopoverArrow />
+                                    <Button onClick={repost} leftIcon={reposted ? <GoCheck /> : <GoBroadcast />} variant="ghost" color={reposted ? 'green.400' : ''} size="md" >{reposted ? 'Brodcstd!' : 'Broadcst this note!'}</Button>
+                                </PopoverContent>
+                            </Popover>
+
                         </Box>
                         <Box flex="1">
                             {note.likes && props.isThread ? <Button isDisabled={true} leftIcon={<IoIosHeart />} size="md" variant="ghost">{note.likes}</Button> :

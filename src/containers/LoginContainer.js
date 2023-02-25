@@ -78,12 +78,13 @@ class LoginContainer extends Component {
         this.props.router.navigate('/');
     }
     async extensionLogin() {
-        let publicKey = await window.nostr.getPublicKey();
-        publicKey = nip19.npubEncode(publicKey);
-        this.props.setAccount({ publicKey: publicKey});
-        this.props.loadAccountInfo(publicKey);
-        this.props.saveToStorage();
-        this.props.router.navigate('/');
+        window.nostr.getPublicKey().then(publicKeyHex => {
+            let publicKey = nip19.npubEncode(publicKeyHex);
+            this.props.setAccount({ publicKey: publicKey });
+            this.props.loadAccountInfo(publicKey);
+            this.props.saveToStorage();
+            this.props.router.navigate('/');
+        });
     }
     render() {
         return (

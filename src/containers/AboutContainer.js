@@ -45,18 +45,12 @@ const AboutContainer = (props) => {
                             </List>
                             <Heading size="md" mt={6}>Version info:</Heading>
                             <Text p={2}>
-                                Version <strong>0.1.1</strong>
-                                <br />Fixes/improvements:
-                                <UnorderedList spacing={2} p={2}>
-                                    <ListItem>
-                                        <strong>Login/Signing with extension:</strong> Support to login and sign events without provide private key, with browser extension (nos2x);
-                                    </ListItem>
-                                </UnorderedList>
-                            </Text>
-                            <Text p={2}>
-                                Version <strong>0.1.0</strong> - First Release!
+                                Version <strong>0.1</strong> - First Release!
                                 <br />Main features/nips implemented on this version:
                                 <UnorderedList spacing={2} p={2}>
+                                    <ListItem>
+                                        <strong>Account creation/Login:</strong> Generating keys, and login with NSEC or browser extension;
+                                    </ListItem>
                                     <ListItem>
                                         <strong>Basic Navigation:</strong> Following feed, Profiles, Note details and replies;
                                     </ListItem>

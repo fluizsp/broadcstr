@@ -22,11 +22,7 @@ const mapDispatchToProps = (dispatch, getState) => {
             dispatch((getMyInfo(publicKeyHex)));
         },
         loadNotes: (publicKeyHex, limit) => {
-            console.log(`dispatch(getUserNotes(${publicKeyHex}, ${limit}));`)
             dispatch(getUserNotes(publicKeyHex, limit * 5));
-        },
-        unloadNotes: () => {
-            dispatch({ type: UNLOAD_NOTES });
         },
         addFollowing: publicKeyHex => {
             dispatch(addFollowing(publicKeyHex));
@@ -105,8 +101,6 @@ const ProfileContainer = props => {
             })
     }, [params.id]);
     useEffect(() => {
-        props.unloadNotes();
-        //props.loadMyInfo(props.account.publicKey);
         console.log('useEffect initial')
         document.title = `Brodcstr - Profile - ${params.id}`;
         if (params.id.includes('@'))
@@ -119,15 +113,12 @@ const ProfileContainer = props => {
         else
             setPublicKeyHex(nip19.decode(params.id).data);
     }, [])
-    useEffect(() => () => {
-        props.unloadNotes();
-    }, []);
     let notes = [];
     let replies = [];
     let isOwnProfile = publicKeyHex === nip19.decode(props.account.publicKey).data;
     let isFollowing = useSelector(state => state.user.following.filter(f => f === publicKeyHex).length > 0);
     notes = useSelector(state => Object.keys(state.content.profileFeed).map(k => { return state.content.profileFeed[k] })
-        .filter(note => note.pubkey === publicKeyHex)
+        .filter(note => note.pubkey === publicKeyHex || note.reposted_by === publicKeyHex)
         .filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
         .slice(0, limit * 2), (a, b) => {

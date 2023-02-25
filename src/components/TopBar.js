@@ -57,7 +57,7 @@ const TopBar = (props) => {
                         </Box>
                     }
                 </Box>
-                <Box p="4" w="180px" textAlign="right">
+                <Box p="4" w="200px" textAlign="right">
                     <Tooltip label={`You are connected to ${props.relays.length} relays`} fontSize='md'>
                         <Button variant="ghost" color="blue.300" leftIcon={<BiNetworkChart />} onClick={() => { navigate('/settings/relays') }} size="sm" fontSize="xs">{props.relays.length}</Button>
                     </Tooltip>

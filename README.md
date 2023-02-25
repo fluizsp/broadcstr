@@ -19,6 +19,14 @@ Because it is like your social network, but:
 
 ## Version info:
 
+**Version 0.1.2!**
+
+- Fixed profile view not showing reposts;
+- Improved UX and feedback on reposts;
+- Fixed topbar icons breaking line on some phones;
+- Reviewed note rendering to better support links and line breaks;
+- Browser extension login fix for some users;
+
 **Version 0.1.1!**
 
 - Implemented login and event signing with extension (nos2x);
