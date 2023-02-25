@@ -608,3 +608,10 @@ export const removeFollowing = (publicKeyHex) => {
         dispatch({ type: REMOVE_FOLLOWING, data: publicKeyHex });
     }
 }
+
+export const locatedNip05 = (publicKeyHex) => {
+    return (dispatch, getState) => {
+        let userMetadata = getState().user.usersMetadata[publicKeyHex];
+        dispatch({ type: LOCATED_USER, data: { publicKeyHex: publicKeyHex, userMetadata: userMetadata ?? {} } })
+    }
+}
