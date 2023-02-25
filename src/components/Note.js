@@ -64,7 +64,6 @@ const Note = props => {
             return element;
     });
     let bigContent = note.content.length > 300;
-
     const reply = () => {
         dispatch({ type: REPLY_TO, data: { note: note, author: authorMetadata, originalResponseTags: responseTags } });
     }
