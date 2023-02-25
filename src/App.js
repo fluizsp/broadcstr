@@ -19,7 +19,9 @@ const store = configureStore({
 
 store.subscribe(throttle(() => {
   console.log('save state to storage')
-  saveState(store.getState().user, 'user');
+  try {
+    saveState(store.getState().user, 'user');
+  } catch { }
 }, 30000));
 
 if (!window.metadataInterval)
