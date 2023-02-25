@@ -46,12 +46,9 @@ const Note = props => {
         }).flat();
     }).flat();
     contentElements = contentElements.map(element => {
-        let lineBreak = lineBreakRgx.exec(element);
         let mention = mentionBreak.exec(element);
         let link = urlBreak.exec(element);
-        if (lineBreak)
-            return <br />;
-        else if (mention) {
+        if (mention) {
             let mentionIndex = /#\[([0-9]+)\]/.exec(element)[1];
             let mentioned = note.pTags[mentionIndex];
             return mentioned ? <MentionTag publicKeyHex={mentioned} /> : element;
@@ -59,7 +56,7 @@ const Note = props => {
         else if (link)
             return <Link target="_blank" href={element}>{element}</Link>;
         else
-            return element;
+            return [element, <br />];
     });
     //console.log(contentElements);
     const reply = () => {
