@@ -1,6 +1,6 @@
-import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, Input, useColorModeValue, LinkOverlay, LinkBox, Link, Flex, Textarea, Popover, PopoverTrigger, PopoverContent, PopoverArrow, Code } from '@chakra-ui/react'
-import { FiMaximize, FiMoreHorizontal } from 'react-icons/fi';
-import { BiCommentDetail, BiHeart, BiRepost, BiExpand } from 'react-icons/bi';
+import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, useColorModeValue, Link, Flex, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
+import { FiMaximize } from 'react-icons/fi';
+import { BiCommentDetail, BiHeart, BiRepost } from 'react-icons/bi';
 import { IoIosHeart } from 'react-icons/io';
 import { formatDistanceStrict } from 'date-fns'
 import { nip19 } from 'nostr-tools';
@@ -9,7 +9,6 @@ import format from 'date-fns/format';
 import { useDispatch, useSelector } from 'react-redux';
 import MentionTag from './MentionTag';
 import { HiLightningBolt, HiReply } from 'react-icons/hi';
-import { FaRetweet } from 'react-icons/fa';
 import { likeNote, REPLY_TO, repostNote } from '../actions/relay';
 import { GoBroadcast, GoCheck } from 'react-icons/go';
 import { useState } from 'react';
@@ -18,6 +17,8 @@ const Note = props => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [reposted, setReposted] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+    const alphaGradient = useColorModeValue('linear(to-t, brand.lightUi 75%, brand.lightUiAlpha 100%)', 'linear(to-t, brand.darkUi 75%, brand.darkUiAlpha 100%)');
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     let note = props.note ?? {};
     let reposted_by = props.note.reposted_by;
@@ -62,7 +63,12 @@ const Note = props => {
         else
             return element;
     });
-    //console.log(contentElements);
+    let bigContent = note.content.length > 300;
+    if (bigContent) {
+        console.log('BIG CONTENT ALERT');
+        console.log(note.content);
+    }
+
     const reply = () => {
         dispatch({ type: REPLY_TO, data: { note: note, author: authorMetadata, originalResponseTags: responseTags } });
     }
@@ -123,15 +129,20 @@ const Note = props => {
                             </Text>
                         </HStack>
                         : ''}
-                    <Box p="5" fontSize={['sm', 'sm', 'md', 'md']}>
-                        {contentElements.map(el => {
-                            return (el)
-                        })}
+                    <Box position="relative">
+                        <Box p="5" pb={expanded ? 20 : null} fontSize={['sm', 'sm', 'md', 'md']} maxH={bigContent && !expanded && !props.isThread ? '200px' : null} overflowY="hidden">
+                            {contentElements.map(el => {
+                                return (el)
+                            })}
+                            <Box bgGradient={alphaGradient} hidden={!bigContent || props.isThread} position="absolute" ml="-5" bottom="-4" w="100%" h="65px" p="2">
+                                <Button variant="ghost" onClick={() => { setExpanded(!expanded) }}>{expanded ? 'Show Less...' : 'Show more...'}</Button>
+                            </Box>
+                        </Box>
                     </Box>
                     {/*<Code p="5" fontSize={['xs', 'sm', 'md']}>
                         {note.content}
                     </Code>*/}
-                    <Image fit="scale-down" maxH="500px" src={note ? note.image : ''} />
+                    <Image fit="scale-down" maxH="400px" src={note ? note.image : ''} />
                     {note.embed ?
                         note.embed.kind === 'youtube' ?
                             <iframe title={note.embed.src} height="400px" width="100%" src={note.embed.src} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
