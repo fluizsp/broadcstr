@@ -39,15 +39,19 @@ const Note = props => {
     const urlBreak = new RegExp(/(http[s]?:\/\/[-a-zA-Z0-9()@:%_\+.~#?&//=]*)/, 'gmi');
     let contentElements = note.content.split(lineBreakRgx);
     contentElements = contentElements.map(element => {
-        return element.split(mentionBreak).map(mBElement => {
+        let innerElements = element.split(mentionBreak).map(mBElement => {
             return mBElement.split(urlBreak).map(uBEllement => {
                 return uBEllement;
             }).flat();
         }).flat();
+        innerElements.push('\n');
+        return innerElements;
     }).flat();
     contentElements = contentElements.map(element => {
         let mention = mentionBreak.exec(element);
         let link = urlBreak.exec(element);
+        if (element === '\n')
+            return <br />;
         if (mention) {
             let mentionIndex = /#\[([0-9]+)\]/.exec(element)[1];
             let mentioned = note.pTags[mentionIndex];
@@ -56,7 +60,7 @@ const Note = props => {
         else if (link)
             return <Link target="_blank" href={element}>{element}</Link>;
         else
-            return [element, <br />];
+            return element;
     });
     //console.log(contentElements);
     const reply = () => {
