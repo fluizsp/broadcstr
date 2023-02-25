@@ -13,9 +13,6 @@ import MenuBar from '../components/MenuBar';
 import BottomNavigation from '../components/BottomNavigation';
 import HomeContainer from './HomeContainer';
 import { connect } from 'react-redux';
-import WelcomeContainer from './WelcomeContainer';
-import AccountCreationContainer from './AccountCreationContainer';
-import LoginContainer from './LoginContainer';
 import NoteDetailContainer from './NoteDetailContainer';
 import { logout, saveToStorage } from '../actions/account';
 import ProfileContainer from './ProfileContainer';
@@ -24,6 +21,7 @@ import { getMyInfo } from '../actions/relay';
 import SettingsContainer from './SettingsContainer';
 import EmbedNoteContainer from './EmbedNoteContainer';
 import AboutContainer from './AboutContainer';
+import WelcomeV2Container from './WelcomeV2Container';
 
 const mapDispatchToProps = (dispatch) => {
     return {
@@ -114,9 +112,7 @@ const AppContainer = (props) => {
     return (<Box minH="100vH" bgGradient='linear(to-br, brand.purple, brand.green)'>
         <BrowserRouter>
             <Routes>
-                <Route exact path="/welcome" element={<WelcomeContainer />} />
-                <Route exact path="/welcome/create" element={<AccountCreationContainer />} />
-                <Route exact path="/welcome/login" element={<LoginContainer />} />
+                <Route exact path="/welcome" element={<WelcomeV2Container />} />
                 <Route exact path="/" element={home(props)} />
                 <Route exact path="/about" element={about(props)} />
                 <Route exact path="/settings/:area?" element={settings(props)} />
