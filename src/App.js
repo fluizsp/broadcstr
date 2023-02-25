@@ -40,7 +40,9 @@ const customTheme = extendTheme({
   colors: {
     brand: {
       darkUi: 'rgba(28,29,43,0.9)',
+      darkUiAlpha: 'rgba(28,29,43,0.0)',
       lightUi: 'rgba(255,255,255,0.8)',
+      lightUiAlpha: 'rgba(255,255,255,0.0)',
       purple: "#874DF8",
       green: "#1EF0B2",
       kindsteel1: "#E9DEFA",
