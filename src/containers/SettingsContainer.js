@@ -71,6 +71,10 @@ const SettingsContainer = (props) => {
         } else
             setNip05Status();
     }, [accountInfo.nip05])
+
+    useEffect(()=>{
+        document.title="Broadcstr - Settings"
+    },[])
     //console.log(nip05Status);
     const copyToClipboard = (type) => {
         switch (type) {

@@ -192,6 +192,9 @@ const contentReducer = createReducer(initialState, {
     },
     REPLY_TO: (state, action) => {
         state.replyTo = action.data;
+    },
+    VIEW_IMAGE: (state, action) => {
+        state.imageSrc = action.data;
     }
 });
 

@@ -93,6 +93,12 @@ const userReducer = createReducer(initialState, {
     RECEIVED_USER_METADATA: (state, action) => {
         let userMetadata = action.data.userMetadata;
         userMetadata = removeEmpty(userMetadata);
+        if (Object.keys(userMetadata).length > 1) {
+            let created_incoming = userMetadata.created_at;
+            let created_old = state.usersMetadata[action.data.publicKey] ? state.usersMetadata[action.data.publicKey].created_at : null;
+            if (created_incoming < created_old)
+                return;
+        }
         state.usersMetadata[action.data.publicKey] = Object.assign({}, state.usersMetadata[action.data.publicKey], userMetadata);
     },
     LOGOUT: (state, action) => {

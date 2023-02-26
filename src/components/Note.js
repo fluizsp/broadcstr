@@ -9,7 +9,7 @@ import format from 'date-fns/format';
 import { useDispatch, useSelector } from 'react-redux';
 import MentionTag from './MentionTag';
 import { HiLightningBolt, HiReply } from 'react-icons/hi';
-import { likeNote, REPLY_TO, repostNote } from '../actions/relay';
+import { likeNote, REPLY_TO, repostNote, VIEW_IMAGE } from '../actions/relay';
 import { GoBroadcast, GoCheck } from 'react-icons/go';
 import { useState } from 'react';
 
@@ -74,6 +74,9 @@ const Note = props => {
         dispatch(repostNote(note));
         setReposted(true);
     }
+    const viewImage = (imageSrc) => {
+        dispatch({ type: VIEW_IMAGE, data: imageSrc });
+    }
     //console.log("Render Note");
     return (
         < Fade in={true}>
@@ -137,7 +140,7 @@ const Note = props => {
                     {/*<Code p="5" fontSize={['xs', 'sm', 'md']}>
                         {note.content}
                     </Code>*/}
-                    <Image fit="scale-down" maxH="400px" src={note ? note.image : ''} />
+                    <Image fit="scale-down" maxH="400px" src={note ? note.image : ''} cursor="pointer" onClick={viewImage.bind(this, note.image)} />
                     {note.embed ?
                         note.embed.kind === 'youtube' ?
                             <iframe title={note.embed.src} height="400px" width="100%" src={note.embed.src} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>

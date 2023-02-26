@@ -62,8 +62,8 @@ const SearchContainer = props => {
 
     useEffect(() => {
         props.clearSearch();
-        console.log('useEffect initial')
         performSearch();
+        document.title="Broadcstr - Search"
     }, [])
     let notes = [];
     let users = [];
@@ -111,7 +111,7 @@ const SearchContainer = props => {
         setNoResults(false);
     }
     const isLoading = searchTerm && searchTerm.length >= 3 && ((activeView === 0 && users.length === 0) || (activeView === 1 && notes.length === 0))
-    console.log("Render Profile");
+    console.log("Render Search");
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
             <Box ml={{ md: '100px', lg: '330px' }} >

@@ -11,6 +11,7 @@ import { useColorModeValue, useColorMode, } from '@chakra-ui/react';
 import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 import { BiDoorOpen } from 'react-icons/bi';
 import { FiMessageSquare } from 'react-icons/fi';
+import { useEffect } from 'react';
 
 const MenuBar = (props) => {
     const location = useLocation();
@@ -30,10 +31,10 @@ const MenuBar = (props) => {
         window.scrollTo(0, 0);
         navigate('/');
     }
-    if (!props.account || !props.account.publicKey)
-        navigate('/welcome');
-    if (location.pathname === "/welcome")
-        return null;
+    useEffect(() => {
+        if (!props.account || !props.account.publicKey)
+            navigate('/welcome');
+    }, []);
     return (<Show above="md">
         <Box w={{ md: '100px', lg: '330px' }} h="100vh" p="40px" bg={uiColor}
             backdropFilter="auto" backdropBlur="6px" top="0" left="0" pos="fixed" zIndex="1"
@@ -86,7 +87,7 @@ const MenuBar = (props) => {
                             <Text fontSize="md" maxW="180px" noOfLines={1}>{props.accountInfo.display_name ?? props.accountInfo.name ?? 'Nostr User'}</Text>
                             {/*<Text as="b" fontSize="xs">@{props.accountInfo.name ?? ''}</Text>*/}
                         </HStack>
-                        <Text w="180px" noOfLines="1" fontSize="xs">{props.accountInfo.nip05 && props.accountInfo.nip05 !== '' ? props.accountInfo.nip05 : '@'+props.accountInfo.name}</Text>
+                        <Text w="180px" noOfLines="1" fontSize="xs">{props.accountInfo.nip05 && props.accountInfo.nip05 !== '' ? props.accountInfo.nip05 : '@' + props.accountInfo.name}</Text>
                     </VStack>
                     <VStack align="right" w="60px">
                         <Menu>

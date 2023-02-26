@@ -27,6 +27,8 @@ export const CLEAR_SEARCH = "CLEAR_SEARCH";
 export const LOCATED_USER = "LOCATED_USER";
 export const LOCATED_NOTE = "LOCATED_NOTE";
 export const REPLY_TO = "REPLY_TO";
+export const VIEW_IMAGE = "VIEW_IMAGE";
+export const CLOSE_IMAGE = "CLOSE_IMAGE";
 
 const myPool = new BroadcstrPool();
 const requestedMetadatas = [];
@@ -314,8 +316,10 @@ export const getUsersMetadata = () => {
             sub.on('event', event => {
                 let userMetadata = JSON.parse(event.content);
                 userMetadata.load = false;
+                userMetadata.created_at=event.created_at;
                 userMetadata.pubkey = event.pubkey;
                 metadataBulk.push(userMetadata);
+                console.log(userMetadata);
                 //dispatch(receivedUserMetadata(event.pubkey, userMetadata));
                 if (metadataBulk.length > 10) {
                     metadataBulk.forEach(userMetadata => {
