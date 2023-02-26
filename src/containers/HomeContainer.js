@@ -13,7 +13,7 @@ const HomeContainer = props => {
     const dispatch = useDispatch();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const bgGradient = useColorModeValue('linear(to-tl, brand.blessing1, brand.blessing2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
-    const [feedType, setFeedType] = useState('following');
+    const [feedType, setFeedType] = useState('foryou');
     const [limit, setLimit] = useState(25);
     useEffect(() => {
         setTimeout(() => {
