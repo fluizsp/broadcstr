@@ -5,7 +5,8 @@ import {
     getEventHash,
     signEvent,
 } from 'nostr-tools'
-import { BroadcstrPool } from '../utils/BroadcstrPool';
+import { SimplePool } from 'nostr-tools';
+
 
 import { setAccount } from './account';
 
@@ -18,8 +19,6 @@ export const RECEIVED_USER_ID = "RECEIVED_USER_ID";
 export const UNLOAD_NOTES = "UNLOAD_NOTES";
 export const SET_FEED_TYPE = "SET_FEED_TYPE";
 export const SET_LIMIT = "SET_LIMIT";
-export const SELECT_NOTES = "SELECT_NOTES";
-export const SELECT_METADATA = "SELECT_METADATA";
 export const REMOVE_FOLLOWING = "REMOVE_FOLLOWING";
 export const USER_FOLLOWING = "USER_FOLLOWING";
 export const USER_FOLLOWER = "USER_FOLLOWER";
@@ -27,8 +26,10 @@ export const CLEAR_SEARCH = "CLEAR_SEARCH";
 export const LOCATED_USER = "LOCATED_USER";
 export const LOCATED_NOTE = "LOCATED_NOTE";
 export const REPLY_TO = "REPLY_TO";
+export const VIEW_IMAGE = "VIEW_IMAGE";
+export const CLOSE_IMAGE = "CLOSE_IMAGE";
 
-const myPool = new BroadcstrPool();
+const myPool = new SimplePool();
 const requestedMetadatas = [];
 
 export const receivedNote = (notes, lastId) => {
@@ -77,7 +78,7 @@ const sign = async (event, account) => {
 
 }
 
-export const getHomeFeed = (feedType, limit) => {
+export const getFollowingFeed = (limit) => {
     return ((dispatch, getState) => {
         let eventBulk = [];
         if (getState().user.following && getState().user.following.length > 0) {
@@ -91,7 +92,6 @@ export const getHomeFeed = (feedType, limit) => {
             sub.on('event', async event => {
                 if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
                     eventBulk.push(event);
-                    //dispatch({ type: RECEIVED_NOTE, data: { feedType: 'homeFeed', notes: event } });
                     if (!getState().user.usersMetadata[event.pubkey]) {
                         await dispatch(receivedUserMetadata(event.pubkey, {}));
                     }
@@ -102,7 +102,7 @@ export const getHomeFeed = (feedType, limit) => {
                     });
                     if (eventBulk.length > 10) {
                         eventBulk.forEach(event => {
-                            dispatch({ type: RECEIVED_NOTE, data: { feedType: 'homeFeed', notes: event } });
+                            dispatch({ type: RECEIVED_NOTE, data: { feedType: 'following', notes: event } });
                         });
                         eventBulk = [];
                     }
@@ -110,13 +110,155 @@ export const getHomeFeed = (feedType, limit) => {
             });
             sub.on('eose', () => {
                 eventBulk.forEach(event => {
-                    dispatch({ type: RECEIVED_NOTE, data: { feedType: 'homeFeed', notes: event } });
+                    dispatch({ type: RECEIVED_NOTE, data: { feedType: 'following', notes: event } });
                 });
                 eventBulk = [];
                 sub.unsub();
             })
         }
     });
+}
+
+export const getForYouFeed = (limit) => {
+    return (dispatch, getState) => {
+        let eventBulk = [];
+        let following = getState().user.following;
+        if (getState().user.following && getState().user.following.length > 0) {
+            let relays = getReadRelaysUrls(getState().user.relays);
+            let followingFilters = [{
+                kinds: [1, 6],
+                authors: following,
+                limit: limit
+            }];
+            let followingSub = myPool.sub(relays, followingFilters);
+            followingSub.on('event', async event => {
+                if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
+                    eventBulk.push(event);
+                    if (!getState().user.usersMetadata[event.pubkey]) {
+                        await dispatch(receivedUserMetadata(event.pubkey, {}));
+                    }
+                    event.tags.forEach(async tag => {
+                        if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
+                            await dispatch(receivedUserMetadata(tag[1], {}));
+                        }
+                    });
+                    if (eventBulk.length > 10) {
+                        eventBulk.forEach(event => {
+                            dispatch({ type: RECEIVED_NOTE, data: { feedType: 'following', notes: event } });
+                        });
+                        eventBulk = [];
+                    }
+                }
+            });
+            followingSub.on('eose', () => {
+                eventBulk.forEach(event => {
+                    dispatch({ type: RECEIVED_NOTE, data: { feedType: 'following', notes: event } });
+                });
+                eventBulk = [];
+                followingSub.unsub();
+            })
+            //TODO:following feed "as is" is the 1st return
+            let secondLevelfollowingFilters = [{
+                kinds: [3],
+                authors: following,
+                limit: limit
+            }];
+            let secondLevelFollowingList = [];
+            myPool.list(relays, secondLevelfollowingFilters).then(results => {
+                let totalTarget = 100;
+                let perFollowingTarget = Math.ceil(totalTarget / results.length);
+                results.forEach(following => {
+                    let followingFollowing = following.tags.map(t => { return t[1] });
+                    for (let takenCount = 0; takenCount < perFollowingTarget; takenCount++) {
+                        let randomIndex = Math.floor((Math.random() * followingFollowing.length));
+                        secondLevelFollowingList.push(followingFollowing[randomIndex]);
+                        takenCount++;
+                    }
+                })
+                secondLevelFollowingList = secondLevelFollowingList.filter(function (item, pos) {
+                    return secondLevelFollowingList.indexOf(item) === pos;
+                })
+                let secondLevelNotesFilters = [{
+                    kinds: [1],
+                    authors: secondLevelFollowingList,
+                    limit: limit
+                }];
+                let secondLevelNotesSub = myPool.sub(relays, secondLevelNotesFilters);
+                secondLevelNotesSub.on('event', async event => {
+                    if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
+                        eventBulk.push(event);
+                        if (!getState().user.usersMetadata[event.pubkey]) {
+                            await dispatch(receivedUserMetadata(event.pubkey, {}));
+                        }
+                        event.tags.forEach(async tag => {
+                            if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
+                                await dispatch(receivedUserMetadata(tag[1], {}));
+                            }
+                        });
+                        if (eventBulk.length > 10) {
+                            eventBulk.forEach(event => {
+                                dispatch({ type: RECEIVED_NOTE, data: { feedType: 'foryou', notes: event } });
+                            });
+                            eventBulk = [];
+                        }
+                    }
+                });
+                secondLevelNotesSub.on('eose', () => {
+                    eventBulk.forEach(event => {
+                        dispatch({ type: RECEIVED_NOTE, data: { feedType: 'foryou', notes: event } });
+                    });
+                    eventBulk = [];
+                    secondLevelNotesSub.unsub();
+                })
+            });
+            let secondLevelLikedFilters = [{
+                kinds: [7],
+                authors: following,
+                limit: limit
+            }];
+            myPool.list(relays, secondLevelLikedFilters).then(results => {
+                let likedNoteIds = [];
+                results.forEach(liked => {
+                    likedNoteIds.push(liked.tags.filter(t => t[0] === 'e').map(t => { return t[1] }));
+                })
+                likedNoteIds = likedNoteIds.flat().slice(0, limit);
+                let likedNotesFilter = [{
+                    kinds: [1],
+                    ids: likedNoteIds,
+                    limit: limit
+                }];
+                let likedNotesSub = myPool.sub(relays, likedNotesFilter);
+                likedNotesSub.on('event', async event => {
+                    if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
+                        eventBulk.push(event);
+                        if (!getState().user.usersMetadata[event.pubkey]) {
+                            await dispatch(receivedUserMetadata(event.pubkey, {}));
+                        }
+                        event.tags.forEach(async tag => {
+                            if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
+                                await dispatch(receivedUserMetadata(tag[1], {}));
+                            }
+                        });
+                        if (eventBulk.length > 10) {
+                            eventBulk.forEach(event => {
+                                dispatch({ type: RECEIVED_NOTE, data: { feedType: 'foryou', notes: event } });
+                            });
+                            eventBulk = [];
+                        }
+                    }
+                });
+                likedNotesSub.on('eose', () => {
+                    eventBulk.forEach(event => {
+                        dispatch({ type: RECEIVED_NOTE, data: { feedType: 'foryou', notes: event } });
+                    });
+                    eventBulk = [];
+                    likedNotesSub.unsub();
+                })
+            });
+
+
+        }
+    }
 }
 
 export const getUserNotes = (publicKeyHex, limit) => {
@@ -144,14 +286,14 @@ export const getUserNotes = (publicKeyHex, limit) => {
             })
             if (eventBulk.length > 10) {
                 eventBulk.forEach(event => {
-                    dispatch({ type: RECEIVED_NOTE, data: { feedType: 'profileFeed', notes: event } });
+                    dispatch({ type: RECEIVED_NOTE, data: { feedType: 'profile', notes: event } });
                 });
                 eventBulk = [];
             }
         });
         sub.on('eose', () => {
             eventBulk.forEach(event => {
-                dispatch({ type: RECEIVED_NOTE, data: { feedType: 'profileFeed', notes: event } });
+                dispatch({ type: RECEIVED_NOTE, data: { feedType: 'profile', notes: event } });
             });
             eventBulk = [];
             sub.unsub();
@@ -250,8 +392,9 @@ export const getNote = (id) => {
     });
 }
 
-export const getMyInfo = (publicKey) => {
+export const getMyInfo = () => {
     return ((dispatch, getState) => {
+        let publicKey = getState().user.account.publicKey;
         if (publicKey) {
             let relays = getReadRelaysUrls(getState().user.relays);
             let filters = [{
@@ -314,9 +457,9 @@ export const getUsersMetadata = () => {
             sub.on('event', event => {
                 let userMetadata = JSON.parse(event.content);
                 userMetadata.load = false;
+                userMetadata.created_at = event.created_at;
                 userMetadata.pubkey = event.pubkey;
                 metadataBulk.push(userMetadata);
-                //dispatch(receivedUserMetadata(event.pubkey, userMetadata));
                 if (metadataBulk.length > 10) {
                     metadataBulk.forEach(userMetadata => {
                         dispatch(receivedUserMetadata(userMetadata.pubkey, userMetadata));
@@ -567,12 +710,6 @@ export const publishProfile = profile => {
     }
 }
 
-export const selectMetadatas = () => {
-    return (dispatch, getState) => {
-        dispatch({ type: SELECT_METADATA, data: getState().user.usersMetadata });
-    }
-}
-
 export const addFollowing = (publicKeyHex) => {
     return (dispatch, getState) => {
         let event = {
@@ -606,5 +743,12 @@ export const addFollowing = (publicKeyHex) => {
 export const removeFollowing = (publicKeyHex) => {
     return (dispatch, getState) => {
         dispatch({ type: REMOVE_FOLLOWING, data: publicKeyHex });
+    }
+}
+
+export const locatedNip05 = (publicKeyHex) => {
+    return (dispatch, getState) => {
+        let userMetadata = getState().user.usersMetadata[publicKeyHex];
+        dispatch({ type: LOCATED_USER, data: { publicKeyHex: publicKeyHex, userMetadata: userMetadata ?? {} } })
     }
 }

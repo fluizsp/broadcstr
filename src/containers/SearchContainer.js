@@ -1,11 +1,12 @@
 import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Tabs, TabList, Tab, Button, Input, InputGroup, InputLeftElement, Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { addFollowing, CLEAR_SEARCH, getMyInfo, getUserFollowers, getUserFollowing, getUserNotes, removeFollowing, search, UNLOAD_NOTES } from '../actions/relay';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { addFollowing, CLEAR_SEARCH, getMyInfo, getUserFollowers, getUserFollowing, getUserNotes, locatedNip05, LOCATED_USER, removeFollowing, search, UNLOAD_NOTES } from '../actions/relay';
 import { useParams } from 'react-router';
 import NoteList from '../components/NoteList';
 import { IoIosSearch } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
+import { nip05 } from 'nostr-tools';
 
 const mapDispatchToProps = (dispatch, getState) => {
     return {
@@ -47,6 +48,7 @@ const mapStateToProps = (state, ownProps) => {
 };
 
 const SearchContainer = props => {
+    const dispatch = useDispatch();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const bgGradient = useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const params = useParams();
@@ -60,8 +62,8 @@ const SearchContainer = props => {
 
     useEffect(() => {
         props.clearSearch();
-        console.log('useEffect initial')
         performSearch();
+        document.title="Broadcstr - Search"
     }, [])
     let notes = [];
     let users = [];
@@ -84,11 +86,18 @@ const SearchContainer = props => {
         }
     });
     const performSearch = term => {
-
         props.clearSearch();
         if (!term)
             term = searchTerm;
         if (term && term.length >= 3) {
+            if (term.includes('@')) {
+                nip05.queryProfile(term).then(value => {
+                    if (value) {
+                        console.log(value);
+                        dispatch(locatedNip05(value.pubkey));
+                    }
+                })
+            }
             console.log(term);
             setSearchTerm(term);
             props.search(activeView === 0 ? 'users' : 'notes', term)
@@ -102,7 +111,7 @@ const SearchContainer = props => {
         setNoResults(false);
     }
     const isLoading = searchTerm && searchTerm.length >= 3 && ((activeView === 0 && users.length === 0) || (activeView === 1 && notes.length === 0))
-    console.log("Render Profile");
+    console.log("Render Search");
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
             <Box ml={{ md: '100px', lg: '330px' }} >
@@ -112,7 +121,7 @@ const SearchContainer = props => {
                             {/*<FormLabel color="gray.400" mb="5">Searching for: "{params.term}"</FormLabel>*/}
                             <InputGroup variant="unstyçed" mb="5">
                                 <InputLeftElement children={<IoIosSearch />}></InputLeftElement>
-                                <Input bg="transparent" variant="unstyçed" placeholder={searchTerm === undefined ? activeView===0?'Search for users handle/username or display name':'Search for hashtags, like #bitcoin' : `Searching for: "${searchTerm}"`} onKeyUp={async k => { if (k.key === "Enter") { performSearch(k.target.value) } }}></Input>
+                                <Input bg="transparent" variant="unstyçed" placeholder={searchTerm === undefined ? activeView === 0 ? 'Search for users handle/username or display name' : 'Search for hashtags, like #bitcoin' : `Searching for: "${searchTerm}"`} onKeyUp={async k => { if (k.key === "Enter") { performSearch(k.target.value) } }}></Input>
                             </InputGroup>
                             <Tabs ml="-12px" index={activeView} mr="-12px">
                                 <TabList>

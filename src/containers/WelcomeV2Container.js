@@ -93,6 +93,7 @@ const WelcomeV2Container = (props) => {
                     <Box p={50}>
                         <VStack spacing="10">
                             <Image src={logo} w={['250px', '250px', '400px']} />
+                            <Heading size="md" color="white">The social media that YOU control and define the boundaries.</Heading>
                             <Box width="400px" textAlign="center">
                                 <Swiper
                                     spaceBetween={0}

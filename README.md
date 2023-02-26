@@ -19,6 +19,16 @@ Because it is like your social network, but:
 
 ## Version info:
 
+**Version 0.2 - Updates and fixes!**
+- New Welcome/Account/Login flow: Cleaner and simpler login and new account flow to reduce complexity for the new user;
+- New "For You" feed, to improve content diversity on the home screen;
+- Latest profile information: Fixed a bug where old profile information was replacing newer profile information;
+- Image view: Added a feature to expand image clicking on it for better readability;
+- Searching for nip-05: Querying domains in nip-05 search for faster return;
+- Longer notes: Automatic collapsing longer content and allowing to expand/collapse it;
+- Pagination fixes: Improved pagination on some views;
+- Small fixes: And other small fixes;
+
 **Version 0.1.2!**
 
 - Fixed profile view not showing reposts;

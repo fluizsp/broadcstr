@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import {
-    Box
+    Box, Center, HStack, Image, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay, useColorModeValue, VStack
 } from '@chakra-ui/react';
 import {
     Route,
@@ -12,12 +12,12 @@ import TopBar from '../components/TopBar';
 import MenuBar from '../components/MenuBar';
 import BottomNavigation from '../components/BottomNavigation';
 import HomeContainer from './HomeContainer';
-import { connect } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import NoteDetailContainer from './NoteDetailContainer';
 import { logout, saveToStorage } from '../actions/account';
 import ProfileContainer from './ProfileContainer';
 import SearchContainer from './SearchContainer';
-import { getMyInfo } from '../actions/relay';
+import { getMyInfo, VIEW_IMAGE } from '../actions/relay';
 import SettingsContainer from './SettingsContainer';
 import EmbedNoteContainer from './EmbedNoteContainer';
 import AboutContainer from './AboutContainer';
@@ -104,11 +104,16 @@ const search = props => {
 }
 
 const AppContainer = (props) => {
-
+    const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
+    const dispatch = useDispatch();
     useEffect(() => {
         if (props.account && props.account.publicKey)
             props.loadMyInfo(props.account.publicKey);
     }, [props.account])
+    const imageSrc = useSelector(state => state.content.imageSrc);
+    const closeImage = () => {
+        dispatch({ type: VIEW_IMAGE, data: null });
+    }
     return (<Box minH="100vH" bgGradient='linear(to-br, brand.purple, brand.green)'>
         <BrowserRouter>
             <Routes>
@@ -120,8 +125,22 @@ const AppContainer = (props) => {
                 <Route path="/note/:id" element={noteDetail(props)} />
                 <Route exact path="/:id" element={profile(props)} />
                 <Route path="/search/:term?" element={search(props)} />
+
             </Routes>
         </BrowserRouter>
+        <Modal size="full" isOpen={imageSrc && imageSrc !== ""} bg="none" onClose={closeImage} closeOnEsc closeOnOverlayClick>
+            <ModalOverlay />
+            <ModalContent bg={uiColor}>
+                <ModalCloseButton />
+                <ModalBody p={0}>
+                    <HStack h="100vH" textAlign="center">
+                        <VStack w="100%">
+                            <Image p={6} maxH="100vH" src={imageSrc} />
+                        </VStack>
+                    </HStack>
+                </ModalBody>
+            </ModalContent>
+        </Modal>
     </Box>)
 }
 

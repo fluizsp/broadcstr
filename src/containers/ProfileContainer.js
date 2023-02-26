@@ -56,8 +56,7 @@ const mapDispatchToProps = (dispatch, getState) => {
 
 const mapStateToProps = (state, ownProps) => {
     return {
-        //userId: state.content.lastUserId,
-        user: nip19.decode(state.user.account.publicKey).data === state.content.lastUserId ? state.user.accountInfo : state.user.usersMetadata[state.content.lastUserId] ?? {},
+        user: state.user.account.publicKey !== undefined ? nip19.decode(state.user.account.publicKey).data === state.content.lastUserId ? state.user.accountInfo : state.user.usersMetadata[state.content.lastUserId] ?? {} : {},
         account: state.user.account,
         limit: state.content.limit
     }
@@ -92,7 +91,7 @@ const ProfileContainer = props => {
         }
     }, [publicKeyHex]);
     useEffect(() => {
-        if (!params.id.includes('@'))
+        if (!params.id.includes('@') && params.id.includes('npub'))
             setPublicKeyHex(nip19.decode(params.id).data);
         else
             nip05.queryProfile(params.id).then(value => {
@@ -103,6 +102,8 @@ const ProfileContainer = props => {
     useEffect(() => {
         console.log('useEffect initial')
         document.title = `Brodcstr - Profile - ${params.id}`;
+        /*if (!props.user.account || props.user.account.publicKey === undefined)
+            navigate('/welcome');*/
         if (params.id.includes('@'))
             nip05.queryProfile(params.id).then(value => {
                 if (value)
@@ -110,14 +111,14 @@ const ProfileContainer = props => {
                 else
                     navigate('/');
             })
-        else
+        else if (params.id.includes('npub'))
             setPublicKeyHex(nip19.decode(params.id).data);
     }, [])
     let notes = [];
     let replies = [];
-    let isOwnProfile = publicKeyHex === nip19.decode(props.account.publicKey).data;
+    let isOwnProfile = props.account.publicKey !== undefined && publicKeyHex === nip19.decode(props.account.publicKey).data;
     let isFollowing = useSelector(state => state.user.following.filter(f => f === publicKeyHex).length > 0);
-    notes = useSelector(state => Object.keys(state.content.profileFeed).map(k => { return state.content.profileFeed[k] })
+    notes = useSelector(state => Object.keys(state.content.feeds.profile).map(k => { return state.content.feeds.profile[k] })
         .filter(note => note.pubkey === publicKeyHex || note.reposted_by === publicKeyHex)
         .filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
@@ -131,7 +132,7 @@ const ProfileContainer = props => {
             return aIds === bIds;
         })
 
-    replies = useSelector(state => Object.keys(state.content.profileFeed).map(k => { return state.content.profileFeed[k] })
+    replies = useSelector(state => Object.keys(state.content.feeds.profile).map(k => { return state.content.feeds.profile[k] })
         .filter(note => note.pubkey === publicKeyHex)
         .filter(note => note.kind === 1 && note.tags.filter(t => t[0] === "e").length > 0)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
@@ -187,7 +188,7 @@ const ProfileContainer = props => {
                                             <Skeleton w="300px" h={3} mb="5" />
                                             <Skeleton w="300px" h={3} mb="5" />
                                         </Box>}
-                                        {props.user.lud16?<Link as="b" color="green.400" href={`lightning:${props.user.lud16}`} fontSize="sm">⚡{props.user.lud16}</Link>:''}
+                                    {props.user.lud16 ? <Link as="b" color="green.400" href={`lightning:${props.user.lud16}`} fontSize="sm">⚡{props.user.lud16}</Link> : ''}
                                 </GridItem>
                             </Grid>
                             <Tabs ml="-25px" index={activeView} mt="50px" mr="-25px">
