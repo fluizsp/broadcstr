@@ -135,7 +135,7 @@ const AppContainer = (props) => {
                 <ModalBody p={0}>
                     <HStack h="100vH" textAlign="center">
                         <VStack w="100%">
-                            <Image p={12} maxH="100vH" src={imageSrc} />
+                            <Image p={6} maxH="100vH" src={imageSrc} />
                         </VStack>
                     </HStack>
                 </ModalBody>

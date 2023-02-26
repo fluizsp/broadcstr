@@ -45,6 +45,36 @@ const AboutContainer = (props) => {
                             </List>
                             <Heading size="md" mt={6}>Version info:</Heading>
                             <Text p={2}>
+                                Version <strong>0.2</strong> - Updates and fixes!
+                                <br />Features and fixes implemented on this version:
+                                <UnorderedList spacing={2} p={2}>
+                                    <ListItem>
+                                        <strong>New Welcome/Account/Login flow:</strong> Cleaner and simpler login and new account flow to reduce complexity for the new user;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>New FOR YOU feed:</strong> In order to improve quality and diversity of home feed;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Latest profile information:</strong> Fixed a bug where old profile information was replacing newer profile information;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Image view:</strong> Added a feature to expand image clicking on it for better readability;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Searching for nip-05:</strong> Querying domains in nip-05 search for faster return;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Longer notes:</strong> Automatic collapsing longer content and allowing to expand/collapse it;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Pagination fixes:</strong> Improved pagination on some views;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Small fixes:</strong> And other small fixes;
+                                    </ListItem>
+                                </UnorderedList>
+                            </Text>
+                            <Text p={2}>
                                 Version <strong>0.1</strong> - First Release!
                                 <br />Main features/nips implemented on this version:
                                 <UnorderedList spacing={2} p={2}>

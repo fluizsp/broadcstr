@@ -1,6 +1,6 @@
 import { Box, Container, Spinner, SlideFade, VStack, Fade, Button, useColorModeValue } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
-import { connect, useSelector } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { nip19 } from 'nostr-tools';
 
 
@@ -10,29 +10,8 @@ import { getUsersMetadata } from '../actions/relay'
 import NoteList from '../components/NoteList';
 import { useParams } from 'react-router';
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        loadUsersMetadata: () => {
-            dispatch(getUsersMetadata());
-        },
-        listNoteReplies: (id) => {
-            dispatch(listNoteReplies(id));
-        },
-        loadNote: (id) => {
-            dispatch(getNote(id));
-        }
-    }
-};
-
-const mapStateToProps = (state, ownProps) => {
-    return {
-        account: state.user.account,
-        accountInfo: state.user.accountInfo,
-        likes: state.user.likes,
-    }
-};
-
 const NoteDetailContainer = props => {
+    const dispatch = useDispatch()
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const bgGradient = useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const params = useParams();
@@ -43,14 +22,9 @@ const NoteDetailContainer = props => {
         setLimit(limit + 25);
     }
     useEffect(() => {
-        let loading = false;
-        if (!props.note || props.note.id !== noteId) {
-            props.loadNote(noteId);
-        }
-        if (!props.note || (!props.note.likes && !props.note.replies && !props.note.reposts)) {
-            props.listNoteReplies(noteId);
-        }
-        document.title=`Brodcstr - Note - ${params.id}`;
+        dispatch(getNote(noteId));
+        dispatch(listNoteReplies(noteId));
+        document.title = `Brodcstr - Note - ${params.id}`;
 
     }, [noteId]);
     let note = useSelector(state => state.content.notes[noteId]) ?? {};
@@ -107,4 +81,4 @@ const NoteDetailContainer = props => {
 
     )
 }
-export default connect(mapStateToProps, mapDispatchToProps)(NoteDetailContainer);
+export default NoteDetailContainer;

@@ -118,7 +118,7 @@ const ProfileContainer = props => {
     let replies = [];
     let isOwnProfile = props.account.publicKey !== undefined && publicKeyHex === nip19.decode(props.account.publicKey).data;
     let isFollowing = useSelector(state => state.user.following.filter(f => f === publicKeyHex).length > 0);
-    notes = useSelector(state => Object.keys(state.content.profileFeed).map(k => { return state.content.profileFeed[k] })
+    notes = useSelector(state => Object.keys(state.content.feeds.profile).map(k => { return state.content.feeds.profile[k] })
         .filter(note => note.pubkey === publicKeyHex || note.reposted_by === publicKeyHex)
         .filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
@@ -132,7 +132,7 @@ const ProfileContainer = props => {
             return aIds === bIds;
         })
 
-    replies = useSelector(state => Object.keys(state.content.profileFeed).map(k => { return state.content.profileFeed[k] })
+    replies = useSelector(state => Object.keys(state.content.feeds.profile).map(k => { return state.content.feeds.profile[k] })
         .filter(note => note.pubkey === publicKeyHex)
         .filter(note => note.kind === 1 && note.tags.filter(t => t[0] === "e").length > 0)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })

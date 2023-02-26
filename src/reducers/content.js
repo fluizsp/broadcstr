@@ -3,15 +3,14 @@ import { createReducer } from '@reduxjs/toolkit'
 
 const initialState = {
     notes: {},
-    homeFeed: {},
+    feeds: {
+        following: {},
+        foryou: {},
+        trending: {},
+        profile: {}
+    },
     profileFeed: {},
-    //selectedNotes: [],
-    //relatedsToLoad: [],
-    //relatedsRequested: [],
-    //loaded: null,
-    //limit: 25,
     lastUserId: null,
-    //selectedMetadata: {},
     usersFollowing: {},
     usersFollowers: {},
     locatedUsers: {},
@@ -50,7 +49,8 @@ const contentReducer = createReducer(initialState, {
         let newNote = action.data.notes;
         if (action.data.lastId)
             state.lastId = action.data.lastId;
-        if (state.notes[newNote.id] === undefined) {
+        if ((!action.data.feedType && state.notes[newNote.id] === undefined)
+            || (action.data.feedType && state.feeds[action.data.feedType][newNote.id] === undefined)) {
             if (newNote.kind === 6) {
                 let reposted_by = newNote.pubkey;
                 if (newNote.content)
@@ -62,10 +62,8 @@ const contentReducer = createReducer(initialState, {
             newNote.eTags = newNote.tags.filter(t => t[0] === 'e').map(t => { return t[1] }) ?? [];
             newNote = treatImages(newNote);
             newNote = treatEmbeds(newNote);
-            if (action.data.feedType && action.data.feedType === 'homeFeed')
-                state.homeFeed[newNote.id] = newNote;
-            else if (action.data.feedType && action.data.feedType === 'profileFeed')
-                state.profileFeed[newNote.id] = newNote;
+            if (action.data.feedType)
+                state.feeds[action.data.feedType][newNote.id] = newNote;
             else
                 state.notes[newNote.id] = newNote;
         }
@@ -128,7 +126,7 @@ const contentReducer = createReducer(initialState, {
     SET_LIMIT: (state, action) => {
         state.limit = action.data;
     },
-    SELECT_NOTES: (state, action) => {
+    /*SELECT_NOTES: (state, action) => {
         let selectedNotes = Object.keys(state.notes).map(key => {
             return state.notes[key];
         });
@@ -144,7 +142,7 @@ const contentReducer = createReducer(initialState, {
                 selectedNotes = selectedNotes.slice(0, action.data.limit ?? 50);
         }
         state.selectedNotes = selectedNotes;
-    },
+    },*/
     SELECT_METADATA: (state, action) => {
         state.selectedMetadata = action.data;
     },
