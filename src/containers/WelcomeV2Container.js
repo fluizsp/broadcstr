@@ -22,6 +22,7 @@ import { useDispatch } from "react-redux";
 import { saveToStorage, setAccount } from "../actions/account";
 import { useNavigate } from "react-router";
 import { getMyInfo } from "../actions/relay";
+import { useIntl } from "react-intl";
 
 const featureCard = (props) => {
     return (<Card ml="50px" mr="50px" p="50px" h="400px" bgGradient="linear(to-b, white 50%, gray.200 100%)" >
@@ -39,12 +40,14 @@ const featureCard = (props) => {
 const WelcomeV2Container = (props) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const intl = useIntl();
     const toast = useToast()
     const [handle, setHandle] = useState();
     const [loginPKey, setLoginPkey] = useState(false);
     const [privateKey, setPrivateKey] = useState();
     const createAccount = () => {
         console.log(handle);
+
         let privateKey = generatePrivateKey();
         let publicKey = getPublicKey(privateKey);
         privateKey = nip19.nsecEncode(privateKey);
@@ -63,7 +66,7 @@ const WelcomeV2Container = (props) => {
 
     const extensionLogin = () => {
         if (!window.nostr)
-            toast({ description: "Can't find extension!", status: "error" })
+            toast({ description: intl.formatMessage({ id: 'welcome.errorExtension' }), status: "error" })
 
         window.nostr.getPublicKey().then(publicKeyHex => {
             let publicKey = nip19.npubEncode(publicKeyHex);
@@ -74,15 +77,21 @@ const WelcomeV2Container = (props) => {
         });
     }
     const keyLogin = () => {
-        try{
-        let privateKeyHex = nip19.decode(privateKey).data;
-        let publicKey = nip19.npubEncode(getPublicKey(privateKeyHex));
-        dispatch(setAccount({ publicKey: publicKey, privateKey: privateKey }));
-        dispatch(getMyInfo(publicKey));
-        dispatch(saveToStorage());
-        navigate('/');
+        try {
+            let publicKey = null;
+            if (privateKey.includes('nsec')) {
+                let privateKeyHex = nip19.decode(privateKey).data;
+                publicKey = nip19.npubEncode(getPublicKey(privateKeyHex));
+            } else if (privateKey.includes('npub')) {
+                publicKey = privateKey;
+                setPrivateKey(undefined);
+            }
+            dispatch(setAccount({ publicKey: publicKey, privateKey: privateKey.includes('npub') ? undefined : privateKey }));
+            dispatch(getMyInfo(publicKey));
+            dispatch(saveToStorage());
+            navigate('/');
         } catch {
-            toast({ description: "Error getting public key, check your key and try again!", status: "error" })
+            toast({ description: intl.formatMessage({ id: 'welcome.errorPublicKey' }), status: "error" })
         }
     }
 
@@ -93,7 +102,7 @@ const WelcomeV2Container = (props) => {
                     <Box p={50}>
                         <VStack spacing="10">
                             <Image src={logo} w={['250px', '250px', '400px']} />
-                            <Heading size="md" color="white">The social media that YOU control and define the boundaries.</Heading>
+                            <Heading size="md" color="white">{intl.formatMessage({ id: 'welcome.header' })}</Heading>
                             <Box width="400px" textAlign="center">
                                 <Swiper
                                     spaceBetween={0}
@@ -102,45 +111,45 @@ const WelcomeV2Container = (props) => {
                                     navigation={true}
                                     modules={[Navigation, Pagination]}>
                                     <SwiperSlide>
-                                        {featureCard({ src: privacy, heading: 'Private!', text: "Your account doesn't require e-mails or phone numbers. Start just with your pair of keys;" })}
+                                        {featureCard({ src: privacy, heading: intl.formatMessage({ id: 'welcome.privacyTitle' }), text: intl.formatMessage({ id: 'welcome.privacyDescription' }) })}
                                     </SwiperSlide>
                                     <SwiperSlide>
-                                        {featureCard({ src: decentralized, heading: 'Decentralized!', text: "Censorship resistance means no Big Techs! You control where your consume and post information. Built on Nostr." })}
+                                        {featureCard({ src: decentralized, heading: intl.formatMessage({ id: 'welcome.decentralizedTitle' }), text: intl.formatMessage({ id: 'welcome.decentralizedDescription' }) })}
                                     </SwiperSlide>
                                     <SwiperSlide>
-                                        {featureCard({ src: encrypted, heading: 'Encrypted!', text: "Content signed with YOUR private key! Messages encrypted with the same key. No one will ever get into your messages without your authorization. Ever" })}
+                                        {featureCard({ src: encrypted, heading: intl.formatMessage({ id: 'welcome.encryptedTitle' }), text: intl.formatMessage({ id: 'welcome.encryptedDescription' }) })}
                                     </SwiperSlide>
                                     <SwiperSlide>
-                                        {featureCard({ src: value4value, heading: 'Value4Value', text: "Reward your favorite content with Bitcoin Lightning Network! Tip and stack sats;" })}
+                                        {featureCard({ src: value4value, heading: intl.formatMessage({ id: 'welcome.value4valueTitle' }), text: intl.formatMessage({ id: 'welcome.value4valueDescription' }) })}
                                     </SwiperSlide>
                                 </Swiper>
                             </Box>
                             <Box>
-                                <Heading size="md" color="white">Start using Broadcstr:</Heading>
+                                <Heading size="md" color="white">{intl.formatMessage({ id: 'welcome.startUsing' })}</Heading>
                                 <Card mt="5" m="5" p="50px" bgGradient="linear(to-b, white 50%, gray.200 100%)" >
                                     <VStack gap={4} >
-                                        <Heading size="md" color="green.400">Choose an username/handle:</Heading>
+                                        <Heading size="md" color="green.400">{intl.formatMessage({ id: 'welcome.chooseHandle' })}</Heading>
                                         <InputGroup>
                                             <InputLeftAddon color="blue.700" children="@" />
                                             <Input variant="outline" id="username" placeholder='handle' onBlur={(e) => setHandle(e.target.value)}></Input>
                                         </InputGroup>
-                                        <Button bgGradient="linear(to-br, brand.purple, brand.green)" onClick={createAccount}>Go!</Button>
+                                        <Button bgGradient="linear(to-br, brand.purple, brand.green)" onClick={createAccount}>{intl.formatMessage({ id: 'welcome.go' })}</Button>
                                     </VStack>
                                 </Card>
-                                <Heading size="md" color="white">Already have keys?</Heading>
+                                <Heading size="md" color="white">{intl.formatMessage({ id: 'welcome.haveKeys' })}</Heading>
                                 <Card mt="5" m="5" p="50px" bgGradient="linear(to-b, white 50%, gray.200 100%)" >
                                     <VStack gap={4}>
-                                        <Heading size="md" color="green.400">Enter using:</Heading>
-                                        <Button bgGradient="linear(to-br, brand.purple, brand.green)" leftIcon={<BrowsersOutline color="blue.700" />} onClick={extensionLogin}>Browser Extension</Button>
-                                        <Button bgGradient="linear(to-br, brand.purple, brand.green)" leftIcon={<HiKey />} onClick={() => { setLoginPkey(!loginPKey) }}>Private Key</Button>
+                                        <Heading size="md" color="green.400">{intl.formatMessage({ id: 'welcome.enterUsing' })}</Heading>
+                                        <Button bgGradient="linear(to-br, brand.purple, brand.green)" leftIcon={<BrowsersOutline color="blue.700" />} onClick={extensionLogin}>{intl.formatMessage({ id: 'welcome.browserExtension' })}</Button>
+                                        <Button bgGradient="linear(to-br, brand.purple, brand.green)" leftIcon={<HiKey />} onClick={() => { setLoginPkey(!loginPKey) }}>{intl.formatMessage({ id: 'keys' })}</Button>
                                         <Collapse in={loginPKey}>
                                             <InputGroup>
                                                 <InputLeftAddon color="blue.700" children="@" />
-                                                <Input variant="outline" id="privateKey" type="password" placeholder='nsec...' onChange={e => { setPrivateKey(e.target.value) }}></Input>
+                                                <Input variant="outline" id="privateKey" type="password" placeholder='nsec... / npub...' onChange={e => { setPrivateKey(e.target.value) }}></Input>
                                             </InputGroup>
                                         </Collapse>
                                         <Collapse in={loginPKey}>
-                                            <Button bgGradient="linear(to-br, brand.purple, brand.green)" onClick={keyLogin}>Go!</Button>
+                                            <Button bgGradient="linear(to-br, brand.purple, brand.green)" onClick={keyLogin}>{intl.formatMessage({ id: 'welcome.go' })}</Button>
                                         </Collapse>
                                     </VStack>
                                 </Card>

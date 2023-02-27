@@ -1,0 +1,22 @@
+{
+    "welcome.header": "The social media that YOU control and define the boundaries.",
+    "welcome.privacyTitle": "Privacy!",
+    "welcome.privacyDescription": "Your account doesn't require e-mails or phone numbers. Start just with your pair of keys",
+    "welcome.decentralizedTitle": "'Decentralized!",
+    "welcome.decentralizedDescription": "Resistance to censorship and Big Techs control! You control where your consume and post information. Built on Nostr.",
+    "welcome.encryptedTitle":"Encrypted!",
+    "welcome.encryptedDescription":"Content signed with YOUR private key! Messages encrypted with the same key. No one will ever get into your messages without your authorization. Ever.",
+    "welcome.value4valueTitle":"Value4Value!",
+    "welcome.value4valueDescription":"Reward your favorite content with Bitcoin Lightning Network! Tip and stack sats",
+    "welcome.startUsing":"Start using Broadcstr:",
+    "welcome.chooseHandle":"Choose an username/handle:",
+    "welcome.haveKeys":"Already have keys?",
+    "welcome.enterUsing":"Enter using:",
+    "welcome.browserExtension":"Browser Extension",
+    "welcome.go":"Go!",
+    "welcome.errorPublicKey":"Error getting public key, check your key and try again!",
+    "welcome.errorExtension":"Can't find extension!",
+    "privateKey":"Private Key",
+    "keys":"Keys",
+    "home":"Home"
+}

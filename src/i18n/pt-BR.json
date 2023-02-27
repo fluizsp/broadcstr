@@ -1,0 +1,21 @@
+{
+    "welcome.header": "A rede social que VOCÊ controla e define os limites!",
+    "welcome.privacyTitle": "Privacidade!",
+    "welcome.privacyDescription": "Criar uma conta não exige e-mails ou números de telefone. Comece apenas criando suas chaves.",
+    "welcome.decentralizedTitle": "Descentralizado!",
+    "welcome.decentralizedDescription": "Resistente a censura e ao controle das Big Techs! Você controla onde consome e onde publica conteúdo. Construído na rede Nostr.",
+    "welcome.encryptedTitle":"Criptografado!",
+    "welcome.encryptedDescription":"Mensagens são cripografadas com a sua chave. Empresas ou governos não acessarão suas mensagens sem sua autorização. Nunca.",
+    "welcome.value4valueTitle":"Ganhe Bitcoins!",
+    "welcome.value4valueDescription":"Recompense o conteúdo que gostou através da rede Lightning do Bitcoin! Ganhe gorjetas pelo seu conteúdo e acumule Satohis!",
+    "welcome.startUsing":"Começe a usar Broadcstr:",
+    "welcome.chooseHandle":"Escolha seu usuário/handle:",
+    "welcome.haveKeys":"Já possui chaves?",
+    "welcome.enterUsing":"Entrar usando:",
+    "welcome.browserExtension":"Extensão do Navegador",
+    "welcome.go":"Vamos!",
+    "welcome.errorPublicKey":"Não foi possível obter a chave pública, verifique a chave informada e tente novamente!",
+    "welcome.errorExtension":"Não foi possível encontrar a extensão do navegador, verifique a extensão e tente novamente!",
+    "privateKey":"Chave Privada",
+    "keys":"Chaves"
+}
