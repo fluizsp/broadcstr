@@ -9,13 +9,14 @@ import format from 'date-fns/format';
 import { useDispatch, useSelector } from 'react-redux';
 import MentionTag from './MentionTag';
 import { HiLightningBolt, HiReply } from 'react-icons/hi';
-import { likeNote, REPLY_TO, repostNote, VIEW_IMAGE } from '../actions/relay';
+import { addNoteRelatedToload, likeNote, REPLY_TO, repostNote, VIEW_IMAGE } from '../actions/relay';
 import { GoBroadcast, GoCheck } from 'react-icons/go';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const Note = props => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+
     const [reposted, setReposted] = useState(false);
     const [expanded, setExpanded] = useState(false);
     const alphaGradient = useColorModeValue('linear(to-t, brand.lightUi 75%, brand.lightUiAlpha 100%)', 'linear(to-t, brand.darkUi 75%, brand.darkUiAlpha 100%)');
@@ -25,6 +26,7 @@ const Note = props => {
     let authorMetadata = useSelector(state => state.user.usersMetadata[note.pubkey], (a, b) => { return a && b && a.name === b.name }) ?? {};
     let responseTags = note.eTags ?? [];
     let responseUserTags = note.pTags ?? [];
+    let relateds = useSelector(state => state.content.allNotesRelateds[note.id]) ?? {};
     let liked = useSelector(state => state.user.likes.filter(l => l === note.id).length > 0);
     //console.log(`render note ${note.content}`)
     let created = note ? new Date(note.created_at * 1000) : new Date();
@@ -39,6 +41,10 @@ const Note = props => {
     const mentionBreak = /(#\[[0-9]+\])/
     const urlBreak = new RegExp(/(http[s]?:\/\/[-a-zA-Z0-9()@:%_\+.~#?&//=]*)/, 'gmi');
     let contentElements = note.content.split(lineBreakRgx);
+    useEffect(() => {
+        if (note.id && !props.isReply)
+            dispatch(addNoteRelatedToload(note.id));
+    }, [])
     contentElements = contentElements.map(element => {
         let innerElements = element.split(mentionBreak).map(mBElement => {
             return mBElement.split(urlBreak).map(uBEllement => {
@@ -145,40 +151,29 @@ const Note = props => {
                         note.embed.kind === 'youtube' ?
                             <iframe title={note.embed.src} height="400px" width="100%" src={note.embed.src} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
                             : note.embed.kind === 'mp4' ? <video src={note.embed.src} muted height="300" width="100%" controls /> : '' : ''}
-                    <Flex bg={uiColor}>
-                        <Box w="200px">
+                    <Box bg={uiColor}>
+                        <HStack>
                             <Tooltip label={liked ? "You liked!" : "Like"} fontSize='md' hasArrow={true}>
-                                <Button onClick={like} isDisabled={liked} variant="ghost" size="md" >{liked ? <IoIosHeart color="red" /> : <BiHeart />}</Button>
+                                <Button leftIcon={liked ? <IoIosHeart color="red" /> : <BiHeart />} onClick={like} isDisabled={liked} variant="ghost" size="md" color="gray.500">{relateds.likes ? relateds.likes.length : ""}</Button>
+
                             </Tooltip>
                             <Tooltip label="Zap! (coming soon)" fontSize='md' hasArrow={true}>
                                 <Button variant="ghost" isDisabled size="md" ><HiLightningBolt /></Button>
                             </Tooltip>
                             <Tooltip label="Reply" fontSize='md' hasArrow={true}>
-                                <Button variant="ghost" size="md" onClick={reply}><HiReply /></Button>
+                                <Button leftIcon={<HiReply />} variant="ghost" size="md" onClick={reply}>{relateds.replies ? relateds.replies.length : ""}</Button>
                             </Tooltip>
                             <Popover>
                                 <PopoverTrigger>
-                                    <Button variant="ghost" size="md" ><GoBroadcast /></Button>
+                                    <Button leftIcon={reposted ? <GoCheck /> : <GoBroadcast />} variant="ghost" size="md" >{relateds.reposts ? relateds.reposts.length : ""}</Button>
                                 </PopoverTrigger>
                                 <PopoverContent>
                                     <PopoverArrow />
                                     <Button onClick={repost} leftIcon={reposted ? <GoCheck /> : <GoBroadcast />} variant="ghost" color={reposted ? 'green.400' : ''} size="md" >{reposted ? 'Brodcstd!' : 'Broadcst this note!'}</Button>
                                 </PopoverContent>
                             </Popover>
-
-                        </Box>
-                        <Box flex="1">
-                            {note.likes && props.isThread ? <Button isDisabled={true} leftIcon={<IoIosHeart />} size="md" variant="ghost">{note.likes}</Button> :
-                                null}
-                            {note.replies && props.isThread ? <Button isDisabled={true} leftIcon={<BiCommentDetail />} size="md" variant="ghost">{note.replies.length}</Button> :
-                                null}
-                            {note.reposts && props.isThread ? <Button isDisabled={true} leftIcon={<BiRepost />} size="md" variant="ghost">{note.reposts}</Button> :
-                                null}
-                        </Box>
-                        <Box>
-
-                        </Box>
-                    </Flex>
+                        </HStack>
+                    </Box>
                 </VStack>
             </Card>
         </Fade >

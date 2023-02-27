@@ -4,11 +4,12 @@ import { connect, useDispatch, useSelector } from 'react-redux';
 import { nip19 } from 'nostr-tools';
 
 
-import { getNote, listNoteReplies } from '../actions/relay';
+import { getNote, listNoteRelateds } from '../actions/relay';
 
 import { getUsersMetadata } from '../actions/relay'
 import NoteList from '../components/NoteList';
 import { useParams } from 'react-router';
+import Note from '../components/Note';
 
 const NoteDetailContainer = props => {
     const dispatch = useDispatch()
@@ -23,16 +24,13 @@ const NoteDetailContainer = props => {
     }
     useEffect(() => {
         dispatch(getNote(noteId));
-        dispatch(listNoteReplies(noteId));
+        dispatch(listNoteRelateds(noteId));
         document.title = `Brodcstr - Note - ${params.id}`;
-
     }, [noteId]);
-    let note = useSelector(state => state.content.notes[noteId]) ?? {};
-    let noteReplies = [];
-    if (note.replies)
-        noteReplies = [...note.replies];
-    let total = noteReplies.length;
-    //noteReplies.sort((a, b) => { return a.tags.filter(t => t[0] === 'p').length < b.tags.filter(t => t[0] === 'p').length ? -1 : 1 })
+    let note = useSelector(state => state.content.allNotes[noteId]) ?? {};
+    let noteRelateds = useSelector(state => state.content.allNotesRelateds ? state.content.allNotesRelateds[noteId] : {});
+    noteRelateds = noteRelateds ?? {}
+    let noteReplies = noteRelateds.replies ?? [];
     let sortedNoteReplies = [];
     sortedNoteReplies = [...noteReplies.filter(r => r.eTags.length === 1)]
     sortedNoteReplies.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
@@ -60,7 +58,8 @@ const NoteDetailContainer = props => {
                 <SlideFade in={true} offsetX="1000" offsetY="0" reverse={true} unmountOnExit={true}>
                     <Container maxW='4xl' pt="80px" pb="20px" >
                         {note && note.id ?
-                            <NoteList notes={[note]} isThread={true} likes={props.likes} /> : null}
+                            <Note note={note} relateds={noteRelateds} isThread={true} key={'Note' + note.id} />
+                            : null}
                         {/*<Box ml="10px">
                             <Card p="5" bg={uiColor} mb={5}>
                                 <Button size="sm" leftIcon={<GoReply />} variant="ghost">Reply this note</Button>
