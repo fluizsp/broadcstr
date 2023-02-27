@@ -6,7 +6,7 @@ const NoteList = props => {
     return (
         props.notes.map((note) => {
             if (note)
-                return (<Note note={note} isThread={props.isThread} isReply={props.isReply} key={'Note' + note.id} />);
+                return (<Note note={note} isReply={props.isReply} key={'Note' + note.id} />);
             else return null
         })
     )

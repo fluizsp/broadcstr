@@ -7,7 +7,7 @@ import {
 import rootReducer from './reducer';
 
 import { extendTheme } from "@chakra-ui/react"
-import { getUsersMetadata, loadRelays, selectMetadatas, SELECT_NOTES } from './actions/relay';
+import { getUsersMetadata, listNotesRelateds, loadRelays, selectMetadatas, SELECT_NOTES } from './actions/relay';
 import AppContainer from './containers/AppContainer';
 import { saveState } from './localStorage';
 import { throttle } from 'lodash';
@@ -21,12 +21,14 @@ store.subscribe(throttle(() => {
   console.log('save state to storage')
   try {
     saveState(store.getState().user, 'user');
+    saveState(store.getState().content, 'content');
   } catch { }
 }, 30000));
 
 if (!window.metadataInterval)
   window.metadataInterval = setInterval(() => {
     store.dispatch(getUsersMetadata());
+    store.dispatch(listNotesRelateds());
     //store.dispatch(selectMetadatas());
     //store.dispatch({ type: SELECT_NOTES, data: {} });
   }, 5000)

@@ -6,7 +6,7 @@ import { AiOutlineVerified } from "react-icons/ai";
 import { FaAdjust, FaGlobe, FaKey, FaPortrait, FaSave, FaSignOutAlt, FaTrash } from "react-icons/fa";
 import { GoBroadcast, GoVerified } from "react-icons/go";
 import { HiLightningBolt } from "react-icons/hi";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import defaultBanner from '../defaultBanner.gif';
 import { useNavigate, useParams } from "react-router";
 import { LOGOUT, saveToStorage, setAccount, SET_RELAYS } from "../actions/account";
@@ -44,6 +44,7 @@ const mapDispatchToProps = () => {
 }
 
 const SettingsContainer = (props) => {
+    const dispatch = useDispatch();
     const colorMode = useColorMode();
     const params = useParams();
     const toast = useToast();
@@ -139,6 +140,7 @@ const SettingsContainer = (props) => {
     }
     const saveRelays = () => {
         props.setRelays(relays);
+        dispatch(saveToStorage());
         toast({ description: "Relays configuration saved!", status: "success" })
     }
     const changeBannerImage = event => {

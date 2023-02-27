@@ -7,7 +7,6 @@ import {
 } from 'nostr-tools'
 import { SimplePool } from 'nostr-tools';
 
-
 import { setAccount } from './account';
 
 export const RECEIVED_NOTE = "RECEIVED_NOTE";
@@ -30,7 +29,12 @@ export const VIEW_IMAGE = "VIEW_IMAGE";
 export const CLOSE_IMAGE = "CLOSE_IMAGE";
 
 const myPool = new SimplePool();
-const requestedMetadatas = [];
+let requestedMetadatas = [];
+let requestedRelateds = [];
+
+setInterval(() => {
+    requestedRelateds = [];
+}, 60000)
 
 export const receivedNote = (notes, lastId) => {
     //DEPRECATED
@@ -44,13 +48,6 @@ export const receivedUserMetadata = (publicKey, userMetadata) => {
     return {
         type: RECEIVED_USER_METADATA,
         data: { publicKey: publicKey, userMetadata: userMetadata }
-    }
-}
-
-export const receivedNoteRelated = (event) => {
-    return {
-        type: RECEIVED_NOTE_RELATED,
-        data: { event: event }
     }
 }
 
@@ -362,8 +359,8 @@ export const getUserFollowers = (publicKeyHex, limit) => {
 
 export const getNote = (id) => {
     return ((dispatch, getState) => {
-        if (getState().content.notes[id]) {
-            dispatch(receivedNote(getState().content.notes[id], id));
+        if (getState().content.allNotes[id]) {
+            dispatch(receivedNote(getState().content.allNotes[id], id));
             return;
         }
         let relays = getReadRelaysUrls(getState().user.relays);
@@ -487,15 +484,23 @@ export const addNoteRelatedToload = (id) => {
     })
 }
 
-export const listNoteReplies = (id, limit) => {
-    return ((dispatch, getState) => {
-        console.log(`listNoteReplies for id:${id} `);
+export const listNotesRelateds = () => {
+    return (dispatch, getState) => {
+        let notesRelatedsToLoad = [];
+        Object.keys(getState().content.allNotesRelateds ?? {}).forEach(k => {
+            if (getState().content.allNotesRelateds[k].load && !requestedRelateds.includes(k))
+                notesRelatedsToLoad.push(k);
+        })
+        notesRelatedsToLoad.slice(0, 25);
+        notesRelatedsToLoad.forEach(id => requestedRelateds.push(id));
+        console.log('notesRelatedsToLoad');
+        console.log(notesRelatedsToLoad);
         let relays = getReadRelaysUrls(getState().user.relays);
         let filters = [
             {
-                kinds: [1]
-                , "#e": [id]
-                , limit: limit ?? 50
+                kinds: [1, 6, 7],
+                "#e": notesRelatedsToLoad,
+                limit: 5000
             }
         ];
         myPool.list(relays, filters).then(results => {
@@ -508,9 +513,36 @@ export const listNoteReplies = (id, limit) => {
                         await dispatch(receivedUserMetadata(tag[1], {}));
                     }
                 })
-                dispatch(receivedNoteRelated(event));
+                dispatch({ type: RECEIVED_NOTE_RELATED, data: event });
             });
-        });
+        })
+    }
+}
+
+export const listNoteRelateds = (id, limit) => {
+    return ((dispatch, getState) => {
+        console.log(`listNoteRelateds for id:${id} `);
+        let relays = getReadRelaysUrls(getState().user.relays);
+        let filters = [
+            {
+                kinds: [1, 6, 7],
+                "#e": [id],
+                limit: 5000
+            }
+        ];
+        myPool.list(relays, filters).then(results => {
+            results.forEach(event => {
+                if (!getState().user.usersMetadata[event.pubkey]) {
+                    dispatch(receivedUserMetadata(event.pubkey, {}));
+                }
+                event.tags.forEach(async tag => {
+                    if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
+                        await dispatch(receivedUserMetadata(tag[1], {}));
+                    }
+                })
+                dispatch({ type: RECEIVED_NOTE_RELATED, data: event });
+            });
+        })
     });
 }
 

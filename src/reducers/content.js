@@ -1,8 +1,12 @@
 import { createReducer } from '@reduxjs/toolkit'
+import { loadState } from '../localStorage';
 
+let storageState = loadState('content');
 
-const initialState = {
+const initialState = storageState ?? {
     notes: {},
+    allNotes: {},
+    allNotesRelateds: {},
     feeds: {
         following: {},
         foryou: {},
@@ -15,7 +19,6 @@ const initialState = {
     usersFollowers: {},
     locatedUsers: {},
     locatedNotes: [],
-    draftEvents: []
 };
 
 export const treatImages = (note) => {
@@ -47,71 +50,70 @@ export const treatEmbeds = (note) => {
 const contentReducer = createReducer(initialState, {
     RECEIVED_NOTE: (state, action) => {
         let newNote = action.data.notes;
-        if (action.data.lastId)
-            state.lastId = action.data.lastId;
-        if ((!action.data.feedType && state.notes[newNote.id] === undefined)
-            || (action.data.feedType && state.feeds[action.data.feedType][newNote.id] === undefined)) {
+        if (state.allNotes[newNote.id] !== undefined)
+            newNote = state.allNotes[newNote.id];
+        else {
             if (newNote.kind === 6) {
                 let reposted_by = newNote.pubkey;
                 if (newNote.content)
                     newNote = JSON.parse(newNote.content);
-                newNote.id = action.data.notes.id;
+                //newNote.id = action.data.notes.id;
                 newNote.reposted_by = reposted_by;
             }
             newNote.pTags = newNote.tags.filter(t => t[0] === 'p').map(t => { return t[1] }) ?? [];
             newNote.eTags = newNote.tags.filter(t => t[0] === 'e').map(t => { return t[1] }) ?? [];
             newNote = treatImages(newNote);
             newNote = treatEmbeds(newNote);
+            state.allNotes[newNote.id] = newNote;
+        }
+
+
+        if ((!action.data.feedType && state.notes[newNote.id] === undefined)
+            || (action.data.feedType && state.feeds[action.data.feedType][newNote.id] === undefined)) {
             if (action.data.feedType)
                 state.feeds[action.data.feedType][newNote.id] = newNote;
             else
                 state.notes[newNote.id] = newNote;
         }
     },
-    LOAD_NOTE_RELATED: (state, action) => {
-        let id = action.data;
-        if (state.relatedsToLoad.indexOf(id) === -1)
-            state.relatedsToLoad.push(id);
-    },
-    NOTE_RELATED_REQUESTED: (state, action) => {
-        console.log('NOTE_RELATED_REQUESTED');
-        let id = action.data;
-        if (state.relatedsRequested.indexOf(id) === -1)
-            state.relatedsRequested.push(id);
-    },
     RECEIVED_NOTE_RELATED: (state, action) => {
-        let noteId = action.data.event.tags.filter(tag => tag[0] === "e")[0][1];
-        if (state.notes[noteId])
-            switch (action.data.event.kind) {
-                case 1:
-                    let reply = action.data.event;
-                    reply = treatImages(reply);
-                    reply = treatEmbeds(reply);
-                    reply.pTags = reply.tags.filter(t => t[0] === 'p').map(t => { return t[1] }) ?? [];
-                    reply.eTags = reply.tags.filter(t => t[0] === 'e').map(t => { return t[1] }) ?? [];
-                    if (state.notes[noteId].replies) {
-                        if (!state.notes[noteId].replies.find(i => i.id === action.data.event.id))
-                            state.notes[noteId].replies.push(reply)
-                    } else
-                        state.notes[noteId].replies = [reply];
-                    break;
-                case 6:
-                    if (state.notes[noteId].reposts) {
-                        state.notes[noteId].reposts++
-                    }
-                    else
-                        state.notes[noteId].reposts = 1;
-                    break;
-                case 7:
-                    if (state.notes[noteId].likes) {
-                        state.notes[noteId].likes++;
-                    }
-                    else
-                        state.notes[noteId].likes = 1;
-                    break;
-                default:
-
-            }
+        let noteId = action.data.tags.filter(tag => tag[0] === "e")[0][1];
+        if (!state.allNotesRelateds)
+            state.allNotesRelateds = {};
+        if (!state.allNotesRelateds[noteId])
+            state.allNotesRelateds[noteId] = {};
+        state.allNotesRelateds[noteId].load = false;
+        switch (action.data.kind) {
+            case 1:
+                let reply = action.data;
+                reply = treatImages(reply);
+                reply = treatEmbeds(reply);
+                reply.pTags = reply.tags.filter(t => t[0] === 'p').map(t => { return t[1] }) ?? [];
+                reply.eTags = reply.tags.filter(t => t[0] === 'e').map(t => { return t[1] }) ?? [];
+                if (state.allNotesRelateds[noteId].replies) {
+                    if (!state.allNotesRelateds[noteId].replies.find(i => i.id === action.data.id))
+                        state.allNotesRelateds[noteId].replies.push(reply)
+                } else
+                    state.allNotesRelateds[noteId].replies = [reply];
+                break;
+            case 6:
+                let repost = action.data;
+                if (state.allNotesRelateds[noteId].reposts) {
+                    if (!state.allNotesRelateds[noteId].reposts.find(i => i.id === action.data.id))
+                        state.allNotesRelateds[noteId].reposts.push(repost)
+                } else
+                    state.allNotesRelateds[noteId].reposts = [repost];
+                break;
+            case 7:
+                let like = action.data;
+                if (state.allNotesRelateds[noteId].likes) {
+                    if (!state.allNotesRelateds[noteId].likes.find(i => i.id === action.data.id))
+                        state.allNotesRelateds[noteId].likes.push(like)
+                } else
+                    state.allNotesRelateds[noteId].likes = [like];
+                break;
+            default:
+        }
     },
     RECEIVED_USER_ID: (state, action) => {
         state.lastUserId = action.data;
@@ -125,6 +127,14 @@ const contentReducer = createReducer(initialState, {
     },
     SET_LIMIT: (state, action) => {
         state.limit = action.data;
+    },
+    LOAD_NOTE_RELATED: (state, action) => {
+        let noteId = action.data;
+        if (!state.allNotesRelateds)
+            state.allNotesRelateds = {};
+        if (!state.allNotesRelateds[noteId])
+            state.allNotesRelateds[noteId] = {};
+        state.allNotesRelateds[noteId].load = true;
     },
     /*SELECT_NOTES: (state, action) => {
         let selectedNotes = Object.keys(state.notes).map(key => {
