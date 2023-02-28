@@ -1,17 +1,16 @@
 import { createReducer } from '@reduxjs/toolkit'
 import { loadState } from '../localStorage';
 
-let storageState = loadState('content');
-
-const initialState = storageState ?? {
+const initialState = {
     notes: {},
-    allNotes: {},
+    allNotes: loadState('content.allNotes') ?? { },
     allNotesRelateds: {},
     feeds: {
         following: {},
         foryou: {},
         trending: {},
-        profile: {}
+        profile: {},
+        zaps: {},
     },
     profileFeed: {},
     lastUserId: null,
@@ -49,23 +48,23 @@ export const treatEmbeds = (note) => {
 
 const contentReducer = createReducer(initialState, {
     RECEIVED_NOTE: (state, action) => {
-        let newNote = action.data.notes;
-        if (state.allNotes[newNote.id] !== undefined)
+        let newNote = Object.assign({}, action.data.notes);
+        /*if (state.allNotes[newNote.id] !== undefined && !action.data.notes.zapAmount)
             newNote = state.allNotes[newNote.id];
-        else {
-            if (newNote.kind === 6) {
-                let reposted_by = newNote.pubkey;
-                if (newNote.content)
-                    newNote = JSON.parse(newNote.content);
-                //newNote.id = action.data.notes.id;
-                newNote.reposted_by = reposted_by;
-            }
-            newNote.pTags = newNote.tags.filter(t => t[0] === 'p').map(t => { return t[1] }) ?? [];
-            newNote.eTags = newNote.tags.filter(t => t[0] === 'e').map(t => { return t[1] }) ?? [];
-            newNote = treatImages(newNote);
-            newNote = treatEmbeds(newNote);
-            state.allNotes[newNote.id] = newNote;
+        else {*/
+        if (newNote.kind === 6) {
+            let reposted_by = newNote.pubkey;
+            if (newNote.content)
+                newNote = JSON.parse(newNote.content);
+            //newNote.id = action.data.notes.id;
+            newNote.reposted_by = reposted_by;
         }
+        newNote.pTags = newNote.tags.filter(t => t[0] === 'p').map(t => { return t[1] }) ?? [];
+        newNote.eTags = newNote.tags.filter(t => t[0] === 'e').map(t => { return t[1] }) ?? [];
+        newNote = treatImages(newNote);
+        newNote = treatEmbeds(newNote);
+        state.allNotes[newNote.id] = newNote;
+        //}
 
 
         if ((!action.data.feedType && state.notes[newNote.id] === undefined)
@@ -112,6 +111,27 @@ const contentReducer = createReducer(initialState, {
                 } else
                     state.allNotesRelateds[noteId].likes = [like];
                 break;
+            case 9735:
+                let zap = action.data;
+                let bolt11 = zap.tags.filter(t => t[0] === 'bolt11');
+                zap.amount = 0;
+                if (bolt11[0] && bolt11[0][1]) {
+                    const zapAmountRgx = /lnbc([0-9]+)([m|n|u|p])/;
+                    let amount = zapAmountRgx.exec(bolt11[0][1]);
+                    if (amount) {
+                        zap.amount = parseInt(amount[1]);
+                        if (amount[2] === 'u')
+                            zap.amount = zap.amount * 100;
+                        if (amount[2] === 'n')
+                            zap.amount = zap.amount / 10;
+                    }
+                }
+                if (state.allNotesRelateds[noteId].zaps) {
+                    if (!state.allNotesRelateds[noteId].zaps.find(i => i.id === action.data.id))
+                        state.allNotesRelateds[noteId].zaps.push(zap)
+                } else
+                    state.allNotesRelateds[noteId].zaps = [zap];
+                break;
             default:
         }
     },
@@ -135,26 +155,6 @@ const contentReducer = createReducer(initialState, {
         if (!state.allNotesRelateds[noteId])
             state.allNotesRelateds[noteId] = {};
         state.allNotesRelateds[noteId].load = true;
-    },
-    /*SELECT_NOTES: (state, action) => {
-        let selectedNotes = Object.keys(state.notes).map(key => {
-            return state.notes[key];
-        });
-        if (action.data) {
-            if (action.data.from)
-                selectedNotes = selectedNotes.filter(note => (note.pubkey === action.data.from))
-            if (action.data.excludeReplies)
-                selectedNotes = selectedNotes.filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
-            if (action.data.onlyReplies)
-                selectedNotes = selectedNotes.filter(note => note.kind === 1 && note.tags.filter(t => t[0] === "e").length > 0)
-            selectedNotes = selectedNotes.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
-            if (action.data.limit)
-                selectedNotes = selectedNotes.slice(0, action.data.limit ?? 50);
-        }
-        state.selectedNotes = selectedNotes;
-    },*/
-    SELECT_METADATA: (state, action) => {
-        state.selectedMetadata = action.data;
     },
     USER_FOLLOWING: (state, action) => {
         let publicKeyHex = action.data.pubkey

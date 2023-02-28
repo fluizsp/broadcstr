@@ -44,7 +44,6 @@ const WelcomeV2Container = (props) => {
     const [loginPKey, setLoginPkey] = useState(false);
     const [privateKey, setPrivateKey] = useState();
     const createAccount = () => {
-        console.log(handle);
         let privateKey = generatePrivateKey();
         let publicKey = getPublicKey(privateKey);
         privateKey = nip19.nsecEncode(privateKey);
@@ -74,13 +73,13 @@ const WelcomeV2Container = (props) => {
         });
     }
     const keyLogin = () => {
-        try{
-        let privateKeyHex = nip19.decode(privateKey).data;
-        let publicKey = nip19.npubEncode(getPublicKey(privateKeyHex));
-        dispatch(setAccount({ publicKey: publicKey, privateKey: privateKey }));
-        dispatch(getMyInfo(publicKey));
-        dispatch(saveToStorage());
-        navigate('/');
+        try {
+            let privateKeyHex = nip19.decode(privateKey).data;
+            let publicKey = nip19.npubEncode(getPublicKey(privateKeyHex));
+            dispatch(setAccount({ publicKey: publicKey, privateKey: privateKey }));
+            dispatch(getMyInfo(publicKey));
+            dispatch(saveToStorage());
+            navigate('/');
         } catch {
             toast({ description: "Error getting public key, check your key and try again!", status: "error" })
         }

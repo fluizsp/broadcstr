@@ -28,6 +28,7 @@ const Note = props => {
     let responseUserTags = note.pTags ?? [];
     let relateds = useSelector(state => state.content.allNotesRelateds[note.id]) ?? {};
     let liked = useSelector(state => state.user.likes.filter(l => l === note.id).length > 0);
+    const account = useSelector(state => state.user.account);
     //console.log(`render note ${note.content}`)
     let created = note ? new Date(note.created_at * 1000) : new Date();
     let timeDistance = formatDistanceStrict(created, new Date(), { addSuffix: false });
@@ -41,10 +42,6 @@ const Note = props => {
     const mentionBreak = /(#\[[0-9]+\])/
     const urlBreak = new RegExp(/(http[s]?:\/\/[-a-zA-Z0-9()@:%_\+.~#?&//=]*)/, 'gmi');
     let contentElements = note.content.split(lineBreakRgx);
-    useEffect(() => {
-        if (note.id && !props.isReply)
-            dispatch(addNoteRelatedToload(note.id));
-    }, [])
     contentElements = contentElements.map(element => {
         let innerElements = element.split(mentionBreak).map(mBElement => {
             return mBElement.split(urlBreak).map(uBEllement => {
@@ -70,6 +67,19 @@ const Note = props => {
             return element;
     });
     let bigContent = note.content.length > 300;
+
+    let totalZapsSuffix = '';
+    let totalZaps = relateds.zaps ? relateds.zaps.reduce((total, zap) => total += zap.amount, 0) : 0;
+    if (totalZaps >= 1000000) {
+        totalZaps = Math.round(totalZaps / 1000000);
+        totalZapsSuffix = 'm';
+    }
+    if (totalZaps >= 1000) {
+        totalZaps = Math.round(totalZaps / 1000);
+        totalZapsSuffix = 'k';
+    }
+
+
     const reply = () => {
         dispatch({ type: REPLY_TO, data: { note: note, author: authorMetadata, originalResponseTags: responseTags } });
     }
@@ -83,12 +93,19 @@ const Note = props => {
     const viewImage = (imageSrc) => {
         dispatch({ type: VIEW_IMAGE, data: imageSrc });
     }
+    const handleClick = url => {
+        let selection = window.getSelection().toString();
+        if (selection.length === 0)
+            navigate(url);
+    }
+    const handleZap = amount => {
+        console.log(amount);
+        console.log(authorMetadata.lud16);
+    }
     //console.log("Render Note");
     return (
         < Fade in={true}>
             <Card mb="5" bg={uiColor} ml={props.isReply ? replyLevel * 10 + 'px' : 0} >
-                {/*props.isReply ? <Box width="1px" height="110%" borderLeftColor={uiColor} borderLeftWidth={2} borderLeftStyle="dashed" position="absolute" left="-18px"></Box> : ''*/}
-                {/*props.isReply ? <Box width="18px" height="1px" borderTopColor={uiColor} borderTopWidth={2} borderTopStyle="dashed" position="absolute" left="-18px" top="44px"></Box> : ''*/}
                 <VStack align="left">
                     <Box p="5" pb="0">
                         <Grid templateColumns='repeat(12, 1fr)'>
@@ -96,7 +113,7 @@ const Note = props => {
                                 <HStack cursor="pointer" onClick={() => { navigate(`/${authorMetadata.nip05 ?? nip19.npubEncode(note.pubkey)}`) }}>
                                     <Avatar size="md" src={authorMetadata.picture ?? ''} name={authorMetadata.display_name ?? authorMetadata.name ?? ''} />
                                     <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{authorMetadata.display_name ?? authorMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
-                                    <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">@{authorMetadata.name ?? ''}</Text>
+                                    <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">{authorMetadata.nip05 ?? authorMetadata.name ? authorMetadata.name : ''}</Text>
                                     <Text fontSize="md" as="b">&middot;</Text>
                                     <Tooltip label={format(created, 'yyyy/MM/dd HH:mm')}>
                                         <Text fontSize="sm">{timeDistance}</Text>
@@ -109,7 +126,6 @@ const Note = props => {
                                         <Button variant="ghost" size="md"><FiMaximize /></Button>
                                     </DomLink>
                                 </Tooltip> : ''}
-                                {/*<Button variant="ghost" color="gray.400" alignSelf="right"><FiMoreHorizontal /></Button>*/}
                             </GridItem>
                         </Grid>
                     </Box>
@@ -119,7 +135,6 @@ const Note = props => {
                                 Replying to
                             </Text>
                             <MentionTag href={`/note/${nip19.noteEncode(responseTags[0])}`} publicKeyHex={responseUserTags.slice(-1).pop()} />
-                            {/*<Text as="b" fontSize="xs" w="150px " color="blue.300" noOfLines={1}>{responseUserTags[0]??'*someone*'}</Text>*/}
                         </HStack>
                         : ''}
                     {reposted_by ?
@@ -133,14 +148,14 @@ const Note = props => {
                             </Text>
                         </HStack>
                         : ''}
-                    <Box position="relative">
-                        <Box p="5" pb={expanded ? 20 : null} fontSize={['sm', 'sm', 'md', 'md']} maxH={bigContent && !expanded && !props.isThread ? '200px' : null} overflowY="hidden">
+                    <Box position="relative" cursor="pointer" >
+                        <Box p="5" pb={expanded ? 20 : null} fontSize={['sm', 'sm', 'md', 'md']} maxH={bigContent && !expanded && !props.isThread ? '200px' : null} overflowY="hidden" onMouseUp={handleClick.bind(this, `/note/${nip19.noteEncode(note.id)}`)}>
                             {contentElements.map(el => {
                                 return (el)
                             })}
-                            <Box bgGradient={alphaGradient} hidden={!bigContent || props.isThread} position="absolute" ml="-5" bottom="-4" w="100%" h="65px" p="2">
-                                <Button variant="ghost" onClick={() => { setExpanded(!expanded) }}>{expanded ? 'Show Less...' : 'Show more...'}</Button>
-                            </Box>
+                        </Box>
+                        <Box bgGradient={alphaGradient} hidden={!bigContent || props.isThread} position="absolute" bottom="-4" w="100%" h="65px" p="2">
+                            <Button variant="ghost" onClick={() => { setExpanded(!expanded) }}>{expanded ? 'Show Less...' : 'Show more...'}</Button>
                         </Box>
                     </Box>
                     {/*<Code p="5" fontSize={['xs', 'sm', 'md']}>
@@ -154,18 +169,31 @@ const Note = props => {
                     <Box bg={uiColor}>
                         <HStack>
                             <Tooltip label={liked ? "You liked!" : "Like"} fontSize='md' hasArrow={true}>
-                                <Button leftIcon={liked ? <IoIosHeart color="red" /> : <BiHeart />} onClick={like} isDisabled={liked} variant="ghost" size="md" color="gray.500">{relateds.likes ? relateds.likes.length : ""}</Button>
+                                <Button isDisabled={!account.publicKey || liked} leftIcon={liked ? <IoIosHeart color="red" /> : <BiHeart />} onClick={like} variant="ghost" size="md">{relateds.likes ? relateds.likes.length : ""}</Button>
 
-                            </Tooltip>
-                            <Tooltip label="Zap! (coming soon)" fontSize='md' hasArrow={true}>
-                                <Button variant="ghost" isDisabled size="md" ><HiLightningBolt /></Button>
-                            </Tooltip>
-                            <Tooltip label="Reply" fontSize='md' hasArrow={true}>
-                                <Button leftIcon={<HiReply />} variant="ghost" size="md" onClick={reply}>{relateds.replies ? relateds.replies.length : ""}</Button>
                             </Tooltip>
                             <Popover>
                                 <PopoverTrigger>
-                                    <Button leftIcon={reposted ? <GoCheck /> : <GoBroadcast />} variant="ghost" size="md" >{relateds.reposts ? relateds.reposts.length : ""}</Button>
+                                    <Tooltip label=" Zaps Coming soon!" fontSize='md' hasArrow={true}>
+                                        <Button isDisabled leftIcon={<HiLightningBolt />} variant="ghost" size="md" >{totalZaps > 0 ? totalZaps + totalZapsSuffix : ''}</Button>
+                                    </Tooltip>
+                                </PopoverTrigger>
+                                <PopoverContent>
+                                    <PopoverArrow />
+                                    <Button leftIcon={<HiLightningBolt color="gold" />} variant="ghost" size="md" >Zap 50 Sats</Button>
+                                    <Button leftIcon={<HiLightningBolt color="gold" />} variant="ghost" size="md" >Zap 500 Sats</Button>
+                                    <Button leftIcon={<HiLightningBolt color="gold" />} variant="ghost" size="md" >Zap 1000 Sats</Button>
+                                    <Button leftIcon={<HiLightningBolt color="gold" />} variant="ghost" size="md" >Zap 5000 Sats</Button>
+                                    <Button leftIcon={<HiLightningBolt color="gold" />} variant="ghost" size="md" >Zap Custom Sats</Button>
+                                </PopoverContent>
+                            </Popover>
+
+                            <Tooltip label="Reply" fontSize='md' hasArrow={true}>
+                                <Button isDisabled={!account.publicKey} leftIcon={<HiReply />} variant="ghost" size="md" onClick={reply}>{relateds.replies ? relateds.replies.length : ""}</Button>
+                            </Tooltip>
+                            <Popover>
+                                <PopoverTrigger>
+                                    <Button isDisabled={!account.publicKey} leftIcon={reposted ? <GoCheck /> : <GoBroadcast />} variant="ghost" size="md" >{relateds.reposts ? relateds.reposts.length : ""}</Button>
                                 </PopoverTrigger>
                                 <PopoverContent>
                                     <PopoverArrow />

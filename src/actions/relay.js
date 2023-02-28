@@ -28,13 +28,13 @@ export const REPLY_TO = "REPLY_TO";
 export const VIEW_IMAGE = "VIEW_IMAGE";
 export const CLOSE_IMAGE = "CLOSE_IMAGE";
 
-const myPool = new SimplePool();
+const myPool = new SimplePool({ eoseSubTimeout: 3000 });
 let requestedMetadatas = [];
 let requestedRelateds = [];
 
 setInterval(() => {
     requestedRelateds = [];
-}, 60000)
+}, 300000)
 
 export const receivedNote = (notes, lastId) => {
     //DEPRECATED
@@ -72,7 +72,6 @@ const sign = async (event, account) => {
             resolve(event);
         }
     });
-
 }
 
 export const getFollowingFeed = (limit) => {
@@ -83,22 +82,24 @@ export const getFollowingFeed = (limit) => {
             let filters = [{
                 kinds: [1, 6],
                 authors: getState().user.following,
-                limit: 200
+                limit: limit
             }];
             let sub = myPool.sub(relays, filters);
-            sub.on('event', async event => {
+            sub.on('event', event => {
                 if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
+
                     eventBulk.push(event);
                     if (!getState().user.usersMetadata[event.pubkey]) {
-                        await dispatch(receivedUserMetadata(event.pubkey, {}));
+                        dispatch(receivedUserMetadata(event.pubkey, {}));
                     }
                     event.tags.forEach(async tag => {
                         if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
-                            await dispatch(receivedUserMetadata(tag[1], {}));
+                            dispatch(receivedUserMetadata(tag[1], {}));
                         }
                     });
                     if (eventBulk.length > 10) {
                         eventBulk.forEach(event => {
+                            dispatch(addNoteRelatedToload(event.id));
                             dispatch({ type: RECEIVED_NOTE, data: { feedType: 'following', notes: event } });
                         });
                         eventBulk = [];
@@ -107,6 +108,7 @@ export const getFollowingFeed = (limit) => {
             });
             sub.on('eose', () => {
                 eventBulk.forEach(event => {
+                    dispatch(addNoteRelatedToload(event.id));
                     dispatch({ type: RECEIVED_NOTE, data: { feedType: 'following', notes: event } });
                 });
                 eventBulk = [];
@@ -114,6 +116,72 @@ export const getFollowingFeed = (limit) => {
             })
         }
     });
+}
+
+export const getZapsFeed = (limit) => {
+    return (dispatch, getState) => {
+        let relays = getReadRelaysUrls(getState().user.relays);
+        let events = {};
+        let zapsFilters = [{
+            kinds: [9735],
+            limit: limit * 10
+        }];
+        myPool.list(relays, zapsFilters).then(results => {
+            results.forEach(zap => {
+                let zapInfo = {};
+                let noteId = zap.tags.filter(t => t[0] === 'e')[0];
+                if (noteId) {
+                    noteId = noteId[1];
+                    dispatch({ type: RECEIVED_NOTE_RELATED, data: zap });
+                    let bolt11 = zap.tags.filter(t => t[0] === 'bolt11');
+                    zapInfo.amount = 0;
+                    if (bolt11[0]) {
+                        const zapAmountRgx = /lnbc([0-9]+)([m|n|u|p])/;
+                        let amount = zapAmountRgx.exec(bolt11[0][1]);
+                        if (amount) {
+                            zapInfo.amount = parseInt(amount[1]);
+                            if (amount[2] === 'u')
+                                zapInfo.amount = zap.amount * 100;
+                            if (amount[2] === 'n')
+                                zapInfo.amount = zap.amount / 10;
+                        }
+                    }
+                    if (!events[noteId])
+                        events[noteId] = zapInfo.amount;
+                    else
+                        events[noteId] = events[noteId] + zapInfo.amount;
+                }
+            })
+            let eventList = Object.keys(events).map(k => { return { id: k, amount: events[k] } })
+            eventList = eventList.sort((a, b) => { return a.amount > b.amount ? -1 : 1 })
+            eventList = eventList.slice(0, limit * 2);
+            let eventsFilters = [{
+                kinds: [1, 6],
+                ids: eventList.map(e => { return e.id }),
+                limit: limit * 2
+            }];
+            myPool.list(relays, eventsFilters).then(results => {
+                results.forEach(event => {
+                    if (events[event.id]) {
+                        let eventWithZapAmount=Object.assign({},event);
+                        eventWithZapAmount.zapAmount = events[event.id];
+                        if (eventWithZapAmount.zapAmount && validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
+                            if (!getState().user.usersMetadata[event.pubkey]) {
+                                dispatch(receivedUserMetadata(event.pubkey, {}));
+                            }
+                            event.tags.forEach(async tag => {
+                                if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
+                                    dispatch(receivedUserMetadata(tag[1], {}));
+                                }
+                            });
+                            dispatch(addNoteRelatedToload(event.id));
+                            dispatch({ type: RECEIVED_NOTE, data: { feedType: 'zaps', notes: eventWithZapAmount } });
+                        }
+                    }
+                })
+            });
+        });
+    }
 }
 
 export const getForYouFeed = (limit) => {
@@ -132,15 +200,16 @@ export const getForYouFeed = (limit) => {
                 if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
                     eventBulk.push(event);
                     if (!getState().user.usersMetadata[event.pubkey]) {
-                        await dispatch(receivedUserMetadata(event.pubkey, {}));
+                        dispatch(receivedUserMetadata(event.pubkey, {}));
                     }
                     event.tags.forEach(async tag => {
                         if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
-                            await dispatch(receivedUserMetadata(tag[1], {}));
+                            dispatch(receivedUserMetadata(tag[1], {}));
                         }
                     });
                     if (eventBulk.length > 10) {
                         eventBulk.forEach(event => {
+                            addNoteRelatedToload(event.id);
                             dispatch({ type: RECEIVED_NOTE, data: { feedType: 'following', notes: event } });
                         });
                         eventBulk = [];
@@ -149,6 +218,7 @@ export const getForYouFeed = (limit) => {
             });
             followingSub.on('eose', () => {
                 eventBulk.forEach(event => {
+                    addNoteRelatedToload(event.id);
                     dispatch({ type: RECEIVED_NOTE, data: { feedType: 'following', notes: event } });
                 });
                 eventBulk = [];
@@ -194,6 +264,7 @@ export const getForYouFeed = (limit) => {
                         });
                         if (eventBulk.length > 10) {
                             eventBulk.forEach(event => {
+                                dispatch(addNoteRelatedToload(event.id));
                                 dispatch({ type: RECEIVED_NOTE, data: { feedType: 'foryou', notes: event } });
                             });
                             eventBulk = [];
@@ -202,6 +273,7 @@ export const getForYouFeed = (limit) => {
                 });
                 secondLevelNotesSub.on('eose', () => {
                     eventBulk.forEach(event => {
+                        dispatch(addNoteRelatedToload(event.id));
                         dispatch({ type: RECEIVED_NOTE, data: { feedType: 'foryou', notes: event } });
                     });
                     eventBulk = [];
@@ -238,6 +310,7 @@ export const getForYouFeed = (limit) => {
                         });
                         if (eventBulk.length > 10) {
                             eventBulk.forEach(event => {
+                                dispatch(addNoteRelatedToload(event.id));
                                 dispatch({ type: RECEIVED_NOTE, data: { feedType: 'foryou', notes: event } });
                             });
                             eventBulk = [];
@@ -246,6 +319,7 @@ export const getForYouFeed = (limit) => {
                 });
                 likedNotesSub.on('eose', () => {
                     eventBulk.forEach(event => {
+                        dispatch(addNoteRelatedToload(event.id));
                         dispatch({ type: RECEIVED_NOTE, data: { feedType: 'foryou', notes: event } });
                     });
                     eventBulk = [];
@@ -266,7 +340,7 @@ export const getUserNotes = (publicKeyHex, limit) => {
             {
                 kinds: [1, 6],
                 authors: [publicKeyHex],
-                limit: limit ?? 200
+                limit: limit ?? 15
             }
         ];
         let sub = myPool.sub(relays, filters);
@@ -283,6 +357,7 @@ export const getUserNotes = (publicKeyHex, limit) => {
             })
             if (eventBulk.length > 10) {
                 eventBulk.forEach(event => {
+                    dispatch(addNoteRelatedToload(event.id));
                     dispatch({ type: RECEIVED_NOTE, data: { feedType: 'profile', notes: event } });
                 });
                 eventBulk = [];
@@ -290,6 +365,7 @@ export const getUserNotes = (publicKeyHex, limit) => {
         });
         sub.on('eose', () => {
             eventBulk.forEach(event => {
+                dispatch(addNoteRelatedToload(event.id));
                 dispatch({ type: RECEIVED_NOTE, data: { feedType: 'profile', notes: event } });
             });
             eventBulk = [];
@@ -493,12 +569,10 @@ export const listNotesRelateds = () => {
         })
         notesRelatedsToLoad.slice(0, 25);
         notesRelatedsToLoad.forEach(id => requestedRelateds.push(id));
-        console.log('notesRelatedsToLoad');
-        console.log(notesRelatedsToLoad);
         let relays = getReadRelaysUrls(getState().user.relays);
         let filters = [
             {
-                kinds: [1, 6, 7],
+                kinds: [1, 6, 7, 9735],
                 "#e": notesRelatedsToLoad,
                 limit: 5000
             }
@@ -525,7 +599,7 @@ export const listNoteRelateds = (id, limit) => {
         let relays = getReadRelaysUrls(getState().user.relays);
         let filters = [
             {
-                kinds: [1, 6, 7],
+                kinds: [1, 6, 7, 9735],
                 "#e": [id],
                 limit: 5000
             }

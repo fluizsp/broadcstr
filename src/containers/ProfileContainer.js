@@ -9,30 +9,6 @@ import defaultBanner from '../defaultBanner.gif';
 import { IoMdPersonAdd, IoMdRemove, IoMdSettings } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
 
-const mapDispatchToProps = (dispatch, getState) => {
-    return {
-        /*loadUsersMetadata: () => {
-            dispatch(getUsersMetadata());
-        },*/
-
-        /*selectNotes: (from, excludeReplies, onlyReplies, sortOrder, limit) => {
-            dispatch({
-                type: SELECT_NOTES,
-                data: {
-                    from: from,
-                    excludeReplies: excludeReplies,
-                    onlyReplies: onlyReplies,
-                    sortOrder: sortOrder,
-                    limit: limit
-                }
-            })
-        },
-        selectMetadata: () => {
-            dispatch(selectMetadatas());
-        }*/
-    }
-};
-
 const ProfileContainer = props => {
     const dispatch = useDispatch();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
@@ -91,6 +67,7 @@ const ProfileContainer = props => {
     }, [params.id]);
     useEffect(() => {
         console.log('useEffect initial')
+        window.scrollTo(0, 0);
         document.title = `Brodcstr - Profile - ${params.id}`;
         /*if (!user.account || user.account.publicKey === undefined)
             navigate('/welcome');*/
@@ -104,7 +81,7 @@ const ProfileContainer = props => {
         else if (params.id.includes('npub'))
             setPublicKeyHex(nip19.decode(params.id).data);
     }, [])
-    let account = useSelector(state => state.user.account);
+    const account = useSelector(state => state.user.account);
     let user = useSelector(state => state.user.usersMetadata[publicKeyHex]) ?? {};
     let userLoaded = user.name ? true : false;
     let notes = [];
@@ -162,7 +139,7 @@ const ProfileContainer = props => {
                                         <Avatar size="2xl" src={user.picture} name={user.display_name ?? user.name} />
                                         {isOwnProfile ?
                                             <Button onClick={() => { navigate('/settings') }} variant="solid" leftIcon={<IoMdSettings />} bgGradient="linear(to-br, brand.purple, brand.green)">Settings</Button> :
-                                            <Button onClick={followUnfollow} variant="solid" leftIcon={isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />} bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? "Unfollow" : "Follow"}</Button>}
+                                            <Button isDisabled={!account.publicKey} onClick={followUnfollow} variant="solid" leftIcon={isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />} bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? "Unfollow" : "Follow"}</Button>}
                                     </VStack>
                                 </GridItem>
                                 <GridItem colSpan={[12, 8]} textAlign="left" pl="5">

@@ -14,9 +14,11 @@ export const setAccount = (account, accountInfo, following, likes) => {
 
 export const saveToStorage = () => {
     return (dispatch, getState) => {
-        let userState = getState().user;
         try {
-            saveState(userState, 'user');
+            saveState(getState().user.account, 'user.account');
+            saveState(getState().user.accountInfo, 'user.accountInfo');
+            saveState(getState().user.usersMetadata, 'user.usersMetadata');
+            saveState(getState().user.likes, 'user.likes');
         } catch {
         }
     }

@@ -1,23 +1,28 @@
-import { Center, Box, Button, Container, Spinner, SlideFade, VStack, Flex, Tab, TabList, Tabs, Tooltip } from '@chakra-ui/react'
+import { Center, Box, Button, Container, Spinner, SlideFade, VStack, Flex, Tab, TabList, Tabs, Text } from '@chakra-ui/react'
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useColorModeValue } from '@chakra-ui/react';
-import { getFollowingFeed, getForYouFeed, getMyInfo } from '../actions/relay';
+import { getFollowingFeed, getForYouFeed, getMyInfo, getZapsFeed } from '../actions/relay';
 
 import NoteList from '../components/NoteList';
 import { useEffect } from 'react';
-import { HiRefresh } from 'react-icons/hi';
-
+import { HiLightningBolt, HiRefresh } from 'react-icons/hi';
+import { useLocation, useNavigate } from 'react-router';
 
 const HomeContainer = props => {
     const dispatch = useDispatch();
+    const location = useLocation();
+    const navigate = useNavigate();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const bgGradient = useColorModeValue('linear(to-tl, brand.blessing1, brand.blessing2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
-    const [feedType, setFeedType] = useState('foryou');
-    const [limit, setLimit] = useState(25);
+    const [feedType, setFeedType] = useState('zaps');
+    const [limit, setLimit] = useState(15);
+    const account = useSelector(state => state.user.account);
     useEffect(() => {
         setTimeout(() => {
-            loadNotes('foryou');
+            let initialFeed = location.pathname.includes('following') ? 'following' :
+                location.pathname.includes('foryou') ? 'foryou' : 'zaps';
+            loadNotes(initialFeed);
             loadMyInfo();
         }, 1000)
         document.title = "Broadcstr"
@@ -28,26 +33,30 @@ const HomeContainer = props => {
     }
 
     const loadNotes = feedType => {
-        console.log('loadNotes');
         setFeedType(feedType);
         switch (feedType) {
             case 'foryou':
-                dispatch(getForYouFeed(limit * 4))
+                navigate('/foryou');
+                dispatch(getForYouFeed(limit + 15))
                 break;
-            case 'trending':
+            case 'zaps':
+                navigate('/');
+                dispatch(getZapsFeed(limit + 15));
                 break;
             default: //following
-                dispatch(getFollowingFeed(limit * 4));
+                navigate('/following');
+                dispatch(getFollowingFeed(limit + 15));
         }
     }
     const moreResults = () => {
-        setLimit(limit + 25);
+        setLimit(limit + 15);
+        if (limit > notes.length)
+            loadNotes(feedType);
     }
     let notes = [];
     notes = useSelector(state => Object.keys(state.content.feeds[feedType]).map(k => { return state.content.feeds[feedType][k] })
         .filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
-        .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
-        .slice(0, limit * 2), (a, b) => {
+        , (a, b) => {
             if (!a)
                 return false;
             let aIds = a.map(aNote => { return aNote.id });
@@ -56,10 +65,11 @@ const HomeContainer = props => {
             bIds = bIds.join(",");
             return aIds === bIds;
         })
-    let drafts = useSelector(state => state.content.draftEvents ?? []);
-    if (drafts)
-        drafts.forEach(d => notes.push(d));
-    notes = notes.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
+    let sortedNotes = []
+    if (feedType === "zaps") {
+        sortedNotes = notes.sort((a, b) => { return parseInt(a.zapAmount) > parseInt(b.zapAmount) ? -1 : 1 })
+    } else
+        sortedNotes = notes.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
             <Box ml={{ md: '100px', lg: '330px' }} >
@@ -68,11 +78,11 @@ const HomeContainer = props => {
                         <Flex mb="5">
                             <Box bg={uiColor} h="50px" p="2" flex="1">
                                 <Center>
-                                    <Tabs index={feedType === "following" ? 1 : feedType === 'foryou' ? 0 : -1}>
+                                    <Tabs index={feedType === "following" ? 1 : feedType === 'foryou' ? 2 : 0}>
                                         <TabList>
-                                            <Tab onClick={loadNotes.bind(this, 'foryou')}>For you</Tab>
-                                            <Tab onClick={loadNotes.bind(this, 'following')}>Following</Tab>
-                                            <Tab isDisabled><Tooltip label="Coming soon!">Trending</Tooltip></Tab>
+                                            <Tab onClick={loadNotes.bind(this, 'zaps')}><HiLightningBolt color="gold" /><Text pl={2}>Trending</Text></Tab>
+                                            <Tab isDisabled={!account.publicKey} onClick={loadNotes.bind(this, 'following')}>Following</Tab>
+                                            <Tab isDisabled={!account.publicKey} onClick={loadNotes.bind(this, 'foryou')}>For you</Tab>
                                         </TabList>
                                     </Tabs>
                                 </Center>
@@ -81,9 +91,9 @@ const HomeContainer = props => {
                                 <Button size="sm" variant="ghost" onClick={loadNotes.bind(this, feedType)}><HiRefresh /></Button>
                             </Box>
                         </Flex>
-                        <NoteList notes={notes.slice(0, limit)} />
+                        <NoteList notes={sortedNotes.slice(0, limit)} />
                         <VStack mb="50px">
-                            <Spinner size="xl" color="blue.300" hidden={notes.length !== 0} />
+                            <Spinner size="xl" color="blue.300" hidden={sortedNotes.length !== 0} />
                             <Button hidden={notes.length === 0 || notes.length < limit} onClick={moreResults.bind(this)} >Next Results...</Button>
                         </VStack>
                     </Container>

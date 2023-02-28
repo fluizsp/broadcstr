@@ -1,10 +1,8 @@
 import { createReducer } from '@reduxjs/toolkit'
 import { loadState } from '../localStorage';
 
-let storageState = loadState('user');
-
-const initialState = storageState ? storageState : {
-    relays: [
+const initialState = {
+    relays: loadState('user.relays') ?? [
         {
             url: 'wss://relay.nostr.info',
             read: true,
@@ -47,10 +45,10 @@ const initialState = storageState ? storageState : {
         }
     ],
     loggedIn: false,
-    account: {},
-    accountInfo: {},
-    usersMetadata: {},
-    likes: [],
+    account: loadState('user.account') ?? {},
+    accountInfo: loadState('user.accountInfo') ?? { },
+    usersMetadata: loadState('user.usersMetadata') ??  {},
+    likes: loadState('user.likes') ?? [],
     following: []
 };
 
