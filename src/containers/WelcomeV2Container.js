@@ -46,8 +46,6 @@ const WelcomeV2Container = (props) => {
     const [loginPKey, setLoginPkey] = useState(false);
     const [privateKey, setPrivateKey] = useState();
     const createAccount = () => {
-        console.log(handle);
-
         let privateKey = generatePrivateKey();
         let publicKey = getPublicKey(privateKey);
         privateKey = nip19.nsecEncode(privateKey);
@@ -87,7 +85,7 @@ const WelcomeV2Container = (props) => {
                 setPrivateKey(undefined);
             }
             dispatch(setAccount({ publicKey: publicKey, privateKey: privateKey.includes('npub') ? undefined : privateKey }));
-            dispatch(getMyInfo(publicKey));
+            dispatch(getMyInfo());
             dispatch(saveToStorage());
             navigate('/');
         } catch {

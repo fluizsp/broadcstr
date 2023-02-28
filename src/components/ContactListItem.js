@@ -18,24 +18,25 @@ const ContactListItem = props => {
         else
             props.addFollowing(props.publicKeyHex);
     }
+    const account = useSelector(state => state.user.account);
     const npub = nip19.npubEncode(props.publicKeyHex);
     const displayName = metadata.display_name ?? metadata.name ?? 'Nostr User';
-    const name = metadata.name ? '@' + metadata.name : npub;
+    const name = metadata.nip05 ? metadata.nip05 : metadata.name ? '@' + metadata.name : npub;
     return (
         <SlideFade in={true} offsety="500" offsetY="0" unmountOnExit={true}>
             <Card mb="5" bg={uiColor} p="5">
                 <Grid templateColumns="repeat(12,1fr)" gap="5">
                     <GridItem>
-                        <Avatar size="md" src={metadata.picture} name={displayName} cursor="pointer" onClick={() => { navigate(`/${metadata.nip05??npub}`) }} />
+                        <Avatar size="md" src={metadata.picture} name={displayName} cursor="pointer" onClick={() => { navigate(`/${metadata.nip05 ?? npub}`) }} />
                     </GridItem>
-                    <GridItem colSpan="6" cursor="pointer" onClick={() => { navigate(`/${metadata.nip05??npub}`) }}>
+                    <GridItem colSpan="6" cursor="pointer" onClick={() => { navigate(`/${metadata.nip05 ?? npub}`) }}>
                         <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{displayName}</Text>
                         {/*<Skeleton width="150px" h={4} />*/}
-                        <Text fontSize="sm" color="gray.400" maxW="150px" noOfLines="1" >{name}</Text>
+                        <Text fontSize="sm" color="gray.400" maxW="250px" noOfLines="1" >{name}</Text>
                     </GridItem>
                     <GridItem p="2" colSpan={5} textAlign="right">
                         <Tooltip label={isFollowing ? "Unfollow" : "Follow"}>
-                            <Button onClick={followUnfollow} variant="solid" size="sm" bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />}</Button>
+                            <Button isDisabled={!account.publicKey} onClick={followUnfollow} variant="solid" size="sm" bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />}</Button>
                         </Tooltip>
                         {/*<Button variant="ghost" size="sm"><IoIosMore /></Button>*/}
                     </GridItem>

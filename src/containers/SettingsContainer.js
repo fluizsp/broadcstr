@@ -6,54 +6,28 @@ import { AiOutlineVerified } from "react-icons/ai";
 import { FaAdjust, FaGlobe, FaKey, FaPortrait, FaSave, FaSignOutAlt, FaTrash } from "react-icons/fa";
 import { GoBroadcast, GoVerified } from "react-icons/go";
 import { HiLightningBolt } from "react-icons/hi";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
 import defaultBanner from '../defaultBanner.gif';
 import { useNavigate, useParams } from "react-router";
 import { LOGOUT, saveToStorage, setAccount, SET_RELAYS } from "../actions/account";
 import { UploadPicture } from "../services/NostrBuildService";
 import { publishProfile } from "../actions/relay";
 
-const mapStateToProps = (state, ownProps) => {
-    return {
-        account: state.user.account,
-        accountInfo: state.user.accountInfo,
-        preferences: state.user.preferences ?? {},
-        relays: state.user.relays
-    }
-}
-
-const mapDispatchToProps = () => {
-    return ((dispatch, getState) => {
-        return {
-            signOut: () => {
-                dispatch({ type: LOGOUT });
-                dispatch(saveToStorage());
-            },
-            signIn: (account) => {
-                dispatch(setAccount(account));
-            },
-            setRelays: relays => {
-                dispatch({ type: SET_RELAYS, data: relays });
-            },
-            saveProfile: (accountInfo) => {
-                dispatch(setAccount(null, accountInfo));
-                dispatch(publishProfile(accountInfo));
-            },
-        };
-    });
-}
-
 const SettingsContainer = (props) => {
+    const dispatch = useDispatch();
     const colorMode = useColorMode();
     const params = useParams();
     const toast = useToast();
     const navigate = useNavigate();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const bgGradient = useColorModeValue('linear(to-tl, brand.blessing1, brand.blessing2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
+    const account = useSelector(state => state.user.account);
+    const originalRelays = useSelector(state => state.user.relays);
+    const oriiginalAccountInfo = useSelector(state => state.user.accountInfo);
     const [newNsec, setNewNsec] = useState();
     const [newRelayUrl, setNewRelayUrl] = useState();
-    const [relays, setRelays] = useState(props.relays);
-    const [accountInfo, setAccountInfo] = useState(props.accountInfo);
+    const [relays, setRelays] = useState(originalRelays);
+    const [accountInfo, setAccountInfo] = useState(oriiginalAccountInfo);
     const [newBannerImage, setNewBannerImage] = useState();
     const [newBannerFile, setNewBannerFile] = useState();
     const [newProfileImage, setNewProfileImage] = useState();
@@ -62,7 +36,7 @@ const SettingsContainer = (props) => {
     useEffect(() => {
         if (accountInfo.nip05) {
             nip05.queryProfile(accountInfo.nip05).then(value => {
-                if (value && value.pubkey === nip19.decode(props.account.publicKey).data && !nip05Status)
+                if (value && value.pubkey === nip19.decode(account.publicKey).data && !nip05Status)
                     setNip05Status(true);
             }).catch(() => {
                 if (nip05Status !== false)
@@ -72,23 +46,23 @@ const SettingsContainer = (props) => {
             setNip05Status();
     }, [accountInfo.nip05])
 
-    useEffect(()=>{
-        document.title="Broadcstr - Settings"
-    },[])
+    useEffect(() => {
+        document.title = "Broadcstr - Settings"
+    }, [])
     //console.log(nip05Status);
     const copyToClipboard = (type) => {
         switch (type) {
             case 'npub':
-                navigator.clipboard.writeText(props.account.publicKey);
+                navigator.clipboard.writeText(account.publicKey);
                 break;
             case 'nsec':
-                navigator.clipboard.writeText(props.account.privateKey);
+                navigator.clipboard.writeText(account.privateKey);
                 break;
             case 'pubHex':
-                navigator.clipboard.writeText(nip19.decode(props.account.publicKey).data);
+                navigator.clipboard.writeText(nip19.decode(account.publicKey).data);
                 break;
             case 'privHex':
-                navigator.clipboard.writeText(nip19.decode(props.account.privateKey).data);
+                navigator.clipboard.writeText(nip19.decode(account.privateKey).data);
                 break;
             default:
         }
@@ -97,16 +71,16 @@ const SettingsContainer = (props) => {
         try {
             let newNpub = getPublicKey(nip19.decode(newNsec).data);
             newNpub = nip19.npubEncode(newNpub);
-            props.signOut();
-            props.signIn({ publicKey: newNpub, privateKey: newNsec });
+            dispatch({ type: LOGOUT });
+            dispatch(setAccount({ publicKey: newNpub, privateKey: newNsec }));
             toast({ description: "Account switched sucessfully!", status: "success" });
         } catch {
             toast({ description: "Unable to use private key, check your key and try again.", status: "error" });
         }
     }
     const signOut = () => {
-        props.signOut();
-        navigate('/welcome');
+        dispatch({ type: LOGOUT });
+        navigate('/');
     }
     const changeReadWrite = (option, relay, control) => {
         let updatedRelays = relays.map(r => {
@@ -138,7 +112,8 @@ const SettingsContainer = (props) => {
         setRelays(updatedRelays);
     }
     const saveRelays = () => {
-        props.setRelays(relays);
+        setRelays(relays);
+        dispatch(saveToStorage());
         toast({ description: "Relays configuration saved!", status: "success" })
     }
     const changeBannerImage = event => {
@@ -218,7 +193,7 @@ const SettingsContainer = (props) => {
             newInfo.banner = newBannerImage;
         }
         setAccountInfo(newInfo);
-        props.saveProfile(newInfo);
+        saveProfile(newInfo);
     }
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
@@ -228,13 +203,13 @@ const SettingsContainer = (props) => {
                         <Box borderRadius="lg">
                             <Tabs defaultIndex={params.area === 'relays' ? 2 : 0}>
                                 <TabList bg={uiColor} borderTopRadius="lg" h={14}>
-                                    <Tab w="25%" panelId="account">
+                                    <Tab isDisabled={!account.publicKey} w="25%" panelId="account">
                                         <FaKey />
                                         <Show above="md">
                                             <Text fontSize="sm" pl={2}> Account</Text>
                                         </Show>
                                     </Tab>
-                                    <Tab w="25%">
+                                    <Tab isDisabled={!account.publicKey} w="25%">
                                         <FaPortrait />
                                         <Show above="md">
                                             <Text fontSize="sm" pl={2}>Profile</Text>
@@ -257,7 +232,7 @@ const SettingsContainer = (props) => {
                                     <TabPanel p="50" bg={uiColor}>
                                         <Heading size="md">Key Management</Heading>
                                         <FormLabel mt={5}>Public Key:</FormLabel>
-                                        <FormLabel mt={2} fontSize="sm">{props.account.publicKey}</FormLabel>
+                                        <FormLabel mt={2} fontSize="sm">{account.publicKey}</FormLabel>
                                         <Button size="sm" mr="2" onClick={copyToClipboard.bind(this, 'npub')}>Copy NPUB</Button>
                                         <Button size="sm" onClick={copyToClipboard.bind(this, 'pubHex')}>Copy HEX</Button>
                                         <FormLabel mt={5}>Private Key: ······························</FormLabel>
@@ -371,4 +346,4 @@ const SettingsContainer = (props) => {
     )
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(SettingsContainer);
+export default SettingsContainer;

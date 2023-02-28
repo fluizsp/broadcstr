@@ -1,6 +1,6 @@
 import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button, Link } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
-import { connect, useSelector } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { addFollowing, getMyInfo, getUserFollowers, getUserFollowing, getUserNotes, receivedUserMetadata, RECEIVED_USER_ID, removeFollowing, SET_LIMIT, UNLOAD_NOTES } from '../actions/relay';
 import { useNavigate, useParams } from 'react-router';
 import { nip05, nip19 } from 'nostr-tools';
@@ -9,60 +9,8 @@ import defaultBanner from '../defaultBanner.gif';
 import { IoMdPersonAdd, IoMdRemove, IoMdSettings } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
 
-const mapDispatchToProps = (dispatch, getState) => {
-    return {
-        /*loadUsersMetadata: () => {
-            dispatch(getUsersMetadata());
-        },*/
-        loadUser: (publicKeyHex) => {
-            dispatch(receivedUserMetadata(publicKeyHex, { load: true }));
-            dispatch({ type: RECEIVED_USER_ID, data: publicKeyHex })
-        },
-        loadMyInfo: (publicKeyHex) => {
-            dispatch((getMyInfo(publicKeyHex)));
-        },
-        loadNotes: (publicKeyHex, limit) => {
-            dispatch(getUserNotes(publicKeyHex, limit * 5));
-        },
-        addFollowing: publicKeyHex => {
-            dispatch(addFollowing(publicKeyHex));
-        },
-        removeFollowing: publicKeyHex => {
-            dispatch(removeFollowing(publicKeyHex));
-        },
-        loadUserFollowing: publicKeyHex => {
-            dispatch(getUserFollowing(publicKeyHex));
-        },
-        loadUserFollowers: publicKeyHex => {
-            dispatch(getUserFollowers(publicKeyHex));
-        }
-        /*selectNotes: (from, excludeReplies, onlyReplies, sortOrder, limit) => {
-            dispatch({
-                type: SELECT_NOTES,
-                data: {
-                    from: from,
-                    excludeReplies: excludeReplies,
-                    onlyReplies: onlyReplies,
-                    sortOrder: sortOrder,
-                    limit: limit
-                }
-            })
-        },
-        selectMetadata: () => {
-            dispatch(selectMetadatas());
-        }*/
-    }
-};
-
-const mapStateToProps = (state, ownProps) => {
-    return {
-        user: state.user.account.publicKey !== undefined ? nip19.decode(state.user.account.publicKey).data === state.content.lastUserId ? state.user.accountInfo : state.user.usersMetadata[state.content.lastUserId] ?? {} : {},
-        account: state.user.account,
-        limit: state.content.limit
-    }
-};
-
 const ProfileContainer = props => {
+    const dispatch = useDispatch();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const navigate = useNavigate();
     const bgGradient = useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
@@ -71,23 +19,41 @@ const ProfileContainer = props => {
     const [nipInfo, setNipInfo] = useState();
     const [limit, setLimit] = useState(25);
     const [publicKeyHex, setPublicKeyHex] = useState(null);
-    const userLoaded = Object.keys(props.user).length > 1;
     const moreResults = () => {
         setLimit(limit + 25);
     }
     const followUnfollow = () => {
         if (!isFollowing)
-            props.addFollowing(publicKeyHex);
+            addFollowing(publicKeyHex);
         else
-            props.removeFollowing(publicKeyHex)
+            removeFollowing(publicKeyHex)
+    }
+    const loadUser = publicKeyHex => {
+        dispatch(receivedUserMetadata(publicKeyHex, { load: true }));
+        dispatch({ type: RECEIVED_USER_ID, data: publicKeyHex })
+    }
+    const loadNotes = (publicKeyHex, limit) => {
+        dispatch(getUserNotes(publicKeyHex, limit * 5));
+    };
+    const addFollowing = publicKeyHex => {
+        dispatch(addFollowing(publicKeyHex));
+    };
+    const removeFollowing = publicKeyHex => {
+        dispatch(removeFollowing(publicKeyHex));
+    };
+    const loadUserFollowing = publicKeyHex => {
+        dispatch(getUserFollowing(publicKeyHex));
+    };
+    const loadUserFollowers = publicKeyHex => {
+        dispatch(getUserFollowers(publicKeyHex));
     }
     useEffect(() => {
         console.log('useEffect publicKeyHex');
         if (publicKeyHex) {
-            props.loadUser(publicKeyHex);
-            props.loadNotes(publicKeyHex, 25);
-            props.loadUserFollowing(publicKeyHex);
-            props.loadUserFollowers(publicKeyHex);
+            loadUser(publicKeyHex);
+            loadNotes(publicKeyHex, 25);
+            loadUserFollowing(publicKeyHex);
+            loadUserFollowers(publicKeyHex);
         }
     }, [publicKeyHex]);
     useEffect(() => {
@@ -101,8 +67,9 @@ const ProfileContainer = props => {
     }, [params.id]);
     useEffect(() => {
         console.log('useEffect initial')
+        window.scrollTo(0, 0);
         document.title = `Brodcstr - Profile - ${params.id}`;
-        /*if (!props.user.account || props.user.account.publicKey === undefined)
+        /*if (!user.account || user.account.publicKey === undefined)
             navigate('/welcome');*/
         if (params.id.includes('@'))
             nip05.queryProfile(params.id).then(value => {
@@ -114,11 +81,14 @@ const ProfileContainer = props => {
         else if (params.id.includes('npub'))
             setPublicKeyHex(nip19.decode(params.id).data);
     }, [])
+    const account = useSelector(state => state.user.account);
+    let user = useSelector(state => state.user.usersMetadata[publicKeyHex]) ?? {};
+    let userLoaded = user.name ? true : false;
     let notes = [];
     let replies = [];
-    let isOwnProfile = props.account.publicKey !== undefined && publicKeyHex === nip19.decode(props.account.publicKey).data;
+    let isOwnProfile = account.publicKey === publicKeyHex;
     let isFollowing = useSelector(state => state.user.following.filter(f => f === publicKeyHex).length > 0);
-    notes = useSelector(state => Object.keys(state.content.feeds.profile).map(k => { return state.content.feeds.profile[k] })
+    notes = useSelector(state => Object.keys(state.content.allNotes).map(k => { return state.content.allNotes[k] })
         .filter(note => note.pubkey === publicKeyHex || note.reposted_by === publicKeyHex)
         .filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
@@ -132,7 +102,7 @@ const ProfileContainer = props => {
             return aIds === bIds;
         })
 
-    replies = useSelector(state => Object.keys(state.content.feeds.profile).map(k => { return state.content.feeds.profile[k] })
+    replies = useSelector(state => Object.keys(state.content.allNotes).map(k => { return state.content.allNotes[k] })
         .filter(note => note.pubkey === publicKeyHex)
         .filter(note => note.kind === 1 && note.tags.filter(t => t[0] === "e").length > 0)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
@@ -154,7 +124,7 @@ const ProfileContainer = props => {
                 <SlideFade in={true} offsetX="1000" offsetY="0" reverse={true} unmountOnExit={true}>
                     <Box className='box1' width="100%" height="300px" mb="-300px"
                         sx={{
-                            bgImage: props.user.banner ?? defaultBanner,
+                            bgImage: user.banner ?? defaultBanner,
                             bgSize: 'cover',
                             bgPosition: 'center',
                             maskImage: "linear-gradient(180deg, #fff 75%, #ffffff00 100%);"
@@ -166,29 +136,29 @@ const ProfileContainer = props => {
                             <Grid templateColumns="repeat(12,1fr)">
                                 <GridItem colSpan={[12, 4]}>
                                     <VStack gap={5}>
-                                        <Avatar size="2xl" src={props.user.picture} name={props.user.display_name ?? props.user.name} />
+                                        <Avatar size="2xl" src={user.picture} name={user.display_name ?? user.name} />
                                         {isOwnProfile ?
                                             <Button onClick={() => { navigate('/settings') }} variant="solid" leftIcon={<IoMdSettings />} bgGradient="linear(to-br, brand.purple, brand.green)">Settings</Button> :
-                                            <Button onClick={followUnfollow} variant="solid" leftIcon={isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />} bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? "Unfollow" : "Follow"}</Button>}
+                                            <Button isDisabled={!account.publicKey} onClick={followUnfollow} variant="solid" leftIcon={isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />} bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? "Unfollow" : "Follow"}</Button>}
                                     </VStack>
                                 </GridItem>
                                 <GridItem colSpan={[12, 8]} textAlign="left" pl="5">
                                     <HStack mt="5">
                                         {userLoaded ?
-                                            <Text fontSize="xl" as="b" maxW="150px" noOfLines="1">{props.user.display_name ?? props.user.name ?? "Nostr User"}</Text>
+                                            <Text fontSize="xl" as="b" maxW="150px" noOfLines="1">{user.display_name ?? user.name ?? "Nostr User"}</Text>
                                             : <Skeleton width="150px" h={4} />}
-                                        <Text fontSize="lg" color="gray.400" maxW="150px" noOfLines="1" >@{props.user.name}</Text>
+                                        <Text fontSize="lg" color="gray.400" maxW="150px" noOfLines="1" >@{user.name}</Text>
                                     </HStack>
                                     {userLoaded ?
-                                        <Text as="b" color="green.400" fontSize="sm">{props.user.nip05}</Text>
+                                        <Text as="b" color="green.400" fontSize="sm">{user.nip05}</Text>
                                         : <Skeleton width="100px" h={2} mb="5" />}
                                     {userLoaded ?
-                                        <Text>{props.user.about}</Text>
+                                        <Text>{user.about}</Text>
                                         : <Box w="300px">
                                             <Skeleton w="300px" h={3} mb="5" />
                                             <Skeleton w="300px" h={3} mb="5" />
                                         </Box>}
-                                    {props.user.lud16 ? <Link as="b" color="green.400" href={`lightning:${props.user.lud16}`} fontSize="sm">⚡{props.user.lud16}</Link> : ''}
+                                    {user.lud16 ? <Link as="b" color="green.400" href={`lightning:${user.lud16}`} fontSize="sm">⚡{user.lud16}</Link> : ''}
                                 </GridItem>
                             </Grid>
                             <Tabs ml="-25px" index={activeView} mt="50px" mr="-25px">
@@ -208,12 +178,12 @@ const ProfileContainer = props => {
                         </SlideFade>
                         <SlideFade in={activeView === 2} unmountOnExit >
                             {following.slice(0, limit).map(f => {
-                                return <ContactListItem publicKeyHex={f} addFollowing={props.addFollowing} removeFollowing={props.removeFollowing} />
+                                return <ContactListItem publicKeyHex={f} addFollowing={addFollowing} removeFollowing={removeFollowing} />
                             })}
                         </SlideFade>
                         <SlideFade in={activeView === 3} unmountOnExit >
                             {followers.slice(0, limit).map(f => {
-                                return <ContactListItem publicKeyHex={f} addFollowing={props.addFollowing} removeFollowing={props.removeFollowing} />
+                                return <ContactListItem publicKeyHex={f} addFollowing={addFollowing} removeFollowing={removeFollowing} />
                             })}
                         </SlideFade>
                         <VStack>
@@ -230,4 +200,4 @@ const ProfileContainer = props => {
     )
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ProfileContainer);
+export default ProfileContainer;
