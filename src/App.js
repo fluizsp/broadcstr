@@ -12,6 +12,9 @@ import AppContainer from './containers/AppContainer';
 import { saveState } from './localStorage';
 import { throttle } from 'lodash';
 import { mode } from '@chakra-ui/theme-tools';
+import { defineMessages, IntlProvider } from 'react-intl';
+import BrazilianPortuguese from './i18n/pt-BR.json';
+import English from './i18n/en-US.json';
 
 const store = configureStore({
   reducer: rootReducer
@@ -64,11 +67,21 @@ const customTheme = extendTheme({
 })
 
 function App() {
+  const language = store.getState().user.language ?? navigator.language
+  let i18nMessages = {};
+  if (language === 'pt-BR')
+    i18nMessages = BrazilianPortuguese;
+  else
+    i18nMessages = English;
+
+    defineMessages(i18nMessages);
 
   return (
     <Provider store={store}>
       <ChakraProvider theme={customTheme}>
-        <AppContainer />
+        <IntlProvider locale={language} messages={i18nMessages}>
+          <AppContainer />
+        </IntlProvider>
       </ChakraProvider >
     </Provider>
   );
