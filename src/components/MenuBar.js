@@ -68,9 +68,7 @@ const MenuBar = (props) => {
                             <Tooltip label="Discover (coming soon!)" fontSize='md'>
                                 <Button isDisabled variant="link"><FaHashtag /></Button>
                             </Tooltip>
-                            <Tooltip label="Messages (coming soon!)" fontSize='md'>
-                                <Button isDisabled variant="link" fontSize="2xl"><FiMessageSquare /></Button>
-                            </Tooltip>
+                                <Button variant="link" fontSize="2xl" onClick={() => { navigate('/about') }}><FaInfo /></Button>
                         </VStack>
                     </VStack>
                 </Hide>
@@ -78,7 +76,7 @@ const MenuBar = (props) => {
             {/* ACCOUNT */}
             <Box w={{ md: '100px', lg: '330px' }} h="75px" p="4" bottom="0" left="0" pos="fixed" bg={uiColor} verticalAlign="middle">
                 <Flex wrap="wrap">
-                    <Button hidden={account.publicKey} variant="ghost" leftIcon={<GoSignIn />} onClick={()=>{navigate('/welcome')}}>Sign-in / Create Account</Button>
+                    <Show above="md"><Button hidden={account.publicKey} variant="ghost" leftIcon={<GoSignIn />} onClick={() => { navigate('/welcome') }}>Sign-in</Button></Show>
                     <Avatar hidden={!account.publicKey} src={accountInfo.picture ?? ''} name={accountInfo.display_name ?? accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" ml={{ md: 2, lg: 0 }} onClick={() => { navigate(`/${accountInfo.nip05 ?? account.publicKey}`) }} cursor="pointer"></Avatar>
                     <VStack hidden={!account.publicKey} spacing="0" align="left" pl="2">
                         <HStack>
