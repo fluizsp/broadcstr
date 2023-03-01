@@ -1,17 +1,16 @@
-import { Flex, Center, Box, Image, VStack, Button, Avatar, Text, Link, Show, Hide, Tooltip, HStack, Menu, MenuButton, MenuItem, MenuList, MenuDivider } from '@chakra-ui/react'
+import { Flex, Center, Box, Image, VStack, Button, Avatar, Text, Show, Hide, Tooltip, HStack, Menu, MenuButton, MenuItem, MenuList, MenuDivider } from '@chakra-ui/react'
 import { FaHashtag, FaInfo, FaSignOutAlt } from 'react-icons/fa';
-import { GoHome } from 'react-icons/go';
+import { GoHome, GoSignIn } from 'react-icons/go';
 import { IoMdSearch, IoIosSettings, IoMdArrowDropup, IoIosPerson } from 'react-icons/io';
-import { AiFillRead } from 'react-icons/ai';
 import { useLocation, useNavigate } from "react-router-dom";
 import logo from '../logo_h.svg';
 import logoDark from '../logo_h_dark.svg';
 import smallLogo from '../logo_small.svg';
 import { useColorModeValue, useColorMode, } from '@chakra-ui/react';
 import { MoonIcon, SunIcon } from '@chakra-ui/icons';
-import { BiDoorOpen } from 'react-icons/bi';
 import { FiMessageSquare } from 'react-icons/fi';
 import { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
 const MenuBar = (props) => {
     const location = useLocation();
@@ -19,11 +18,13 @@ const MenuBar = (props) => {
     const colorMode = useColorMode();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const logoSelector = useColorModeValue(logo, logoDark);
+    const account = useSelector(state => state.user.account);
+    const accountInfo = useSelector(state => state.user.accountInfo);
     function goSplash() {
         navigate('/welcome');
     }
     function logout() {
-        props.logout();
+        logout();
         navigate('/welcome');
     }
 
@@ -31,10 +32,6 @@ const MenuBar = (props) => {
         window.scrollTo(0, 0);
         navigate('/');
     }
-    useEffect(() => {
-        if (!props.account || !props.account.publicKey)
-            navigate('/welcome');
-    }, []);
     return (<Show above="md">
         <Box w={{ md: '100px', lg: '330px' }} h="100vh" p="40px" bg={uiColor}
             backdropFilter="auto" backdropBlur="6px" top="0" left="0" pos="fixed" zIndex="1"
@@ -50,9 +47,9 @@ const MenuBar = (props) => {
                             <Tooltip label="Coming soon!" fontSize='md'>
                                 <Button leftIcon={<FaHashtag />} variant="ghost" isDisabled size="lg">Discover</Button>
                             </Tooltip>
-                            <Tooltip label="Messages (coming soon!)" fontSize='md'>
+                            {/*<Tooltip label="Messages (coming soon!)" fontSize='md'>
                                 <Button isDisabled leftIcon={<FiMessageSquare />} variant="ghost" size="lg">Messages</Button>
-                            </Tooltip>
+                            </Tooltip>*/}
                             <Button leftIcon={<FaInfo />} variant="ghost" size="lg" onClick={() => { navigate('/about') }}>About</Button>
                         </VStack>
                     </VStack>
@@ -71,9 +68,7 @@ const MenuBar = (props) => {
                             <Tooltip label="Discover (coming soon!)" fontSize='md'>
                                 <Button isDisabled variant="link"><FaHashtag /></Button>
                             </Tooltip>
-                            <Tooltip label="Messages (coming soon!)" fontSize='md'>
-                                <Button isDisabled variant="link" fontSize="2xl"><FiMessageSquare /></Button>
-                            </Tooltip>
+                                <Button variant="link" fontSize="2xl" onClick={() => { navigate('/about') }}><FaInfo /></Button>
                         </VStack>
                     </VStack>
                 </Hide>
@@ -81,23 +76,22 @@ const MenuBar = (props) => {
             {/* ACCOUNT */}
             <Box w={{ md: '100px', lg: '330px' }} h="75px" p="4" bottom="0" left="0" pos="fixed" bg={uiColor} verticalAlign="middle">
                 <Flex wrap="wrap">
-                    <Avatar src={props.accountInfo.picture ?? ''} name={props.accountInfo.display_name ?? props.accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" ml={{ md: 2, lg: 0 }} onClick={() => { navigate(`/${props.accountInfo.nip05 ?? props.account.publicKey}`) }} cursor="pointer"></Avatar>
-                    <VStack spacing="0" align="left" pl="2">
+                    <Show above="md"><Button hidden={account.publicKey} variant="ghost" leftIcon={<GoSignIn />} onClick={() => { navigate('/welcome') }}>Sign-in</Button></Show>
+                    <Avatar hidden={!account.publicKey} src={accountInfo.picture ?? ''} name={accountInfo.display_name ?? accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" ml={{ md: 2, lg: 0 }} onClick={() => { navigate(`/${accountInfo.nip05 ?? account.publicKey}`) }} cursor="pointer"></Avatar>
+                    <VStack hidden={!account.publicKey} spacing="0" align="left" pl="2">
                         <HStack>
-                            <Text fontSize="md" maxW="180px" noOfLines={1}>{props.accountInfo.display_name ?? props.accountInfo.name ?? 'Nostr User'}</Text>
-                            {/*<Text as="b" fontSize="xs">@{props.accountInfo.name ?? ''}</Text>*/}
+                            <Text fontSize="md" maxW="180px" noOfLines={1}>{accountInfo.display_name ?? accountInfo.name ?? 'Nostr User'}</Text>
+                            {/*<Text as="b" fontSize="xs">@{accountInfo.name ?? ''}</Text>*/}
                         </HStack>
-                        <Text w="180px" noOfLines="1" fontSize="xs">{props.accountInfo.nip05 && props.accountInfo.nip05 !== '' ? props.accountInfo.nip05 : '@' + props.accountInfo.name}</Text>
+                        <Text w="180px" noOfLines="1" fontSize="xs">{accountInfo.nip05 && accountInfo.nip05 !== '' ? accountInfo.nip05 : '@' + accountInfo.name}</Text>
                     </VStack>
                     <VStack align="right" w="60px">
-                        <Menu>
+                        <Menu >
                             <MenuButton as={Button} variant="ghost"><IoMdArrowDropup /></MenuButton>
-                            <MenuList>
-                                <MenuItem icon={<IoIosPerson />} onClick={() => { navigate(`/${props.accountInfo.nip05 ?? props.account.publicKey}`) }}>Profile</MenuItem>
-                                <MenuItem icon={<IoIosSettings />} onClick={() => { navigate('/settings') }}>Settings</MenuItem>
+                            <MenuList bg={uiColor}>
+                                <MenuItem isDisabled={!account.publicKey} icon={<IoIosPerson />} onClick={() => { navigate(`/${accountInfo.nip05 ?? account.publicKey}`) }}>Profile</MenuItem>
+                                <MenuItem isDisabled={!account.publicKey} icon={<IoIosSettings />} onClick={() => { navigate('/settings') }}>Settings</MenuItem>
                                 <MenuItem icon={colorMode.colorMode === 'light' ? <MoonIcon /> : <SunIcon />} onClick={colorMode.toggleColorMode}>Switch to {colorMode.colorMode === 'light' ? 'dark' : 'light'} Mode</MenuItem>
-                                <MenuDivider />
-                                <MenuItem onClick={logout.bind(this)} icon={<FaSignOutAlt />}>Sign out</MenuItem>
                             </MenuList>
                         </Menu>
                         {/*<Button variant="ghost" color="gray.400" onClick={colorMode.toggleColorMode}></Button>*/}

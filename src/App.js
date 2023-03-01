@@ -7,11 +7,14 @@ import {
 import rootReducer from './reducer';
 
 import { extendTheme } from "@chakra-ui/react"
-import { getUsersMetadata, loadRelays, selectMetadatas, SELECT_NOTES } from './actions/relay';
+import { getUsersMetadata, listNotesRelateds, loadRelays, selectMetadatas, SELECT_NOTES } from './actions/relay';
 import AppContainer from './containers/AppContainer';
 import { saveState } from './localStorage';
 import { throttle } from 'lodash';
 import { mode } from '@chakra-ui/theme-tools';
+import { defineMessages, IntlProvider } from 'react-intl';
+import BrazilianPortuguese from './i18n/pt-BR.json';
+import English from './i18n/en-US.json';
 
 const store = configureStore({
   reducer: rootReducer
@@ -20,15 +23,19 @@ const store = configureStore({
 store.subscribe(throttle(() => {
   console.log('save state to storage')
   try {
-    saveState(store.getState().user, 'user');
+    saveState(store.getState().user.account, 'user.account');
+    saveState(store.getState().user.accountInfo, 'user.accountInfo');
+    saveState(store.getState().user.likes, 'user.likes');
+    saveState(store.getState().user.relays, 'user.relays');
+    saveState(store.getState().user.usersMetadata, 'user.usersMetadata');
+    saveState(store.getState().content.allNotes, 'content.allNotes');
   } catch { }
 }, 30000));
 
 if (!window.metadataInterval)
   window.metadataInterval = setInterval(() => {
     store.dispatch(getUsersMetadata());
-    //store.dispatch(selectMetadatas());
-    //store.dispatch({ type: SELECT_NOTES, data: {} });
+    store.dispatch(listNotesRelateds());
   }, 5000)
 
 // 2. Call `extendTheme` and pass your custom values
@@ -60,11 +67,21 @@ const customTheme = extendTheme({
 })
 
 function App() {
+  const language = store.getState().user.language ?? navigator.language
+  let i18nMessages = {};
+  if (language === 'pt-BR')
+    i18nMessages = BrazilianPortuguese;
+  else
+    i18nMessages = English;
+
+    defineMessages(i18nMessages);
 
   return (
     <Provider store={store}>
       <ChakraProvider theme={customTheme}>
-        <AppContainer />
+        <IntlProvider locale={language} messages={i18nMessages}>
+          <AppContainer />
+        </IntlProvider>
       </ChakraProvider >
     </Provider>
   );

@@ -1,10 +1,9 @@
 import { createReducer } from '@reduxjs/toolkit'
-import { loadState } from '../localStorage';
+import { saveToStorage } from '../actions/account';
+import { loadState, saveState } from '../localStorage';
 
-let storageState = loadState('user');
-
-const initialState = storageState ? storageState : {
-    relays: [
+const initialState = {
+    relays: loadState('user.relays') ?? [
         {
             url: 'wss://relay.nostr.info',
             read: true,
@@ -47,10 +46,10 @@ const initialState = storageState ? storageState : {
         }
     ],
     loggedIn: false,
-    account: {},
-    accountInfo: {},
-    usersMetadata: {},
-    likes: [],
+    account: loadState('user.account') ?? {},
+    accountInfo: loadState('user.accountInfo') ?? {},
+    usersMetadata: loadState('user.usersMetadata') ?? {},
+    likes: loadState('user.likes') ?? [],
     following: []
 };
 
@@ -107,6 +106,11 @@ const userReducer = createReducer(initialState, {
         state.accountInfo = {};
         state.likes = [];
         state.following = [];
+        try {
+            saveState({}, "user.account")
+            saveState({}, "user.accountInfo")
+            saveState({}, "user.likes")
+        } catch { }
     },
     REMOVE_FOLLOWING: (state, action) => {
         if (state.following.indexOf(action.data) >= 0)

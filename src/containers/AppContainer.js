@@ -23,50 +23,29 @@ import EmbedNoteContainer from './EmbedNoteContainer';
 import AboutContainer from './AboutContainer';
 import WelcomeV2Container from './WelcomeV2Container';
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        logout: () => {
-            dispatch(logout());
-            dispatch(saveToStorage());
-        },
-        loadMyInfo: (publicKey) => {
-            dispatch(getMyInfo(publicKey));
-        }
-    };
-};
-
-const mapStateToProps = (state, ownProps) => {
-    return {
-        loggedIn: state.user.loggedIn,
-        account: state.user.account,
-        accountInfo: state.user.accountInfo ?? {},
-        relays: state.user.relays
-    };
-}
-
 const home = props => (
     <Box>
-        <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
-        <TopBar account={props.account} accountInfo={props.accountInfo} relays={props.relays} />
-        <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
+        <MenuBar />
+        <TopBar />
+        <BottomNavigation />
         <HomeContainer />
     </Box>
 )
 
 const about = props => (
     <Box>
-        <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
-        <TopBar account={props.account} accountInfo={props.accountInfo} relays={props.relays} />
-        <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
+        <MenuBar />
+        <TopBar />
+        <BottomNavigation />
         <AboutContainer />
     </Box>
 )
 
 const settings = props => (
     <Box>
-        <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
-        <TopBar account={props.account} accountInfo={props.accountInfo} relays={props.relays} />
-        <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
+        <MenuBar />
+        <TopBar />
+        <BottomNavigation />
         <SettingsContainer />
     </Box>
 )
@@ -74,9 +53,9 @@ const settings = props => (
 const noteDetail = props => {
     return (
         <Box>
-            <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
-            <TopBar account={props.account} accountInfo={props.accountInfo} relays={props.relays} backLabel="Note" />
-            <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
+            <MenuBar />
+            <TopBar backLabel="Note" />
+            <BottomNavigation />
             <NoteDetailContainer />
         </Box>
     )
@@ -84,9 +63,9 @@ const noteDetail = props => {
 const profile = props => {
     return (
         <Box>
-            <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
-            <TopBar account={props.account} accountInfo={props.accountInfo} relays={props.relays} backLabel="Profile" />
-            <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
+            <MenuBar />
+            <TopBar backLabel="Profile" />
+            <BottomNavigation />
             <ProfileContainer />
         </Box>
     )
@@ -95,9 +74,9 @@ const profile = props => {
 const search = props => {
     return (
         <Box>
-            <MenuBar account={props.account} accountInfo={props.accountInfo} logout={props.logout} />
-            <TopBar account={props.account} accountInfo={props.accountInfo} relays={props.relays} backLabel="Search" />
-            <BottomNavigation account={props.account} accountInfo={props.accountInfo} />
+            <MenuBar />
+            <TopBar  backLabel="Search" />
+            <BottomNavigation />
             <SearchContainer />
         </Box>
     )
@@ -106,10 +85,6 @@ const search = props => {
 const AppContainer = (props) => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const dispatch = useDispatch();
-    useEffect(() => {
-        if (props.account && props.account.publicKey)
-            props.loadMyInfo(props.account.publicKey);
-    }, [props.account])
     const imageSrc = useSelector(state => state.content.imageSrc);
     const closeImage = () => {
         dispatch({ type: VIEW_IMAGE, data: null });
@@ -118,7 +93,9 @@ const AppContainer = (props) => {
         <BrowserRouter>
             <Routes>
                 <Route exact path="/welcome" element={<WelcomeV2Container />} />
+                <Route exact path="/foryou"  element={home(props)} />
                 <Route exact path="/" element={home(props)} />
+                <Route exact path="/following" element={home(props)} />
                 <Route exact path="/about" element={about(props)} />
                 <Route exact path="/settings/:area?" element={settings(props)} />
                 <Route path="/embed/:id" element={<EmbedNoteContainer />} />
@@ -144,4 +121,4 @@ const AppContainer = (props) => {
     </Box>)
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(AppContainer);
+export default AppContainer;

@@ -21,11 +21,12 @@ const TopBar = (props) => {
     const [composerActive, setComposerActive] = useState(false);
     const params = useParams();
     const navigate = useNavigate();
+    const account = useSelector(state => state.user.account);
+    const relays = useSelector(state => state.user.relays);
+    const accountInfo = useSelector(state => state.user.accountInfo);
     let replyTo = useSelector(state => {
         return state.content.replyTo;
     });
-    if (location.pathname === "/welcome")
-        return null;
     const performSearch = () => {
         navigate(`/search/${searchTerm}`);
     }
@@ -58,11 +59,11 @@ const TopBar = (props) => {
                     }
                 </Box>
                 <Box p="4" w="200px" textAlign="right">
-                    <Tooltip label={`You are connected to ${props.relays.length} relays`} fontSize='md'>
-                        <Button variant="ghost" color="blue.300" leftIcon={<BiNetworkChart />} onClick={() => { navigate('/settings/relays') }} size="sm" fontSize="xs">{props.relays.length}</Button>
+                    <Tooltip label={`You are connected to ${relays.length} relays`} fontSize='md'>
+                        <Button variant="ghost" color="blue.300" leftIcon={<BiNetworkChart />} onClick={() => { navigate('/settings/relays') }} size="sm" fontSize="xs">{relays.length}</Button>
                     </Tooltip>
-                    <Tooltip label="What's on your mind?" fontSize='md'>
-                        <Button variant="ghost" size="sm" fontSize="2xl" onClick={openCloseComposer}>{composerActive || replyTo ? <IoMdCloseCircle /> : <IoMdAddCircleOutline />}</Button>
+                    <Tooltip label={account.publicKey?"What's on your mind?":"Sign-in to post notes!"} fontSize='md'>
+                        <Button isDisabled={!account.publicKey}  variant="ghost" size="sm" fontSize="2xl" onClick={openCloseComposer}>{composerActive || replyTo ? <IoMdCloseCircle /> : <IoMdAddCircleOutline />}</Button>
                     </Tooltip>
                     <Tooltip label="Notifications (coming soon!)" fontSize='md'>
                         <Button variant="ghost" size="sm" isDisabled fontSize="2xl" ><IoMdNotifications /></Button>
@@ -72,7 +73,7 @@ const TopBar = (props) => {
             <Collapse in={composerActive || replyTo} unmountOnExit>
                 <Box p="3">
                     <Container maxW="4xl">
-                        <Composer account={props.account} replyTo={replyTo} accountInfo={props.accountInfo} onPublish={openCloseComposer} />
+                        <Composer account={account} replyTo={replyTo} accountInfo={accountInfo} onPublish={openCloseComposer} />
                     </Container>
                 </Box>
             </Collapse>

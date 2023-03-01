@@ -2,17 +2,20 @@ import { Box, Button, Center, Grid, GridItem, Hide, Avatar, useColorModeValue } 
 import { IoIosHome, IoIosSearch } from 'react-icons/io';
 import { FaHashtag } from 'react-icons/fa';
 import withRouter from '../withRouter';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { GoSignIn } from 'react-icons/go';
 
 const BottomNavigation = props => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const navigate = useNavigate();
-    const isHome = props.router.location.pathname === "/";
-    const isSearch = props.router.location.pathname.includes("/search");
-    const isOwnProfile = props.router.location.pathname.includes(`/${props.accountInfo.nip05}`);
-    if (props.router.location.pathname === "/welcome")
-        return null;
+    const location = useLocation();
+    const isHome = location.pathname === "/";
+    const isSearch = location.pathname.includes("/search");
+    const account = useSelector(state => state.user.account);
+    const accountInfo = useSelector(state => state.user.accountInfo);
+    const isOwnProfile = location.pathname.includes(`/${accountInfo.nip05}`);
     const goHome = () => {
         navigate('/');
     }
@@ -24,12 +27,12 @@ const BottomNavigation = props => {
                 <Grid templateColumns="repeat(4,1fr)" gap="5" >
                     <GridItem p="17px" mt="-2" bgGradient={isHome ? "linear(to-br, brand.purple, brand.green)" : ""} borderTopRadius="2xl">
                         <Center>
-                            <Button variant="link" size="sm" fontSize="3xl" color={isHome?"blue.900":null} onClick={goHome}><IoIosHome /></Button>
+                            <Button variant="link" size="sm" fontSize="3xl" color={isHome ? "blue.900" : null} onClick={goHome}><IoIosHome /></Button>
                         </Center>
                     </GridItem>
                     <GridItem p="4" mt="-2" bgGradient={isSearch ? "linear(to-br, brand.purple, brand.green)" : ""} borderTopRadius="2xl">
                         <Center>
-                            <Button onClick={() => { navigate('/search') }} variant="ghost" color={isSearch?"blue.900":null} size="sm" fontSize="2xl"><IoIosSearch /></Button>
+                            <Button onClick={() => { navigate('/search') }} variant="ghost" color={isSearch ? "blue.900" : null} size="sm" fontSize="2xl"><IoIosSearch /></Button>
                         </Center>
                     </GridItem>
                     <GridItem p="4">
@@ -39,9 +42,10 @@ const BottomNavigation = props => {
                     </GridItem>
                     <GridItem p="4" mt="-2" bgGradient={isOwnProfile ? "linear(to-br, brand.purple, brand.green)" : ""} borderTopRadius="2xl">
                         <Center>
-                            <Link to={`/${props.accountInfo.nip05??props.account.publicKey}`}>
-                                <Avatar src={props.accountInfo.picture ?? ''} name={props.accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" size="sm" />
+                            <Link hidden={!account.publicKey} to={`/${accountInfo.nip05 ?? account.publicKey}`}>
+                                <Avatar src={accountInfo.picture ?? ''} name={accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" size="sm" />
                             </Link>
+                            <Button hidden={account.publicKey} onClick={()=>{navigate('/welcome')}} variant="ghost" mt="-1"><GoSignIn /></Button>
                         </Center>
                     </GridItem>
                 </Grid>
