@@ -22,11 +22,11 @@ const ProfileContainer = props => {
     const moreResults = () => {
         setLimit(limit + 25);
     }
-    const followUnfollow = () => {
+    const followUnfollow = (isFollowing) => {
         if (!isFollowing)
-            addFollowing(publicKeyHex);
+            followingAdd(publicKeyHex);
         else
-            removeFollowing(publicKeyHex)
+            followingRemove(publicKeyHex)
     }
     const loadUser = publicKeyHex => {
         dispatch(receivedUserMetadata(publicKeyHex, { load: true }));
@@ -35,10 +35,10 @@ const ProfileContainer = props => {
     const loadNotes = (publicKeyHex, limit) => {
         dispatch(getUserNotes(publicKeyHex, limit * 5));
     };
-    const addFollowing = publicKeyHex => {
+    const followingAdd = publicKeyHex => {
         dispatch(addFollowing(publicKeyHex));
     };
-    const removeFollowing = publicKeyHex => {
+    const followingRemove = publicKeyHex => {
         dispatch(removeFollowing(publicKeyHex));
     };
     const loadUserFollowing = publicKeyHex => {
@@ -139,7 +139,7 @@ const ProfileContainer = props => {
                                         <Avatar size="2xl" src={user.picture} name={user.display_name ?? user.name} />
                                         {isOwnProfile ?
                                             <Button onClick={() => { navigate('/settings') }} variant="solid" leftIcon={<IoMdSettings />} bgGradient="linear(to-br, brand.purple, brand.green)">Settings</Button> :
-                                            <Button isDisabled={!account.publicKey} onClick={followUnfollow} variant="solid" leftIcon={isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />} bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? "Unfollow" : "Follow"}</Button>}
+                                            <Button isDisabled={!account.publicKey} onClick={followUnfollow.bind(this, isFollowing)} variant="solid" leftIcon={isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />} bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? "Unfollow" : "Follow"}</Button>}
                                     </VStack>
                                 </GridItem>
                                 <GridItem colSpan={[12, 8]} textAlign="left" pl="5">
