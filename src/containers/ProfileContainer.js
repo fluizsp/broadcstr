@@ -86,7 +86,7 @@ const ProfileContainer = props => {
     let userLoaded = user.name ? true : false;
     let notes = [];
     let replies = [];
-    let isOwnProfile = account.publicKey === publicKeyHex;
+    let isOwnProfile = account.publicKey && nip19.decode(account.publicKey).data === publicKeyHex;
     let isFollowing = useSelector(state => state.user.following.filter(f => f === publicKeyHex).length > 0);
     notes = useSelector(state => Object.keys(state.content.allNotes).map(k => { return state.content.allNotes[k] })
         .filter(note => note.pubkey === publicKeyHex || note.reposted_by === publicKeyHex)

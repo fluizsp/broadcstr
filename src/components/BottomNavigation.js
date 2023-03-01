@@ -5,6 +5,7 @@ import withRouter from '../withRouter';
 import { useLocation, useNavigate } from 'react-router';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { GoSignIn } from 'react-icons/go';
 
 const BottomNavigation = props => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
@@ -41,9 +42,10 @@ const BottomNavigation = props => {
                     </GridItem>
                     <GridItem p="4" mt="-2" bgGradient={isOwnProfile ? "linear(to-br, brand.purple, brand.green)" : ""} borderTopRadius="2xl">
                         <Center>
-                            <Link to={`/${accountInfo.nip05 ?? account.publicKey}`}>
+                            <Link hidden={!account.publicKey} to={`/${accountInfo.nip05 ?? account.publicKey}`}>
                                 <Avatar src={accountInfo.picture ?? ''} name={accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" size="sm" />
                             </Link>
+                            <Button hidden={account.publicKey} onClick={()=>{navigate('/welcome')}} variant="ghost" mt="-1"><GoSignIn /></Button>
                         </Center>
                     </GridItem>
                 </Grid>
