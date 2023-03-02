@@ -1,24 +1,30 @@
-import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, useColorModeValue, Link, Flex, Popover, PopoverTrigger, PopoverContent, PopoverArrow } from '@chakra-ui/react'
+import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, useColorModeValue, Link, Flex, Popover, PopoverTrigger, PopoverContent, PopoverArrow, useToast, InputGroup, InputLeftAddon, InputRightAddon, Input } from '@chakra-ui/react'
 import { FiMaximize } from 'react-icons/fi';
-import { BiCommentDetail, BiHeart, BiRepost } from 'react-icons/bi';
+import { BiCommentDetail, BiHeart, BiMinus, BiPlus, BiRepost } from 'react-icons/bi';
 import { IoIosHeart } from 'react-icons/io';
 import { formatDistanceStrict } from 'date-fns'
-import { nip19 } from 'nostr-tools';
+import { nip19, nip57, getEventHash } from 'nostr-tools';
 import { Link as DomLink, useNavigate } from 'react-router-dom';
 import format from 'date-fns/format';
 import { useDispatch, useSelector } from 'react-redux';
 import MentionTag from './MentionTag';
 import { HiLightningBolt, HiReply } from 'react-icons/hi';
-import { addNoteRelatedToload, likeNote, REPLY_TO, repostNote, VIEW_IMAGE } from '../actions/relay';
+import { addNoteRelatedToload, likeNote, REPLY_TO, repostNote, sign, VIEW_IMAGE } from '../actions/relay';
 import { GoBroadcast, GoCheck } from 'react-icons/go';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Nip57Service } from '../services/Nip57Service';
 
 const Note = props => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
+    const lnRef = useRef(null);
+    const txtZapAmount = useRef(null);
+    const toast = useToast();
     const [reposted, setReposted] = useState(false);
     const [expanded, setExpanded] = useState(false);
+    const [ln, setLn] = useState(0);
+    const [actualZapAmount, setActualZapAmount] = useState(144);
+    const [controlledZapAmount, setControlledZapAmount] = useState(144);
     const alphaGradient = useColorModeValue('linear(to-t, brand.lightUi 75%, brand.lightUiAlpha 100%)', 'linear(to-t, brand.darkUi 75%, brand.darkUiAlpha 100%)');
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     let note = props.note ?? {};
@@ -29,6 +35,7 @@ const Note = props => {
     let relateds = useSelector(state => state.content.allNotesRelateds[note.id]) ?? {};
     let liked = useSelector(state => state.user.likes.filter(l => l === note.id).length > 0);
     const account = useSelector(state => state.user.account);
+    const relays = useSelector(state => state.user.relays);
     //console.log(`render note ${note.content}`)
     let created = note ? new Date(note.created_at * 1000) : new Date();
     let timeDistance = formatDistanceStrict(created, new Date(), { addSuffix: false });
@@ -98,9 +105,44 @@ const Note = props => {
         if (selection.length === 0)
             navigate(url);
     }
-    const handleZap = amount => {
-        console.log(amount);
-        console.log(authorMetadata.lud16);
+    const handleZap = () => {
+        let lud16 = authorMetadata.lud16;
+        if (!lud16) {
+            toast({ description: `${authorMetadata.name ?? nip19.npubEncode(authorMetadata.publicKey)} doesn't have a valid lud16.`, status: 'error' });
+        }
+        Nip57Service.fetchLud16(lud16).then(zapInfo => {
+            try {
+                let zapRequestInfo = {
+                    profile: zapInfo.nostrPubkey,
+                    amount: actualZapAmount * 1000,
+                    event: note.id,
+                    relays: relays.map(r => { return r.url })
+                }
+                let zapRequest = nip57.makeZapRequest(zapRequestInfo);
+                zapRequest.content = '';
+                zapRequest.pubkey = nip19.decode(account.publicKey).data;
+                zapRequest.id = getEventHash(zapRequest);
+                console.log(zapRequest);
+                sign(zapRequest, account).then(signedEvent => {
+                    Nip57Service.fetchCallback(zapInfo.callback, actualZapAmount * 1000, signedEvent).then(result => {
+                        setLn(`lightning:${result.pr}`);
+                        setTimeout(() => { lnRef.current.click(); }, 100);
+                    });
+                }).catch(err => {
+                    toast({ description: err.message, status: 'error' });
+                });
+            } catch (err) {
+                toast({ description: err.message, status: 'error' });
+            }
+        })
+    }
+    const fibonacciAmount = increase => {
+        let newNumber =
+            increase ? controlledZapAmount * (1 + Math.sqrt(5)) / 2.0 :
+                controlledZapAmount === 1 ? 1 : controlledZapAmount / ((1 + Math.sqrt(5)) / 2);
+        setActualZapAmount(Math.round(newNumber));
+        setControlledZapAmount(Math.round(newNumber));
+        txtZapAmount.current.value = Math.round(newNumber);
     }
     //console.log("Render Note");
     return (
@@ -113,7 +155,7 @@ const Note = props => {
                                 <HStack cursor="pointer" onClick={() => { navigate(`/${authorMetadata.nip05 ?? nip19.npubEncode(note.pubkey)}`) }}>
                                     <Avatar size="md" src={authorMetadata.picture ?? ''} name={authorMetadata.display_name ?? authorMetadata.name ?? ''} />
                                     <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{authorMetadata.display_name ?? authorMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
-                                    <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">{authorMetadata.nip05 ?? authorMetadata.name ? authorMetadata.name : ''}</Text>
+                                    <Text fontSize="sm" color="gray.400" maxW="150px" noOfLines="1">{authorMetadata.nip05 ?? authorMetadata.name ? authorMetadata.name : ''}</Text>
                                     <Text fontSize="md" as="b">&middot;</Text>
                                     <Tooltip label={format(created, 'yyyy/MM/dd HH:mm')}>
                                         <Text fontSize="sm">{timeDistance}</Text>
@@ -172,19 +214,21 @@ const Note = props => {
                                 <Button isDisabled={!account.publicKey || liked} leftIcon={liked ? <IoIosHeart color="red" /> : <BiHeart />} onClick={like} variant="ghost" size="md">{relateds.likes ? relateds.likes.length : ""}</Button>
 
                             </Tooltip>
+                            <Link ref={lnRef} href={ln}></Link>
                             <Popover>
                                 <PopoverTrigger>
-                                    <Tooltip label=" Zaps Coming soon!" fontSize='md' hasArrow={true}>
-                                        <Button isDisabled leftIcon={<HiLightningBolt />} variant="ghost" size="md" >{totalZaps > 0 ? totalZaps + totalZapsSuffix : ''}</Button>
-                                    </Tooltip>
+                                    <Button isDisabled={!account.publicKey} leftIcon={<HiLightningBolt />} variant="ghost" size="md" >{totalZaps > 0 ? totalZaps + totalZapsSuffix : ''}</Button>
                                 </PopoverTrigger>
                                 <PopoverContent>
                                     <PopoverArrow />
-                                    <Button leftIcon={<HiLightningBolt color="gold" />} variant="ghost" size="md" >Zap 50 Sats</Button>
-                                    <Button leftIcon={<HiLightningBolt color="gold" />} variant="ghost" size="md" >Zap 500 Sats</Button>
-                                    <Button leftIcon={<HiLightningBolt color="gold" />} variant="ghost" size="md" >Zap 1000 Sats</Button>
-                                    <Button leftIcon={<HiLightningBolt color="gold" />} variant="ghost" size="md" >Zap 5000 Sats</Button>
-                                    <Button leftIcon={<HiLightningBolt color="gold" />} variant="ghost" size="md" >Zap Custom Sats</Button>
+                                    <VStack gap="0">
+                                        <InputGroup>
+                                            <InputLeftAddon><Button variant="ghost" onClick={fibonacciAmount.bind(this, false)}><BiMinus /></Button></InputLeftAddon>
+                                            <Input ref={txtZapAmount} defaultValue={actualZapAmount} w="100%" onBlur={e => { setActualZapAmount(e.target.value) }} textAlign="center" />
+                                            <InputRightAddon><Button variant="ghost" onClick={fibonacciAmount.bind(this, true)}><BiPlus /></Button></InputRightAddon>
+                                        </InputGroup>
+                                        <Button w="100%" leftIcon={<HiLightningBolt color="gold" />} rightIcon={<HiLightningBolt color="gold" />} variant="ghost" size="md" onClick={handleZap.bind(this)} >Zap Sats</Button>
+                                    </VStack>
                                 </PopoverContent>
                             </Popover>
 
