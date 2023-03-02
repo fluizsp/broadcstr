@@ -76,7 +76,7 @@ const MenuBar = (props) => {
             {/* ACCOUNT */}
             <Box w={{ md: '100px', lg: '330px' }} h="75px" p="4" bottom="0" left="0" pos="fixed" bg={uiColor} verticalAlign="middle">
                 <Flex wrap="wrap">
-                    <Show above="md"><Button hidden={account.publicKey} variant="ghost" leftIcon={<GoSignIn />} onClick={() => { navigate('/welcome') }}>Sign-in</Button></Show>
+                    <Show above="md"><Button hidden={account.publicKey} variant="ghost" w="75%" leftIcon={<GoSignIn />} onClick={() => { navigate('/welcome') }}>Sign-in</Button></Show>
                     <Avatar hidden={!account.publicKey} src={accountInfo.picture ?? ''} name={accountInfo.display_name ?? accountInfo.name ?? 'Visitor'} bg="blue.300" mb="5" ml={{ md: 2, lg: 0 }} onClick={() => { navigate(`/${accountInfo.nip05 ?? account.publicKey}`) }} cursor="pointer"></Avatar>
                     <VStack hidden={!account.publicKey} spacing="0" align="left" pl="2">
                         <HStack>
@@ -87,7 +87,7 @@ const MenuBar = (props) => {
                     </VStack>
                     <VStack align="right" w="60px">
                         <Menu >
-                            <MenuButton as={Button} variant="ghost"><IoMdArrowDropup /></MenuButton>
+                            <MenuButton as={Button} variant="ghost" w="50px"><IoMdArrowDropup /></MenuButton>
                             <MenuList bg={uiColor}>
                                 <MenuItem isDisabled={!account.publicKey} icon={<IoIosPerson />} onClick={() => { navigate(`/${accountInfo.nip05 ?? account.publicKey}`) }}>Profile</MenuItem>
                                 <MenuItem isDisabled={!account.publicKey} icon={<IoIosSettings />} onClick={() => { navigate('/settings') }}>Settings</MenuItem>

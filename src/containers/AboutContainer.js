@@ -45,6 +45,30 @@ const AboutContainer = (props) => {
                             </List>
                             <Heading size="md" mt={6}>Version info:</Heading>
                             <Text p={2}>
+                                Version <strong>0.3</strong> - Updates and fixes!
+                                <br />Features and fixes implemented on this version:
+                                <UnorderedList spacing={2} p={2}>
+                                    <ListItem>
+                                        <strong>⚡ ZAPS!</strong> First implementation of zaps! Show total zaps of notes and zap others;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Localization:</strong> Localization structure and preparation;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Likes/Replies/Zaps:</strong> Showing like/replies/zaps amount in feeds (still experimental);
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Anonymous navigation:</strong> Navigation without a npub/nsec/extension (with limited options);
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Reviewed cache:</strong> Changed how state is stored and loaded from/to cache;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Fixes:</strong> Minor fixes and adjustments;
+                                    </ListItem>
+                                </UnorderedList>
+                            </Text>
+                            <Text p={2}>
                                 Version <strong>0.2</strong> - Updates and fixes!
                                 <br />Features and fixes implemented on this version:
                                 <UnorderedList spacing={2} p={2}>

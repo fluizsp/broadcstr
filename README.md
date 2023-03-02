@@ -19,6 +19,14 @@ Because it is like your social network, but:
 
 ## Version info:
 
+**Version 0.3 - Updates and fixes!**
+- ⚡ ZAPS! First implementation of zaps! Show total zaps of notes and zap others;
+- Localization: Localization structure and preparation;
+- Likes/Replies/Zaps: Showing like/replies/zaps amount in feeds (still experimental);
+- Anonymous navigation: Navigation without a npub/nsec/extension (with limited options);
+- Reviewed cache: Changed how state is stored and loaded from/to cache;
+- Fixes: Minor fixes and adjustments;
+
 **Version 0.2 - Updates and fixes!**
 - New Welcome/Account/Login flow: Cleaner and simpler login and new account flow to reduce complexity for the new user;
 - New "For You" feed, to improve content diversity on the home screen;
