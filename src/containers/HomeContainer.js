@@ -87,7 +87,7 @@ const HomeContainer = props => {
                                     </Tabs>
                                 </Center>
                             </Box>
-                            <Box bg={uiColor} h="50px" p="2" w="60px">
+                            <Box bg={uiColor} h="50px" pt="2" w="50px">
                                 <Button size="sm" variant="ghost" onClick={loadNotes.bind(this, feedType)}><HiRefresh /></Button>
                             </Box>
                         </Flex>

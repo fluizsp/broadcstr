@@ -170,6 +170,10 @@ const SettingsContainer = (props) => {
         newInfo.lud16 = event.target.value;
         setAccountInfo(newInfo);
     }
+    const publishProfile = (accountInfo) => {
+        dispatch(setAccount(null, accountInfo));
+        dispatch(publishProfile(accountInfo));
+    }
     const saveProfile = async () => {
         let newInfo = {};
         console.log(accountInfo);
@@ -193,7 +197,7 @@ const SettingsContainer = (props) => {
             newInfo.banner = newBannerImage;
         }
         setAccountInfo(newInfo);
-        saveProfile(newInfo);
+        publishProfile(newInfo);
     }
     return (
         <Box minH="100vH" bgGradient={bgGradient}>

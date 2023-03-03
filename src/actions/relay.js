@@ -59,18 +59,22 @@ const getWriteRelaysUrls = relays => {
     return relays.filter(r => r.write).map(r => { return r.url });
 }
 
-const sign = async (event, account) => {
+export const sign = async (event, account) => {
     return new Promise((resolve, reject) => {
-        if (!account.privateKey) {
-            window.nostr.signEvent(event).then(signedEvent => {
-                resolve(signedEvent);
-            }).catch(err => {
-                reject(err);
-            });
-        } else if (account.privateKey) {
-            event.sig = signEvent(event, nip19.decode(account.privateKey).data);
-            resolve(event);
-        }
+        try {
+            if (!account.privateKey && window.nostr) {
+                window.nostr.signEvent(event).then(signedEvent => {
+                    resolve(signedEvent);
+                }).catch(err => {
+                    reject(err);
+                });
+            } else if (account.privateKey) {
+                event.sig = signEvent(event, nip19.decode(account.privateKey).data);
+                resolve(event);
+            }
+        } catch (err) {
+            reject(err);
+        };
     });
 }
 
@@ -163,7 +167,7 @@ export const getZapsFeed = (limit) => {
             myPool.list(relays, eventsFilters).then(results => {
                 results.forEach(event => {
                     if (events[event.id]) {
-                        let eventWithZapAmount=Object.assign({},event);
+                        let eventWithZapAmount = Object.assign({}, event);
                         eventWithZapAmount.zapAmount = events[event.id];
                         if (eventWithZapAmount.zapAmount && validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
                             if (!getState().user.usersMetadata[event.pubkey]) {
