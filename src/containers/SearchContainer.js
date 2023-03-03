@@ -7,37 +7,11 @@ import NoteList from '../components/NoteList';
 import { IoIosSearch } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
 import { nip05 } from 'nostr-tools';
+import { useIntl } from 'react-intl';
 
 const mapDispatchToProps = (dispatch, getState) => {
     return {
-        loadMyInfo: (publicKeyHex) => {
-            dispatch((getMyInfo(publicKeyHex)));
-        },
-        loadNotes: (publicKeyHex, limit) => {
-            console.log(`dispatch(getUserNotes(${publicKeyHex}, ${limit}));`)
-            dispatch(getUserNotes(publicKeyHex, limit * 5));
-        },
-        unloadNotes: () => {
-            dispatch({ type: UNLOAD_NOTES });
-        },
-        addFollowing: publicKeyHex => {
-            dispatch(addFollowing(publicKeyHex));
-        },
-        removeFollowing: publicKeyHex => {
-            dispatch(removeFollowing(publicKeyHex));
-        },
-        loadUserFollowing: publicKeyHex => {
-            dispatch(getUserFollowing(publicKeyHex));
-        },
-        loadUserFollowers: publicKeyHex => {
-            dispatch(getUserFollowers(publicKeyHex));
-        },
-        search: (type, term) => {
-            dispatch(search(type, term));
-        },
-        clearSearch: async () => {
-            await dispatch({ type: CLEAR_SEARCH });
-        }
+
     }
 };
 
@@ -49,6 +23,7 @@ const mapStateToProps = (state, ownProps) => {
 
 const SearchContainer = props => {
     const dispatch = useDispatch();
+    const intl = useIntl();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const bgGradient = useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const params = useParams();
@@ -59,11 +34,27 @@ const SearchContainer = props => {
     const moreResults = () => {
         setLimit(limit + 50);
     }
+    const addFollowing = publicKeyHex => {
+        dispatch(addFollowing(publicKeyHex));
+    }
+    const removeFollowing = publicKeyHex => {
+        dispatch(removeFollowing(publicKeyHex));
+    }
+    const loadUserFollowing = publicKeyHex => {
+        dispatch(getUserFollowing(publicKeyHex));
+    }
+    const loadUserFollowers = publicKeyHex => {
+        dispatch(getUserFollowers(publicKeyHex));
+    }
+        
+    const clearSearch = async () => {
+        await dispatch({ type: CLEAR_SEARCH });
+    }
 
     useEffect(() => {
-        props.clearSearch();
+        clearSearch();
         performSearch();
-        document.title="Broadcstr - Search"
+        document.title = "Broadcstr - Search"
     }, [])
     let notes = [];
     let users = [];
@@ -86,7 +77,7 @@ const SearchContainer = props => {
         }
     });
     const performSearch = term => {
-        props.clearSearch();
+        clearSearch();
         if (!term)
             term = searchTerm;
         if (term && term.length >= 3) {
@@ -98,9 +89,8 @@ const SearchContainer = props => {
                     }
                 })
             }
-            console.log(term);
             setSearchTerm(term);
-            props.search(activeView === 0 ? 'users' : 'notes', term)
+            dispatch(search(activeView === 0 ? 'users' : 'notes', term.replace('#', '')));
             setNoResults(false);
         }
     }
@@ -121,48 +111,27 @@ const SearchContainer = props => {
                             {/*<FormLabel color="gray.400" mb="5">Searching for: "{params.term}"</FormLabel>*/}
                             <InputGroup variant="unstyçed" mb="5">
                                 <InputLeftElement children={<IoIosSearch />}></InputLeftElement>
-                                <Input bg="transparent" variant="unstyçed" placeholder={searchTerm === undefined ? activeView === 0 ? 'Search for users handle/username or display name' : 'Search for hashtags, like #bitcoin' : `Searching for: "${searchTerm}"`} onKeyUp={async k => { if (k.key === "Enter") { performSearch(k.target.value) } }}></Input>
+                                <Input bg="transparent" variant="unstyçed" placeholder={searchTerm === undefined ? activeView === 0 ? intl.formatMessage({ id: 'userSearchHelp' }) : intl.formatMessage({ id: 'noteSearchHelp' }) : intl.formatMessage({ id: 'searchingFor' }, { term: searchTerm })} onKeyUp={async k => { if (k.key === "Enter") { performSearch(k.target.value) } }}></Input>
                             </InputGroup>
                             <Tabs ml="-12px" index={activeView} mr="-12px">
                                 <TabList>
-                                    <Tab w="50%" onClick={() => { setTab(0) }}>Users</Tab>
-                                    <Tab w="50%" onClick={() => { setTab(1) }}>Notes & Replies</Tab>
+                                    <Tab w="50%" onClick={() => { setTab(0) }}>{intl.formatMessage({ id: 'users' })}</Tab>
+                                    <Tab w="50%" onClick={() => { setTab(1) }}>{intl.formatMessage({ id: 'notesAndReplies' })}</Tab>
                                 </TabList>
                             </Tabs>
                         </Card>
                         <SlideFade in={activeView === 0} unmountOnExit>
                             {users.slice(0, limit).map(u => {
-                                return (<ContactListItem publicKeyHex={u.publicKeyHex} metadata={u.metadata} addFollowing={props.addFollowing} removeFollowing={props.removeFollowing} />)
+                                return (<ContactListItem publicKeyHex={u.publicKeyHex} metadata={u.metadata} addFollowing={addFollowing} removeFollowing={removeFollowing} />)
                             })}
                         </SlideFade>
                         <SlideFade in={activeView === 1} unmountOnExit>
                             <NoteList notes={notes.slice(0, limit)} />
                         </SlideFade>
                         <VStack>
-                            {notes.length > limit || users.length > limit ? <Button onClick={moreResults} >Show more...</Button> : null}
+                            {notes.length > limit || users.length > limit ? <Button onClick={moreResults} >{intl.formatMessage({ id: 'moreResults' })}</Button> : null}
                             <Fade in={isLoading}>
                                 <Spinner size="xl" color="blue.300" />
-                            </Fade>
-                            <Fade in={noResults}>
-                                <Alert
-                                    status='warning'
-                                    variant='subtle'
-                                    flexDirection='column'
-                                    alignItems='center'
-                                    justifyContent='center'
-                                    textAlign='center'
-                                    height='400px'
-                                >
-                                    <AlertIcon boxSize='40px' mr={0} />
-                                    <AlertTitle mt={4} mb={1} fontSize='lg'>
-                                        No Results!
-                                    </AlertTitle>
-                                    <AlertDescription maxWidth='sm'>
-                                        Your search returned no results ): <br />
-                                        If you are searching for users, try the display name, username, or the NIP-05.<br />
-                                        If you are searching for notes, use tags without the "#" like: Bitcoin
-                                    </AlertDescription>
-                                </Alert>
                             </Fade>
                         </VStack>
                     </Container>
@@ -173,4 +142,4 @@ const SearchContainer = props => {
     )
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(SearchContainer);
+export default SearchContainer;

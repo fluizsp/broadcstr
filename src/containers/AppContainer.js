@@ -1,27 +1,25 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
-    Box, Center, HStack, Image, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay, useColorModeValue, VStack
+    Box, HStack, Image, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay, useColorModeValue, VStack
 } from '@chakra-ui/react';
 import {
     Route,
-    Routes,
-    useNavigate
+    Routes
 } from 'react-router';
 import { BrowserRouter } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import MenuBar from '../components/MenuBar';
 import BottomNavigation from '../components/BottomNavigation';
 import HomeContainer from './HomeContainer';
-import { connect, useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import NoteDetailContainer from './NoteDetailContainer';
-import { logout, saveToStorage } from '../actions/account';
 import ProfileContainer from './ProfileContainer';
 import SearchContainer from './SearchContainer';
-import { getMyInfo, VIEW_IMAGE } from '../actions/relay';
+import { VIEW_IMAGE } from '../actions/relay';
 import SettingsContainer from './SettingsContainer';
-import EmbedNoteContainer from './EmbedNoteContainer';
 import AboutContainer from './AboutContainer';
 import WelcomeV2Container from './WelcomeV2Container';
+import { useIntl } from 'react-intl';
 
 const home = props => (
     <Box>
@@ -54,7 +52,7 @@ const noteDetail = props => {
     return (
         <Box>
             <MenuBar />
-            <TopBar backLabel="Note" />
+            <TopBar backLabel=" " />
             <BottomNavigation />
             <NoteDetailContainer />
         </Box>
@@ -64,7 +62,7 @@ const profile = props => {
     return (
         <Box>
             <MenuBar />
-            <TopBar backLabel="Profile" />
+            <TopBar backLabel=" " />
             <BottomNavigation />
             <ProfileContainer />
         </Box>
@@ -75,7 +73,7 @@ const search = props => {
     return (
         <Box>
             <MenuBar />
-            <TopBar  backLabel="Search" />
+            <TopBar backLabel=" " />
             <BottomNavigation />
             <SearchContainer />
         </Box>
@@ -93,12 +91,11 @@ const AppContainer = (props) => {
         <BrowserRouter>
             <Routes>
                 <Route exact path="/welcome" element={<WelcomeV2Container />} />
-                <Route exact path="/foryou"  element={home(props)} />
+                <Route exact path="/foryou" element={home(props)} />
                 <Route exact path="/" element={home(props)} />
                 <Route exact path="/following" element={home(props)} />
                 <Route exact path="/about" element={about(props)} />
                 <Route exact path="/settings/:area?" element={settings(props)} />
-                <Route path="/embed/:id" element={<EmbedNoteContainer />} />
                 <Route path="/note/:id" element={noteDetail(props)} />
                 <Route exact path="/:id" element={profile(props)} />
                 <Route path="/search/:term?" element={search(props)} />

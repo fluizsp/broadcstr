@@ -1,22 +1,22 @@
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
-import { Avatar, Box, Button, Card, Center, Container, Flex, FormLabel, Grid, GridItem, Heading, HStack, Input, InputGroup, InputLeftElement, InputRightAddon, Show, SlideFade, Switch, Tab, TabList, TabPanel, TabPanels, Tabs, Tag, TagLabel, TagLeftIcon, Text, Textarea, Tooltip, useColorMode, useColorModeValue, useToast, VStack } from "@chakra-ui/react";
+import { Avatar, Box, Button, Card, Center, Container, Flex, FormLabel, Grid, GridItem, Heading, HStack, Input, InputGroup, InputLeftElement, InputRightAddon, Select, Show, SlideFade, Switch, Tab, TabList, TabPanel, TabPanels, Tabs, Tag, TagLabel, TagLeftIcon, Text, Textarea, Tooltip, useColorMode, useColorModeValue, useToast, VStack } from "@chakra-ui/react";
 import { getPublicKey, nip05, nip19 } from "nostr-tools";
 import { useEffect, useState } from "react";
-import { AiOutlineVerified } from "react-icons/ai";
 import { FaAdjust, FaGlobe, FaKey, FaPortrait, FaSave, FaSignOutAlt, FaTrash } from "react-icons/fa";
 import { GoBroadcast, GoVerified } from "react-icons/go";
 import { HiLightningBolt } from "react-icons/hi";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import defaultBanner from '../defaultBanner.gif';
 import { useNavigate, useParams } from "react-router";
-import { LOGOUT, saveToStorage, setAccount, SET_RELAYS } from "../actions/account";
+import { LOGOUT, saveToStorage, SAVE_LANGUAGE, setAccount } from "../actions/account";
 import { UploadPicture } from "../services/NostrBuildService";
-import { publishProfile } from "../actions/relay";
+import { useIntl } from "react-intl";
 
 const SettingsContainer = (props) => {
     const dispatch = useDispatch();
     const colorMode = useColorMode();
     const params = useParams();
+    const intl = useIntl();
     const toast = useToast();
     const navigate = useNavigate();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
@@ -33,6 +33,7 @@ const SettingsContainer = (props) => {
     const [newProfileImage, setNewProfileImage] = useState();
     const [newProfileFile, setNewProfileFile] = useState();
     const [nip05Status, setNip05Status] = useState();
+    const [language, setLanguage] = useState();
     useEffect(() => {
         if (accountInfo.nip05) {
             nip05.queryProfile(accountInfo.nip05).then(value => {
@@ -73,9 +74,9 @@ const SettingsContainer = (props) => {
             newNpub = nip19.npubEncode(newNpub);
             dispatch({ type: LOGOUT });
             dispatch(setAccount({ publicKey: newNpub, privateKey: newNsec }));
-            toast({ description: "Account switched sucessfully!", status: "success" });
+            toast({ description: intl.formatMessage({ id: 'accountSwitched' }), status: "success" });
         } catch {
-            toast({ description: "Unable to use private key, check your key and try again.", status: "error" });
+            toast({ description: intl.formatMessage({ id: 'unableToUsePrivateKey' }), status: "error" });
         }
     }
     const signOut = () => {
@@ -114,7 +115,7 @@ const SettingsContainer = (props) => {
     const saveRelays = () => {
         setRelays(relays);
         dispatch(saveToStorage());
-        toast({ description: "Relays configuration saved!", status: "success" })
+        toast({ description: intl.formatMessage({ id: 'relaysSaved' }), status: "success" })
     }
     const changeBannerImage = event => {
         if (event.target.files) {
@@ -199,6 +200,10 @@ const SettingsContainer = (props) => {
         setAccountInfo(newInfo);
         publishProfile(newInfo);
     }
+    const saveLanguage = () => {
+        dispatch({ type: SAVE_LANGUAGE, data: language })
+        document.location.reload();
+    }
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
             <Box ml={{ md: '100px', lg: '330px' }} >
@@ -210,13 +215,13 @@ const SettingsContainer = (props) => {
                                     <Tab isDisabled={!account.publicKey} w="25%" panelId="account">
                                         <FaKey />
                                         <Show above="md">
-                                            <Text fontSize="sm" pl={2}> Account</Text>
+                                            <Text fontSize="sm" pl={2}>{intl.formatMessage({ id: 'account' })}</Text>
                                         </Show>
                                     </Tab>
                                     <Tab isDisabled={!account.publicKey} w="25%">
                                         <FaPortrait />
                                         <Show above="md">
-                                            <Text fontSize="sm" pl={2}>Profile</Text>
+                                            <Text fontSize="sm" pl={2}>{intl.formatMessage({ id: 'profile' })}</Text>
                                         </Show>
                                     </Tab>
                                     <Tab w="25%" >
@@ -228,28 +233,28 @@ const SettingsContainer = (props) => {
                                     <Tab w="25%">
                                         <FaAdjust />
                                         <Show above="md">
-                                            <Text fontSize="sm" pl={2}> Preferences</Text>
+                                            <Text fontSize="sm" pl={2}> {intl.formatMessage({ id: 'preferences' })}</Text>
                                         </Show>
                                     </Tab>
                                 </TabList>
                                 <TabPanels>
                                     <TabPanel p="50" bg={uiColor}>
-                                        <Heading size="md">Key Management</Heading>
-                                        <FormLabel mt={5}>Public Key:</FormLabel>
+                                        <Heading size="md">{intl.formatMessage({ id: 'keyManagement' })}</Heading>
+                                        <FormLabel mt={5}>{intl.formatMessage({ id: 'publicKey' })}:</FormLabel>
                                         <FormLabel mt={2} fontSize="sm">{account.publicKey}</FormLabel>
-                                        <Button size="sm" mr="2" onClick={copyToClipboard.bind(this, 'npub')}>Copy NPUB</Button>
-                                        <Button size="sm" onClick={copyToClipboard.bind(this, 'pubHex')}>Copy HEX</Button>
-                                        <FormLabel mt={5}>Private Key: ······························</FormLabel>
-                                        <Button size="sm" mr="2" onClick={copyToClipboard.bind(this, 'nsec')}>Copy NSEC</Button>
-                                        <Button size="sm" onClick={copyToClipboard.bind(this, 'privHex')}>Copy HEX</Button>
-                                        <Heading size="md" mt={5}>Switch & Sign out</Heading>
-                                        <FormLabel mt={5}>Switch accounts (enter new Private Key):</FormLabel>
+                                        <Button size="sm" mr="2" onClick={copyToClipboard.bind(this, 'npub')}>{intl.formatMessage({ id: 'copy' })} NPUB</Button>
+                                        <Button size="sm" onClick={copyToClipboard.bind(this, 'pubHex')}>{intl.formatMessage({ id: 'copy' })} HEX</Button>
+                                        <FormLabel mt={5}>{intl.formatMessage({ id: 'privateKey' })}: ······························</FormLabel>
+                                        <Button size="sm" mr="2" onClick={copyToClipboard.bind(this, 'nsec')}>{intl.formatMessage({ id: 'copy' })} NSEC</Button>
+                                        <Button size="sm" onClick={copyToClipboard.bind(this, 'privHex')}>{intl.formatMessage({ id: 'copy' })} HEX</Button>
+                                        <Heading size="md" mt={5}>{intl.formatMessage({ id: 'switchAndSignOut' })}</Heading>
+                                        <FormLabel mt={5}>{intl.formatMessage({ id: 'switchAccounts' })}:</FormLabel>
                                         <InputGroup>
                                             <Input type="password" variant="solid" colorScheme="facebook" onChange={(e) => { setNewNsec(e.target.value) }}></Input>
-                                            <InputRightAddon><Button onClick={SwitchAccount}>Switch account</Button></InputRightAddon>
+                                            <InputRightAddon><Button onClick={SwitchAccount}>{intl.formatMessage({ id: 'switchAndSignOut' })}</Button></InputRightAddon>
                                         </InputGroup>
-                                        <FormLabel mt={5}>Sign Out:</FormLabel>
-                                        <Button leftIcon={<FaSignOutAlt />} onClick={signOut}>Sign Out</Button>
+                                        <FormLabel mt={5}>{intl.formatMessage({ id: 'signOut' })}:</FormLabel>
+                                        <Button leftIcon={<FaSignOutAlt />} onClick={signOut}>{intl.formatMessage({ id: 'signOut' })}</Button>
                                     </TabPanel>
                                     <TabPanel p={0} mb={50}>
                                         <Box className='box1' width="100%" height="300px" mb="-300px"
@@ -261,9 +266,9 @@ const SettingsContainer = (props) => {
                                             }}>
                                             <Center>
                                                 <VStack mt="50px">
-                                                    <FormLabel htmlFor="bannerImage" bg={uiColor} p={3} cursor="pointer" borderRadius="md">Upload banner image</FormLabel>
+                                                    <FormLabel htmlFor="bannerImage" bg={uiColor} p={3} cursor="pointer" borderRadius="md">{intl.formatMessage({ id: 'uploadBannerImage' })}</FormLabel>
                                                     <Input id="bannerImage" accept="image/*" type="file" hidden onChange={changeBannerImage.bind(this)}></Input>
-                                                    <Input size='xs' w="150px" variant="solid" placeholder="...or enter image url" onBlur={changeBannerImage.bind(this)}></Input>
+                                                    <Input size='xs' w="150px" variant="solid" placeholder={intl.formatMessage({ id: 'enterBannerUrl' })} onBlur={changeBannerImage.bind(this)}></Input>
                                                 </VStack>
                                             </Center>
 
@@ -273,8 +278,8 @@ const SettingsContainer = (props) => {
                                                 <GridItem colSpan={[12, 4]}>
                                                     <VStack gap={2}>
                                                         <Avatar size="2xl" src={newProfileImage ?? accountInfo.picture} name={accountInfo.display_name ?? accountInfo.name} />
-                                                        <FormLabel htmlFor="profileImage" bg={uiColor} p={3} cursor="pointer" borderRadius="md">Upload profile image...</FormLabel>
-                                                        <Input size='xs' variant="flushed" placeholder="...or enter image url" onChange={changeProfileImage.bind(this)}></Input>
+                                                        <FormLabel htmlFor="profileImage" bg={uiColor} p={3} cursor="pointer" borderRadius="md">{intl.formatMessage({ id: 'uploadProfileImage' })}</FormLabel>
+                                                        <Input size='xs' variant="flushed" placeholder={intl.formatMessage({ id: 'enterProfileUrl' })} onChange={changeProfileImage.bind(this)}></Input>
                                                         <Input id="profileImage" accept="image/*" type="file" hidden onChange={changeProfileImage.bind(this)} hidden></Input>
                                                     </VStack>
                                                 </GridItem>
@@ -287,32 +292,32 @@ const SettingsContainer = (props) => {
                                                         </InputGroup>
                                                     </HStack>
                                                     <HStack>
-                                                        <Input size="sm" fontWeight="bold" color="green.400" maxW="250px" variant="flushed" defaultValue={accountInfo.nip05} placeholder="your nip05@verified domain" onChange={changeNip05.bind(this)}></Input>
-                                                        <Tooltip label={nip05Status ? 'NIP-05 sucessfull validated!' : ''}>
+                                                        <Input size="sm" fontWeight="bold" color="green.400" maxW="250px" variant="flushed" defaultValue={accountInfo.nip05} placeholder={intl.formatMessage({ id: 'yourNip05' })} onChange={changeNip05.bind(this)}></Input>
+                                                        <Tooltip label={nip05Status ? intl.formatMessage({ id: 'nip05Successful' }) : ''}>
                                                             <Tag color={nip05Status === undefined ? 'gray.400' : nip05Status ? 'green.400' : 'red.500'}>
                                                                 {nip05Status ? <TagLeftIcon as={GoVerified} /> : null}
-                                                                <TagLabel>{nip05Status === undefined ? 'No nip-05' : nip05Status ? 'Validated' : 'Validation error'}</TagLabel>
+                                                                <TagLabel>{nip05Status === undefined ? intl.formatMessage({ id: 'noNip05' }) : nip05Status ? intl.formatMessage({ id: 'validated' }) : intl.formatMessage({ id: 'validationError' })}</TagLabel>
                                                             </Tag>
                                                         </Tooltip>
                                                     </HStack>
-                                                    <Textarea variant="flushed" defaultValue={accountInfo.about} placeholder="Tell a little about yourself! What your interests and hobbies! Show Nostr users what your profile is up to!" onChange={changeAbout.bind(this)}></Textarea>
+                                                    <Textarea variant="flushed" defaultValue={accountInfo.about} placeholder={intl.formatMessage({ id: 'aboutPlaceholder' })} onChange={changeAbout.bind(this)}></Textarea>
                                                     <InputGroup>
                                                         <InputLeftElement children={<HiLightningBolt color="yellow" />}></InputLeftElement>
-                                                        <Input color="green.400" variant="flushed" defaultValue={accountInfo.lud16} placeholder="Bitcoin Lightning LUD-06 address" onChange={changeLud16.bind(this)}></Input>
+                                                        <Input color="green.400" variant="flushed" defaultValue={accountInfo.lud16} placeholder={intl.formatMessage({ id: 'lud16Placeholder' })} onChange={changeLud16.bind(this)}></Input>
                                                     </InputGroup>
                                                 </GridItem>
                                             </Grid>
                                             <Box textAlign="right" mt="10">
-                                                <Button leftIcon={<GoBroadcast />} bgGradient="linear(to-br, brand.purple, brand.green)" onClick={saveProfile}>Brodcst profile!</Button>
+                                                <Button rightIcon={<GoBroadcast />} bgGradient="linear(to-br, brand.purple, brand.green)" onClick={saveProfile}>Brodcst!</Button>
                                             </Box>
                                         </Card>
                                     </TabPanel >
                                     <TabPanel p="50" bg={uiColor}>
-                                        <Heading size="md">Relay configuration:</Heading>
+                                        <Heading size="md">{intl.formatMessage({ id: 'relayConfiguration' })}:</Heading>
                                         <Flex p={5}>
                                             <Box flex={1}></Box>
-                                            <Box w={24} textAlign="center">Read</Box>
-                                            <Box w={24} textAlign="center">Write</Box>
+                                            <Box w={24} textAlign="center">{intl.formatMessage({ id: 'read' })}</Box>
+                                            <Box w={24} textAlign="center">{intl.formatMessage({ id: 'write' })}</Box>
                                             <Box w={8} textAlign="center"></Box>
                                         </Flex>
                                         {relays.map(relay => {
@@ -326,19 +331,30 @@ const SettingsContainer = (props) => {
                                                     </Flex>
                                                 </Box>)
                                         })}
-                                        <FormLabel mt={5}>Add a new relay:</FormLabel>
+                                        <FormLabel mt={5}>{intl.formatMessage({ id: 'addNewRelay' })}:</FormLabel>
                                         <InputGroup>
-                                            <Input placeholder="Relay url (wss://relay.someawesomeserver.io" onChange={(e) => { setNewRelayUrl(e.target.value) }} />
-                                            <InputRightAddon><Button onClick={addRelay} variant="unstyled">Add</Button></InputRightAddon>
+                                            <Input placeholder="Url (wss://relay.someawesomeserver.io" onChange={(e) => { setNewRelayUrl(e.target.value) }} />
+                                            <InputRightAddon><Button onClick={addRelay} variant="unstyled">{intl.formatMessage({ id: 'add' })}</Button></InputRightAddon>
                                         </InputGroup>
                                         <Box textAlign="right" mt="10">
-                                            <Button leftIcon={<FaSave />} bgGradient="linear(to-br, brand.purple, brand.green)" onClick={saveRelays}>Save relay configuration</Button>
+                                            <Button leftIcon={<FaSave />} bgGradient="linear(to-br, brand.purple, brand.green)" onClick={saveRelays}>{intl.formatMessage({ id: 'saveRelays' })}</Button>
                                         </Box>
                                     </TabPanel>
                                     <TabPanel p="50" bg={uiColor}>
-                                        <Heading size="md">Color Mode</Heading>
-                                        <FormLabel mt={5}>Current color mode is: {colorMode.colorMode}</FormLabel>
-                                        <Button leftIcon={colorMode.colorMode === 'light' ? <MoonIcon /> : <SunIcon />} onClick={colorMode.toggleColorMode}>Switch Color Mode</Button>
+                                        <Heading size="md" >{intl.formatMessage({ id: 'colorMode' })}</Heading>
+                                        <FormLabel mt={5}>{intl.formatMessage({ id: 'currentColorMode' }, { mode: colorMode.colorMode === 'light' ? intl.formatMessage({ id: 'light' }) : intl.formatMessage({ id: 'dark' }) })}</FormLabel>
+                                        <Button leftIcon={colorMode.colorMode === 'light' ? <MoonIcon /> : <SunIcon />} onClick={colorMode.toggleColorMode}>{intl.formatMessage({ id: 'switchTo' }, { mode: colorMode.colorMode === 'light' ? intl.formatMessage({ id: 'dark' }) : intl.formatMessage({ id: 'light' }) })}</Button>
+                                        <Heading size="md" mt={5}>Language</Heading>
+                                        <FormLabel mt={5}>Select a new Language</FormLabel>
+                                        <Select onChange={e => { setLanguage(e.target.value) }} defaultValue={language}>
+                                            <option value="">Detect</option>
+                                            <option value="en-US">English</option>
+                                            <option value="es-ES">Spanish</option>
+                                            <option value="fr">French</option>
+                                            <option value="pt-BR">Portuguese</option>
+                                            <option value="de">German</option>
+                                        </Select>
+                                        <Button mt={5} leftIcon={<FaSave />} bgGradient="linear(to-br, brand.purple, brand.green)" onClick={saveLanguage}>Save language configuration</Button>
                                     </TabPanel>
                                 </TabPanels>
                             </Tabs>
