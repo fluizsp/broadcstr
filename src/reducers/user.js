@@ -50,6 +50,7 @@ const initialState = {
     accountInfo: loadState('user.accountInfo') ?? {},
     usersMetadata: loadState('user.usersMetadata') ?? {},
     likes: loadState('user.likes') ?? [],
+    language: loadState('user.language') ?? null,
     following: []
 };
 
@@ -119,6 +120,10 @@ const userReducer = createReducer(initialState, {
     SET_RELAYS: (state, action) => {
         if (action.data)
             state.relays = action.data;
+    },
+    SAVE_LANGUAGE: (state, action) => {
+        state.language = action.data;
+        saveState(action.data, "user.language")
     }
 });
 

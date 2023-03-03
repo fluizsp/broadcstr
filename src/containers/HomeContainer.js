@@ -8,11 +8,13 @@ import NoteList from '../components/NoteList';
 import { useEffect } from 'react';
 import { HiLightningBolt, HiRefresh } from 'react-icons/hi';
 import { useLocation, useNavigate } from 'react-router';
+import { useIntl } from 'react-intl';
 
 const HomeContainer = props => {
     const dispatch = useDispatch();
     const location = useLocation();
     const navigate = useNavigate();
+    const intl=useIntl();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const bgGradient = useColorModeValue('linear(to-tl, brand.blessing1, brand.blessing2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const [feedType, setFeedType] = useState('zaps');
@@ -80,9 +82,9 @@ const HomeContainer = props => {
                                 <Center>
                                     <Tabs index={feedType === "following" ? 1 : feedType === 'foryou' ? 2 : 0}>
                                         <TabList>
-                                            <Tab onClick={loadNotes.bind(this, 'zaps')}><HiLightningBolt color="gold" /><Text pl={2}>Trending</Text></Tab>
-                                            <Tab isDisabled={!account.publicKey} onClick={loadNotes.bind(this, 'following')}>Following</Tab>
-                                            <Tab isDisabled={!account.publicKey} onClick={loadNotes.bind(this, 'foryou')}>For you</Tab>
+                                            <Tab onClick={loadNotes.bind(this, 'zaps')}><HiLightningBolt color="gold" /><Text pl={2}>{intl.formatMessage({ id: 'trending' })}</Text></Tab>
+                                            <Tab isDisabled={!account.publicKey} onClick={loadNotes.bind(this, 'following')}>{intl.formatMessage({ id: 'following' })}</Tab>
+                                            <Tab isDisabled={!account.publicKey} onClick={loadNotes.bind(this, 'foryou')}>{intl.formatMessage({ id: 'foryou' })}</Tab>
                                         </TabList>
                                     </Tabs>
                                 </Center>
@@ -94,7 +96,7 @@ const HomeContainer = props => {
                         <NoteList notes={sortedNotes.slice(0, limit)} />
                         <VStack mb="50px">
                             <Spinner size="xl" color="blue.300" hidden={sortedNotes.length !== 0} />
-                            <Button hidden={notes.length === 0 || notes.length < limit} onClick={moreResults.bind(this)} >Next Results...</Button>
+                            <Button hidden={notes.length === 0 || notes.length < limit} onClick={moreResults.bind(this)} >{intl.formatMessage({ id: 'moreResults' })}</Button>
                         </VStack>
                     </Container>
                 </SlideFade>

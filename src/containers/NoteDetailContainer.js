@@ -9,11 +9,13 @@ import { getNote, listNoteRelateds } from '../actions/relay';
 import NoteList from '../components/NoteList';
 import { useParams } from 'react-router';
 import Note from '../components/Note';
+import { useIntl } from 'react-intl';
 
 const NoteDetailContainer = props => {
     const dispatch = useDispatch()
     const bgGradient = useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const params = useParams();
+    const intl=useIntl();
     const [limit, setLimit] = useState(25);
     const noteId = nip19.decode(params.id).data;
     const moreResults = () => {
@@ -43,7 +45,7 @@ const NoteDetailContainer = props => {
             }
         })
     }
-    console.log("Render Note Details");
+    //console.log("Render Note Details");
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
             <Box ml={{ md: '100px', lg: '330px' }} >
@@ -52,15 +54,10 @@ const NoteDetailContainer = props => {
                         {note && note.id ?
                             <Note note={note} relateds={noteRelateds} isThread={true} key={'Note' + note.id} />
                             : null}
-                        {/*<Box ml="10px">
-                            <Card p="5" bg={uiColor} mb={5}>
-                                <Button size="sm" leftIcon={<GoReply />} variant="ghost">Reply this note</Button>
-                            </Card>
-                        </Box>*/}
                         {noteReplies ?
                             <NoteList notes={sortedNoteReplies.slice(0, limit)} isReply={true} likes={props.likes} /> : null}
                         <VStack>
-                            {sortedNoteReplies.length > limit ? <Button onClick={moreResults} >Show older replies...</Button> : null}
+                            {sortedNoteReplies.length > limit ? <Button onClick={moreResults} >{intl.formatMessage({ id: 'oldersReplies' })}</Button> : null}
                             <Fade in={note === {} || !noteRelateds.replies}>
                                 <Spinner size="xl" color="blue.300" />
                             </Fade>
