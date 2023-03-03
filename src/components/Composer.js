@@ -4,6 +4,7 @@ import { nip19 } from "nostr-tools";
 import { useRef, useState } from "react";
 import { FaFileImage } from "react-icons/fa";
 import { GoBroadcast } from "react-icons/go";
+import { useIntl } from "react-intl";
 import { useDispatch, useSelector } from "react-redux";
 import { publishNote } from "../actions/relay";
 import { treatEmbeds, treatImages } from "../reducers/content";
@@ -12,6 +13,7 @@ import EmojiPicker from "./EmojiPicker";
 
 const Composer = (props) => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
+    const intl = useIntl();
     const [draftNote, setDraftNote] = useState({
         pubkey: nip19.decode(props.account.publicKey).data,
         kind: 1,
@@ -115,7 +117,7 @@ const Composer = (props) => {
                     <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1">@{props.accountInfo.name ?? ''}</Text>
                     <Text fontSize="md" as="b">&middot;</Text>
                     <Tooltip label={format(new Date(), 'yyyy/MM/dd HH:mm')}>
-                        <Text fontSize="sm">just now</Text>
+                        <Text fontSize="sm">{intl.formatMessage({ id: 'justNow' })}</Text>
                     </Tooltip>
                 </HStack>
                 {props.replyTo ?
@@ -140,7 +142,7 @@ const Composer = (props) => {
                     : <Box w="100%">
                         <Popover placement="bottom-start" isOpen={mentionActive} autoFocus={false} strategy="fixed">
                             <PopoverAnchor>
-                                <Textarea ref={textAreaRef} fontSize={['sm', 'sm', 'md', 'md']} p="5" w="100%" h="150px" defaultValue={draftNote.content} onKeyUp={handleKey.bind(this)} onBlur={updateDraftNote.bind(this)} placeholder="What's on your mind? Tell the world some stories..."></Textarea>
+                                <Textarea ref={textAreaRef} fontSize={['sm', 'sm', 'md', 'md']} p="5" w="100%" h="150px" defaultValue={draftNote.content} onKeyUp={handleKey.bind(this)} onBlur={updateDraftNote.bind(this)} placeholder={intl.formatMessage({ id: 'whatsOnYourMind' })}></Textarea>
                             </PopoverAnchor>
                             <PopoverContent>
                                 <PopoverArrow />
@@ -155,7 +157,7 @@ const Composer = (props) => {
                     </Box>}
                 <Flex w="100%">
                     <HStack w="200px">
-                        <Tooltip label="Upload image and embed to your note">
+                        <Tooltip label={intl.formatMessage({ id: 'uploadImage' })}>
                             <FormLabel htmlFor="noteImage" cursor="pointer" pt="2" pl="2">
                                 <FaFileImage />
                             </FormLabel>
@@ -164,8 +166,8 @@ const Composer = (props) => {
                         <EmojiPicker onEmojiClick={addEmoji} />
                     </HStack>
                     <Box flex={1} textAlign="right">
-                        <Button variant="solid" size="sm" mr={2} onClick={() => editMode === 'preview' ? setEditMode('edit') : setEditMode('preview')}>{editMode === 'preview' ? 'Edit Note' : 'Preview Note'}</Button>
-                        <Button variant="solid" leftIcon={<GoBroadcast />} bgGradient="linear(to-br, brand.purple, brand.green)" size="md" onClick={publish}>Broadcst Note!</Button>
+                        <Button variant="solid" size="sm" mr={2} onClick={() => editMode === 'preview' ? setEditMode('edit') : setEditMode('preview')}>{editMode === 'preview' ? intl.formatMessage({ id: 'editNote' }) : intl.formatMessage({ id: 'previewNote' })}</Button>
+                        <Button variant="solid" rightIcon={<GoBroadcast />} bgGradient="linear(to-br, brand.purple, brand.green)" size="md" onClick={publish}>Broadcst!</Button>
                     </Box>
                 </Flex>
 

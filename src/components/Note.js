@@ -1,6 +1,6 @@
-import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, useColorModeValue, Link, Flex, Popover, PopoverTrigger, PopoverContent, PopoverArrow, useToast, InputGroup, InputLeftAddon, InputRightAddon, Input } from '@chakra-ui/react'
+import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, useColorModeValue, Link, Popover, PopoverTrigger, PopoverContent, PopoverArrow, useToast, InputGroup, InputLeftAddon, InputRightAddon, Input } from '@chakra-ui/react'
 import { FiMaximize } from 'react-icons/fi';
-import { BiCommentDetail, BiHeart, BiMinus, BiPlus, BiRepost } from 'react-icons/bi';
+import { BiHeart, BiMinus, BiPlus } from 'react-icons/bi';
 import { IoIosHeart } from 'react-icons/io';
 import { formatDistanceStrict } from 'date-fns'
 import { nip19, nip57, getEventHash } from 'nostr-tools';
@@ -9,15 +9,17 @@ import format from 'date-fns/format';
 import { useDispatch, useSelector } from 'react-redux';
 import MentionTag from './MentionTag';
 import { HiLightningBolt, HiReply } from 'react-icons/hi';
-import { addNoteRelatedToload, likeNote, REPLY_TO, repostNote, sign, VIEW_IMAGE } from '../actions/relay';
+import { likeNote, REPLY_TO, repostNote, sign, VIEW_IMAGE } from '../actions/relay';
 import { GoBroadcast, GoCheck } from 'react-icons/go';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Nip57Service } from '../services/Nip57Service';
+import { useIntl } from 'react-intl';
 
 const Note = props => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const lnRef = useRef(null);
+    const intl=useIntl();
     const txtZapAmount = useRef(null);
     const toast = useToast();
     const [reposted, setReposted] = useState(false);
@@ -108,7 +110,7 @@ const Note = props => {
     const handleZap = () => {
         let lud16 = authorMetadata.lud16;
         if (!lud16) {
-            toast({ description: `${authorMetadata.name ?? nip19.npubEncode(authorMetadata.publicKey)} doesn't have a valid lud16.`, status: 'error' });
+            toast({ description: intl.formatMessage({ id: 'userDontHaveLud16' }, {user: authorMetadata.name ?? nip19.npubEncode(authorMetadata.publicKey)}), status: 'error' });
         }
         Nip57Service.fetchLud16(lud16).then(zapInfo => {
             try {
@@ -163,7 +165,7 @@ const Note = props => {
                                 </HStack>
                             </GridItem>
                             <GridItem align="right">
-                                {!props.isThread ? <Tooltip label="View full note" fontSize='md' hasArrow={true}>
+                                {!props.isThread ? <Tooltip label={intl.formatMessage({ id: 'viewFullNote' })} fontSize='md' hasArrow={true}>
                                     <DomLink to={`/note/${nip19.noteEncode(note.id)}`}>
                                         <Button variant="ghost" size="md"><FiMaximize /></Button>
                                     </DomLink>
@@ -174,7 +176,7 @@ const Note = props => {
                     {!props.isReply && responseTags.length > 0 ?
                         <HStack p="5" h="5" spacing={1}>
                             <Text fontSize="xs" color="gray.500">
-                                Replying to
+                                {intl.formatMessage({ id: 'replyingTo' })}
                             </Text>
                             <MentionTag href={`/note/${nip19.noteEncode(responseTags[0])}`} publicKeyHex={responseUserTags.slice(-1).pop()} />
                         </HStack>
@@ -183,7 +185,7 @@ const Note = props => {
                         <HStack p="5" h="5" spacing={1}>
                             <GoBroadcast />
                             <Text fontSize="xs" color="gray.500">
-                                Broadcstd By
+                                {intl.formatMessage({ id: 'broadcstdBy' })}
                             </Text>
                             <Text as="b" fontSize="xs" w="150px " color="blue.300" noOfLines={1}>
                                 <MentionTag publicKeyHex={reposted_by} />
@@ -197,7 +199,7 @@ const Note = props => {
                             })}
                         </Box>
                         <Box bgGradient={alphaGradient} hidden={!bigContent || props.isThread} position="absolute" bottom="-4" w="100%" h="65px" p="2">
-                            <Button variant="ghost" onClick={() => { setExpanded(!expanded) }}>{expanded ? 'Show Less...' : 'Show more...'}</Button>
+                            <Button variant="ghost" onClick={() => { setExpanded(!expanded) }}>{expanded ? intl.formatMessage({ id: 'showLess' }) : intl.formatMessage({ id: 'showMore' })}</Button>
                         </Box>
                     </Box>
                     {/*<Code p="5" fontSize={['xs', 'sm', 'md']}>
@@ -210,7 +212,7 @@ const Note = props => {
                             : note.embed.kind === 'mp4' ? <video src={note.embed.src} muted height="300" width="100%" controls /> : '' : ''}
                     <Box bg={uiColor}>
                         <HStack>
-                            <Tooltip label={liked ? "You liked!" : "Like"} fontSize='md' hasArrow={true}>
+                            <Tooltip label={liked ? intl.formatMessage({ id: 'youLiked' }) : intl.formatMessage({ id: 'like' })} fontSize='md' hasArrow={true}>
                                 <Button isDisabled={!account.publicKey || liked} leftIcon={liked ? <IoIosHeart color="red" /> : <BiHeart />} onClick={like} variant="ghost" size="md">{relateds.likes ? relateds.likes.length : ""}</Button>
 
                             </Tooltip>
@@ -232,7 +234,7 @@ const Note = props => {
                                 </PopoverContent>
                             </Popover>
 
-                            <Tooltip label="Reply" fontSize='md' hasArrow={true}>
+                            <Tooltip label={intl.formatMessage({ id: 'reply' })} fontSize='md' hasArrow={true}>
                                 <Button isDisabled={!account.publicKey} leftIcon={<HiReply />} variant="ghost" size="md" onClick={reply}>{relateds.replies ? relateds.replies.length : ""}</Button>
                             </Tooltip>
                             <Popover>
@@ -241,7 +243,7 @@ const Note = props => {
                                 </PopoverTrigger>
                                 <PopoverContent>
                                     <PopoverArrow />
-                                    <Button onClick={repost} leftIcon={reposted ? <GoCheck /> : <GoBroadcast />} variant="ghost" color={reposted ? 'green.400' : ''} size="md" >{reposted ? 'Brodcstd!' : 'Broadcst this note!'}</Button>
+                                    <Button onClick={repost} leftIcon={reposted ? <GoCheck /> : <GoBroadcast />} variant="ghost" color={reposted ? 'green.400' : ''} size="md" >{reposted ? 'Brodcstd!' : 'Broadcst!'}</Button>
                                 </PopoverContent>
                             </Popover>
                         </HStack>

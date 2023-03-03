@@ -8,11 +8,13 @@ import NoteList from '../components/NoteList';
 import defaultBanner from '../defaultBanner.gif';
 import { IoMdPersonAdd, IoMdRemove, IoMdSettings } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
+import { useIntl } from 'react-intl';
 
 const ProfileContainer = props => {
     const dispatch = useDispatch();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const navigate = useNavigate();
+    const intl=useIntl();
     const bgGradient = useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const params = useParams();
     const [activeView, setActiveView] = useState(0);
@@ -138,8 +140,8 @@ const ProfileContainer = props => {
                                     <VStack gap={5}>
                                         <Avatar size="2xl" src={user.picture} name={user.display_name ?? user.name} />
                                         {isOwnProfile ?
-                                            <Button onClick={() => { navigate('/settings') }} variant="solid" leftIcon={<IoMdSettings />} bgGradient="linear(to-br, brand.purple, brand.green)">Settings</Button> :
-                                            <Button isDisabled={!account.publicKey} onClick={followUnfollow.bind(this, isFollowing)} variant="solid" leftIcon={isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />} bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? "Unfollow" : "Follow"}</Button>}
+                                            <Button onClick={() => { navigate('/settings') }} variant="solid" leftIcon={<IoMdSettings />} bgGradient="linear(to-br, brand.purple, brand.green)">{intl.formatMessage({ id: 'settings' })}</Button> :
+                                            <Button isDisabled={!account.publicKey} onClick={followUnfollow.bind(this, isFollowing)} variant="solid" leftIcon={isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />} bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? intl.formatMessage({ id: 'unfollow' }) : intl.formatMessage({ id: 'follow' })}</Button>}
                                     </VStack>
                                 </GridItem>
                                 <GridItem colSpan={[12, 8]} textAlign="left" pl="5">
@@ -163,10 +165,10 @@ const ProfileContainer = props => {
                             </Grid>
                             <Tabs ml="-25px" index={activeView} mt="50px" mr="-25px">
                                 <TabList>
-                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(0) }}>Notes</Tab>
-                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(1) }}>Replies</Tab>
-                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(2) }}> Following ({following.length}) </Tab>
-                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(3) }}> Followers ({followers.length})</Tab>
+                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(0) }}>{intl.formatMessage({ id: 'notes' })}</Tab>
+                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(1) }}>{intl.formatMessage({ id: 'replies' })}</Tab>
+                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(2) }}> {intl.formatMessage({ id: 'following' })} ({following.length}) </Tab>
+                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(3) }}> {intl.formatMessage({ id: 'followers' })} ({followers.length})</Tab>
                                 </TabList>
                             </Tabs>
                         </Card>
@@ -187,7 +189,7 @@ const ProfileContainer = props => {
                             })}
                         </SlideFade>
                         <VStack>
-                            {<Button onClick={moreResults} hidden={(activeView === 0 && notes.length < limit) || (activeView === 1 && replies.length < limit)}>Show more...</Button>}
+                            {<Button onClick={moreResults} hidden={(activeView === 0 && notes.length < limit) || (activeView === 1 && replies.length < limit)}>{intl.formatMessage({ id: 'moreResults' })}</Button>}
                             <Fade in={notes.length === 0 && replies.length === 0 && following.length === 0}>
                                 <Spinner size="xl" color="blue.300" />
                             </Fade>

@@ -11,6 +11,7 @@ import { useState } from 'react';
 import Composer from './Composer';
 import { useDispatch, useSelector } from 'react-redux';
 import { REPLY_TO } from '../actions/relay';
+import { useIntl } from 'react-intl';
 
 const TopBar = (props) => {
     const dispatch = useDispatch();
@@ -20,6 +21,7 @@ const TopBar = (props) => {
     const [searchTerm, setSearchTerm] = useState(null);
     const [composerActive, setComposerActive] = useState(false);
     const params = useParams();
+    const intl = useIntl();
     const navigate = useNavigate();
     const account = useSelector(state => state.user.account);
     const relays = useSelector(state => state.user.relays);
@@ -52,20 +54,20 @@ const TopBar = (props) => {
                             <Show above="md">
                                 <InputGroup variant="unstyçed">
                                     <InputLeftElement children={<IoIosSearch />}></InputLeftElement>
-                                    <Input bg="transparent" variant="unstyçed" placeholder='Search for users and notes...' onKeyUp={k => { setSearchTerm(k.target.value); if (k.key === "Enter") { performSearch() } }}></Input>
+                                    <Input bg="transparent" variant="unstyçed" placeholder={intl.formatMessage({ id: 'searchUserAndNotes' })} onKeyUp={k => { setSearchTerm(k.target.value); if (k.key === "Enter") { performSearch() } }}></Input>
                                 </InputGroup>
                             </Show>
                         </Box>
                     }
                 </Box>
                 <Box p="4" w="200px" textAlign="right">
-                    <Tooltip label={`You are connected to ${relays.length} relays`} fontSize='md'>
+                    <Tooltip placement="left" label={intl.formatMessage({ id: 'connectedtoNRelays' },{count:relays.length})} fontSize='md'>
                         <Button variant="ghost" color="blue.300" leftIcon={<BiNetworkChart />} onClick={() => { navigate('/settings/relays') }} size="sm" fontSize="xs">{relays.length}</Button>
                     </Tooltip>
-                    <Tooltip label={account.publicKey?"What's on your mind?":"Sign-in to post notes!"} fontSize='md'>
+                    <Tooltip placement="left" label={account.publicKey?intl.formatMessage({ id: 'whatsOnYourMind' }):intl.formatMessage({ id: 'signInToPost' })} fontSize='md'>
                         <Button isDisabled={!account.publicKey}  variant="ghost" size="sm" fontSize="2xl" onClick={openCloseComposer}>{composerActive || replyTo ? <IoMdCloseCircle /> : <IoMdAddCircleOutline />}</Button>
                     </Tooltip>
-                    <Tooltip label="Notifications (coming soon!)" fontSize='md'>
+                    <Tooltip placement="left" label={intl.formatMessage({ id: 'notifications' })} fontSize='md'>
                         <Button variant="ghost" size="sm" isDisabled fontSize="2xl" ><IoMdNotifications /></Button>
                     </Tooltip>
                 </Box>
