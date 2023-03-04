@@ -1,4 +1,4 @@
-import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button, Link } from '@chakra-ui/react'
+import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button, Link, Tooltip, Tag, TagLabel, TagLeftIcon } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { addFollowing, getMyInfo, getUserFollowers, getUserFollowing, getUserNotes, receivedUserMetadata, RECEIVED_USER_ID, removeFollowing, SET_LIMIT, UNLOAD_NOTES } from '../actions/relay';
@@ -9,17 +9,19 @@ import defaultBanner from '../defaultBanner.gif';
 import { IoMdPersonAdd, IoMdRemove, IoMdSettings } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
 import { useIntl } from 'react-intl';
+import { GoVerified } from 'react-icons/go';
 
 const ProfileContainer = props => {
     const dispatch = useDispatch();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const navigate = useNavigate();
-    const intl=useIntl();
+    const intl = useIntl();
     const bgGradient = useColorModeValue('linear(to-br, brand.kindsteel1, brand.kindsteel2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const params = useParams();
     const [activeView, setActiveView] = useState(0);
     const [nipInfo, setNipInfo] = useState();
     const [limit, setLimit] = useState(25);
+    const [nip05Status, setNip05Status] = useState();
     const [publicKeyHex, setPublicKeyHex] = useState(null);
     const moreResults = () => {
         setLimit(limit + 25);
@@ -49,6 +51,7 @@ const ProfileContainer = props => {
     const loadUserFollowers = publicKeyHex => {
         dispatch(getUserFollowers(publicKeyHex));
     }
+
     useEffect(() => {
         console.log('useEffect publicKeyHex');
         if (publicKeyHex) {
@@ -63,9 +66,14 @@ const ProfileContainer = props => {
             setPublicKeyHex(nip19.decode(params.id).data);
         else
             nip05.queryProfile(params.id).then(value => {
-                if (value)
+                if (value) {
                     setPublicKeyHex(value.pubkey);
-            })
+                    setNip05Status(true);
+                }
+            }).catch(() => {
+                if (nip05Status !== false)
+                    setNip05Status(false);
+            });
     }, [params.id]);
     useEffect(() => {
         console.log('useEffect initial')
@@ -75,16 +83,27 @@ const ProfileContainer = props => {
             navigate('/welcome');*/
         if (params.id.includes('@'))
             nip05.queryProfile(params.id).then(value => {
-                if (value)
+                if (value){
                     setPublicKeyHex(value.pubkey);
-                else
-                    navigate('/');
+                    setNip05Status(true);
+                }
             })
         else if (params.id.includes('npub'))
             setPublicKeyHex(nip19.decode(params.id).data);
     }, [])
     const account = useSelector(state => state.user.account);
     let user = useSelector(state => state.user.usersMetadata[publicKeyHex]) ?? {};
+    if (params.id!==user.nip05 && user && user.nip05 && !user.nip05Status) {
+        nip05.queryProfile(user.nip05).then(value => {
+            if (value) {
+                setNip05Status(true);
+                navigate('/' + user.nip05);
+            }
+        }).catch(() => {
+            if (nip05Status !== false)
+                setNip05Status(false);
+        });
+    }
     let userLoaded = user.name ? true : false;
     let notes = [];
     let replies = [];
@@ -152,7 +171,15 @@ const ProfileContainer = props => {
                                         <Text fontSize="lg" color="gray.400" maxW="150px" noOfLines="1" >@{user.name}</Text>
                                     </HStack>
                                     {userLoaded ?
-                                        <Text as="b" color="green.400" fontSize="sm">{user.nip05}</Text>
+                                        <Box>
+                                            <Text as="b" color="green.400" fontSize="sm">{user.nip05} </Text>
+                                            <Tooltip label={nip05Status ? intl.formatMessage({ id: 'nip05Successful' }) : ''}>
+                                                <Tag color={nip05Status === undefined ? 'gray.400' : nip05Status ? 'green.400' : 'red.500'}>
+                                                    {nip05Status ? <TagLeftIcon as={GoVerified} /> : null}
+                                                    <TagLabel>{nip05Status === undefined ? intl.formatMessage({ id: 'noNip05' }) : nip05Status ? intl.formatMessage({ id: 'validated' }) : intl.formatMessage({ id: 'validationError' })}</TagLabel>
+                                                </Tag>
+                                            </Tooltip>
+                                        </Box>
                                         : <Skeleton width="100px" h={2} mb="5" />}
                                     {userLoaded ?
                                         <Text>{user.about}</Text>
