@@ -1,16 +1,16 @@
-import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, useColorModeValue, Link, Popover, PopoverTrigger, PopoverContent, PopoverArrow, useToast, InputGroup, InputLeftAddon, InputRightAddon, Input } from '@chakra-ui/react'
+import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, useColorModeValue, Link, Popover, PopoverTrigger, PopoverContent, PopoverArrow, useToast, InputGroup, InputLeftAddon, InputRightAddon, Input, Tag, TagLeftIcon, TagLabel } from '@chakra-ui/react'
 import { FiMaximize } from 'react-icons/fi';
 import { BiHeart, BiMinus, BiPlus } from 'react-icons/bi';
-import { IoIosHeart } from 'react-icons/io';
+import { IoIosHeart, IoMdPersonAdd, IoMdRemove } from 'react-icons/io';
 import { formatDistanceStrict } from 'date-fns'
-import { nip19, nip57, getEventHash } from 'nostr-tools';
+import { nip19, nip57, getEventHash, nip05 } from 'nostr-tools';
 import { Link as DomLink, useNavigate } from 'react-router-dom';
 import format from 'date-fns/format';
 import { useDispatch, useSelector } from 'react-redux';
 import MentionTag from './MentionTag';
 import { HiLightningBolt, HiReply } from 'react-icons/hi';
-import { likeNote, REPLY_TO, repostNote, sign, VIEW_IMAGE } from '../actions/relay';
-import { GoBroadcast, GoCheck } from 'react-icons/go';
+import { addFollowing, likeNote, removeFollowing, REPLY_TO, repostNote, sign, VIEW_IMAGE } from '../actions/relay';
+import { GoBroadcast, GoCheck, GoVerified } from 'react-icons/go';
 import { useRef, useState } from 'react';
 import { Nip57Service } from '../services/Nip57Service';
 import { useIntl } from 'react-intl';
@@ -19,12 +19,14 @@ const Note = props => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const lnRef = useRef(null);
-    const intl=useIntl();
+    const intl = useIntl();
     const txtZapAmount = useRef(null);
     const toast = useToast();
     const [reposted, setReposted] = useState(false);
     const [expanded, setExpanded] = useState(false);
     const [ln, setLn] = useState(0);
+    const [nip05Status, setNip05Status] = useState();
+
     const [actualZapAmount, setActualZapAmount] = useState(144);
     const [controlledZapAmount, setControlledZapAmount] = useState(144);
     const alphaGradient = useColorModeValue('linear(to-t, brand.lightUi 75%, brand.lightUiAlpha 100%)', 'linear(to-t, brand.darkUi 75%, brand.darkUiAlpha 100%)');
@@ -34,7 +36,22 @@ const Note = props => {
     let authorMetadata = useSelector(state => state.user.usersMetadata[note.pubkey], (a, b) => { return a && b && a.name === b.name }) ?? {};
     let responseTags = note.eTags ?? [];
     let responseUserTags = note.pTags ?? [];
-    let relateds = useSelector(state => state.content.allNotesRelateds[note.id]) ?? {};
+    let isFollowing = false//useSelector(state => state.user.following.filter(f => f === note.pubkey).length > 0);
+    let relateds = useSelector(state => state.content.allNotesRelateds[note.id],
+        (a, b) => {
+            let aIds = [];
+            let bIds = [];
+            if (a && a.likes) aIds.push(a.likes.map(note => { return note.id }));
+            if (a && a.reposts) aIds.push(a.reposts.map(note => { return note.id }));
+            if (a && a.zaps) aIds.push(a.zaps.map(note => { return note.id }));
+            if (a && a.replies) aIds.push(a.replies.map(note => { return note.id }));
+            if (b && b.likes) bIds.push(b.likes.map(note => { return note.id }));
+            if (b && b.reposts) bIds.push(b.reposts.map(note => { return note.id }));
+            if (b && b.zaps) bIds.push(b.zaps.map(note => { return note.id }));
+            if (b && b.replies) bIds.push(b.replies.map(note => { return note.id }));
+
+            return aIds.flat().join(',') === bIds.flat().join(',');
+        }) ?? {};
     let liked = useSelector(state => state.user.likes.filter(l => l === note.id).length > 0);
     const account = useSelector(state => state.user.account);
     const relays = useSelector(state => state.user.relays);
@@ -107,10 +124,33 @@ const Note = props => {
         if (selection.length === 0)
             navigate(url);
     }
+    const followUnfollow = (isFollowing) => {
+        if (!isFollowing)
+            followingAdd(note.pubkey);
+        else
+            followingRemove(note.pubkey)
+    }
+    const followingAdd = publicKeyHex => {
+        dispatch(addFollowing(publicKeyHex));
+    };
+    const followingRemove = publicKeyHex => {
+        dispatch(removeFollowing(publicKeyHex));
+    };
+    const checkNip05 = () => {
+        if (authorMetadata.nip05 && authorMetadata.nip05.includes('@'))
+            nip05.queryProfile(authorMetadata.nip05).then(value => {
+                if (value)
+                    setNip05Status(true);
+                else
+                    setNip05Status(false);
+            }).catch(err => {
+                setNip05Status(false);
+            });
+    }
     const handleZap = () => {
         let lud16 = authorMetadata.lud16;
         if (!lud16) {
-            toast({ description: intl.formatMessage({ id: 'userDontHaveLud16' }, {user: authorMetadata.name ?? nip19.npubEncode(authorMetadata.publicKey)}), status: 'error' });
+            toast({ description: intl.formatMessage({ id: 'userDontHaveLud16' }, { user: authorMetadata.name ?? nip19.npubEncode(authorMetadata.publicKey) }), status: 'error' });
         }
         Nip57Service.fetchLud16(lud16).then(zapInfo => {
             try {
@@ -146,7 +186,7 @@ const Note = props => {
         setControlledZapAmount(Math.round(newNumber));
         txtZapAmount.current.value = Math.round(newNumber);
     }
-    //console.log("Render Note");
+    console.log("Render Note");
     return (
         < Fade in={true}>
             <Card mb="5" bg={uiColor} ml={props.isReply ? replyLevel * 10 + 'px' : 0} >
@@ -154,10 +194,35 @@ const Note = props => {
                     <Box p="5" pb="0">
                         <Grid templateColumns='repeat(12, 1fr)'>
                             <GridItem colSpan="11">
-                                <HStack cursor="pointer" onClick={() => { navigate(`/${authorMetadata.nip05 ?? nip19.npubEncode(note.pubkey)}`) }}>
-                                    <Avatar size="md" src={authorMetadata.picture ?? ''} name={authorMetadata.display_name ?? authorMetadata.name ?? ''} />
-                                    <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{authorMetadata.display_name ?? authorMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
-                                    <Text fontSize="sm" color="gray.400" maxW="150px" noOfLines="1">{authorMetadata.nip05 ?? authorMetadata.name ? authorMetadata.name : ''}</Text>
+                                <HStack cursor="pointer" onClick={() => { navigate(`/${authorMetadata.nip05 && nip05Status ? authorMetadata.nip05 : nip19.npubEncode(note.pubkey)}`) }}>
+                                    <Popover trigger="hover" placement='bottom-start' onOpen={checkNip05}>
+                                        <PopoverTrigger>
+                                            <HStack>
+                                                <Avatar size="md" src={authorMetadata.picture ?? ''} name={authorMetadata.display_name ?? authorMetadata.name ?? ''} />
+                                                <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{authorMetadata.display_name ?? authorMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
+                                                <Text fontSize="sm" color="gray.400" maxW="150px" noOfLines="1">{authorMetadata.nip05 ?? authorMetadata.name ? authorMetadata.name : ''}</Text>
+                                            </HStack>
+                                        </PopoverTrigger>
+                                        <PopoverContent p={5} w="350px" >
+                                            <PopoverArrow />
+                                            <HStack>
+                                                <Avatar size="md" src={authorMetadata.picture ?? ''} name={authorMetadata.display_name ?? authorMetadata.name ?? ''} />
+                                                <Text fontSize="md" as="b" maxW="150px" noOfLines="1">{authorMetadata.display_name ?? authorMetadata.name ?? nip19.npubEncode(note.pubkey)}</Text>
+                                                <Text fontSize="sm" color="gray.400" maxW="150px" noOfLines="1">{authorMetadata.nip05 ?? authorMetadata.name ? authorMetadata.name : ''}</Text>
+                                            </HStack>
+                                            <Box m={3}>
+                                                <Text as="b" color="green.400" fontSize="sm">{authorMetadata.nip05} </Text>
+                                                <Tooltip label={nip05Status ? intl.formatMessage({ id: 'nip05Successful' }) : ''}>
+                                                    <Tag hidden={!authorMetadata.nip05} color={nip05Status === undefined ? 'gray.400' : nip05Status ? 'green.400' : 'red.500'}>
+                                                        {nip05Status ? <TagLeftIcon as={GoVerified} /> : null}
+                                                        <TagLabel>{nip05Status === undefined ? intl.formatMessage({ id: 'noNip05' }) : nip05Status ? intl.formatMessage({ id: 'validated' }) : intl.formatMessage({ id: 'validationError' })}</TagLabel>
+                                                    </Tag>
+                                                </Tooltip>
+                                            </Box>
+                                            <Text m={3}>{authorMetadata.about}</Text>
+                                            <Button m={3} w="200px" isDisabled={!account.publicKey} onClick={followUnfollow.bind(this, isFollowing)} variant="solid" leftIcon={isFollowing ? <IoMdRemove /> : <IoMdPersonAdd />} bgGradient="linear(to-br, brand.purple, brand.green)">{isFollowing ? intl.formatMessage({ id: 'unfollow' }) : intl.formatMessage({ id: 'follow' })}</Button>
+                                        </PopoverContent>
+                                    </Popover>
                                     <Text fontSize="md" as="b">&middot;</Text>
                                     <Tooltip label={format(created, 'yyyy/MM/dd HH:mm')}>
                                         <Text fontSize="sm">{timeDistance}</Text>
