@@ -6,7 +6,7 @@ import {
     Route,
     Routes
 } from 'react-router';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import TopBar from '../components/TopBar';
 import MenuBar from '../components/MenuBar';
 import BottomNavigation from '../components/BottomNavigation';
@@ -88,7 +88,7 @@ const AppContainer = (props) => {
         dispatch({ type: VIEW_IMAGE, data: null });
     }
     return (<Box minH="100vH" bgGradient='linear(to-br, brand.purple, brand.green)'>
-        <BrowserRouter>
+        <HashRouter>
             <Routes>
                 <Route exact path="/welcome" element={<WelcomeV2Container />} />
                 <Route exact path="/foryou" element={home(props)} />
@@ -101,7 +101,7 @@ const AppContainer = (props) => {
                 <Route path="/search/:term?" element={search(props)} />
 
             </Routes>
-        </BrowserRouter>
+        </HashRouter>
         <Modal size="full" isOpen={imageSrc && imageSrc !== ""} bg="none" onClose={closeImage} closeOnEsc closeOnOverlayClick>
             <ModalOverlay />
             <ModalContent bg={uiColor}>

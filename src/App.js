@@ -7,11 +7,10 @@ import {
 import rootReducer from './reducer';
 
 import { extendTheme } from "@chakra-ui/react"
-import { getUsersMetadata, listNotesRelateds, loadRelays, selectMetadatas, SELECT_NOTES } from './actions/relay';
+import { getUsersMetadata, listNotesRelateds } from './actions/relay';
 import AppContainer from './containers/AppContainer';
 import { saveState } from './localStorage';
 import { throttle } from 'lodash';
-import { mode } from '@chakra-ui/theme-tools';
 import { defineMessages, IntlProvider } from 'react-intl';
 import Portuguese from './i18n/pt-BR.json';
 import English from './i18n/en-US.json';

@@ -77,7 +77,7 @@ const HomeContainer = props => {
             <Box ml={{ md: '100px', lg: '330px' }} >
                 <SlideFade in={true} offsetX="-1000" offsetY="0" unmountOnExit={true}>
                     <Container maxW='4xl' pt="80px" pb="20px" >
-                        <Flex mb="5">
+                        <Flex mb="50">
                             <Box bg={uiColor} h="50px" p="2" flex="1">
                                 <Center>
                                     <Tabs index={feedType === "following" ? 1 : feedType === 'foryou' ? 2 : 0}>
