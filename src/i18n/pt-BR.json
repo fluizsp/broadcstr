@@ -60,6 +60,7 @@
     "copy":"Copiar",
     "switchAndSignOut":"Sair e trocar de conta",
     "switchAccounts":"Trocar de conta (informe a nova Chave Privada)",
+    "signOutAlert":"Antes de sair certifique-se que você salvou sua chave privada (utilize a opção copiar acima), ou você não poderá entrar novamente com a mesma conta. Não há como 'Recuperar a senha'.",
     "signOut":"Sair",
     "uploadBannerImage":"Enviar imagem de Banner",
     "enterBannerUrl":"...ou cole a url da imagem",
