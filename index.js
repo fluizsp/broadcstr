@@ -3,14 +3,6 @@ const path = require('path');
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'build')))
-app.use(function(request, response, next) {
-
-    if (!request.secure) {
-       return response.redirect("https://" + request.headers.host + request.url);
-    }
-
-    next();
-})
 
 app.get("/.well-known/nostr.json", (req, res) => {
     if (req.query.name === 'fluizsp')
