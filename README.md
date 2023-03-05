@@ -61,7 +61,43 @@ Because it is like your social network, but:
 - Basic Search: Search for users using handles/username or NIP-05 and search content with #hashtags;
 - And, of course, Dark Mode! Cause we can't live without dark mode;
 
-  
+### Suported / To be supported NIPs: (refer to https://github.com/nostr-protocol/nips):
+
+- [x] NIP-01: Basic protocol flow description;
+- [x] NIP-02: Contact List and Petnames;
+- [ ] NIP-03: OpenTimestamps Attestations for Events;
+- [ ] NIP-03: NIP-04: Encrypted Direct Message;
+- [x] NIP-05: Mapping Nostr keys to DNS-based internet identifiers;
+- [ ] NIP-06: Basic key derivation from mnemonic seed phrase;
+- [x] NIP-07: window.nostr capability for web browsers;
+- [x] NIP-08: Handling Mentions;
+- [ ] NIP-09: Event Deletion;
+- [ ] NIP-10: Conventions for clients' use of e and p tags in text events;
+- [ ] NIP-12: Generic Tag Queries (partial);
+- [ ] NIP-13: Proof of Work;
+- [ ] NIP-14: Subject tag in text events.;
+- [ ] NIP-15: End of Stored Events Notice;
+- [ ] NIP-16: Event Treatment;
+- [x] NIP-19: bech32-encoded entities;
+- [ ] NIP-20: Command Results (partial);
+- [ ] NIP-21: nostr: URL scheme;
+- [ ] NIP-22: Event created_at Limits;
+- [ ] NIP-23: Long-form Content;
+- [x] NIP-25: Reactions;
+- [x] NIP-25: Reactions;
+- [ ] NIP-26: Delegated Event Signing;
+- [ ] NIP-28: Public Chat;
+- [ ] NIP-33: Parameterized Replaceable Events;
+- [ ] NIP-36: Sensitive Content;
+- [ ] NIP-40: Expiration Timestamp;
+- [ ] NIP-42: Authentication of clients to relays;
+- [ ] NIP-46: Nostr Connect;
+- [ ] NIP-50: Keywords filter (partial);
+- [ ] NIP-56: Reporting;
+- [x] NIP-57: Lightning Zaps
+- [ ] NIP-58: Badges;
+- [ ] NIP-65: Relay List Metadata;
+- [ ] NIP-78: Application-specific data;
 
 ### More info:
 
@@ -81,9 +117,11 @@ About Nostr!
 Want to know more about Nostr? Start here
 
 ### Stack
-Broadcstr was built using React.js and Chakra-ui.
+Broadcstr was built using React.js with create-react-app and Chakra-ui.
 
-Since it's the first release, the code is still messy and needing a ton of refactor and improvements, I will soon update this section also.
+Using https://github.com/nbd-wtf/nostr-tools for nostr requests/websocket connectivity.
+
+Improving code each release. Still in Alpha.
 
 ### Available Scripts
 
