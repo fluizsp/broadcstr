@@ -566,6 +566,7 @@ export const addNoteRelatedToload = (id) => {
 
 export const listNotesRelateds = () => {
     return (dispatch, getState) => {
+        console.log('listNotesRelateds');
         let notesRelatedsToLoad = [];
         Object.keys(getState().content.allNotesRelateds ?? {}).forEach(k => {
             if (getState().content.allNotesRelateds[k].load && !requestedRelateds.includes(k))
@@ -573,27 +574,30 @@ export const listNotesRelateds = () => {
         })
         notesRelatedsToLoad.slice(0, 25);
         notesRelatedsToLoad.forEach(id => requestedRelateds.push(id));
-        let relays = getReadRelaysUrls(getState().user.relays);
-        let filters = [
-            {
-                kinds: [1, 6, 7, 9735],
-                "#e": notesRelatedsToLoad,
-                limit: 5000
-            }
-        ];
-        myPool.list(relays, filters).then(results => {
-            results.forEach(event => {
-                if (!getState().user.usersMetadata[event.pubkey]) {
-                    dispatch(receivedUserMetadata(event.pubkey, {}));
+        console.log(notesRelatedsToLoad.length);
+        if (notesRelatedsToLoad.length > 0) {
+            let relays = getReadRelaysUrls(getState().user.relays);
+            let filters = [
+                {
+                    kinds: [1, 6, 7, 9735],
+                    "#e": notesRelatedsToLoad,
+                    limit: 5000
                 }
-                event.tags.forEach(async tag => {
-                    if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
-                        await dispatch(receivedUserMetadata(tag[1], {}));
+            ];
+            myPool.list(relays, filters).then(results => {
+                results.forEach(event => {
+                    if (!getState().user.usersMetadata[event.pubkey]) {
+                        dispatch(receivedUserMetadata(event.pubkey, {}));
                     }
-                })
-                dispatch({ type: RECEIVED_NOTE_RELATED, data: event });
-            });
-        })
+                    event.tags.forEach(async tag => {
+                        if (tag[0] === 'p' && !getState().user.usersMetadata[tag[1]]) {
+                            await dispatch(receivedUserMetadata(tag[1], {}));
+                        }
+                    })
+                    dispatch({ type: RECEIVED_NOTE_RELATED, data: event });
+                });
+            })
+        }
     }
 }
 

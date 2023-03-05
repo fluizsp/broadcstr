@@ -97,7 +97,6 @@ const ProfileContainer = props => {
         nip05.queryProfile(user.nip05).then(value => {
             if (value) {
                 setNip05Status(true);
-                navigate('/' + user.nip05);
             }
         }).catch(() => {
             if (nip05Status !== false)
