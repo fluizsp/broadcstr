@@ -189,7 +189,7 @@ const Note = props => {
     console.log("Render Note");
     return (
         < Fade in={true}>
-            <Card mb="5" bg={uiColor} ml={props.isReply ? replyLevel * 10 + 'px' : 0} >
+            <Card mb="2" bg={uiColor} ml={props.isReply ? replyLevel * 10 + 'px' : 0} >
                 <VStack align="left">
                     <Box p="5" pb="0">
                         <Grid templateColumns='repeat(12, 1fr)'>

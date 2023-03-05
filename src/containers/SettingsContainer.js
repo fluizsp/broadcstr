@@ -1,5 +1,5 @@
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
-import { Avatar, Box, Button, Card, Center, Container, Flex, FormLabel, Grid, GridItem, Heading, HStack, Input, InputGroup, InputLeftElement, InputRightAddon, Select, Show, SlideFade, Switch, Tab, TabList, TabPanel, TabPanels, Tabs, Tag, TagLabel, TagLeftIcon, Text, Textarea, Tooltip, useColorMode, useColorModeValue, useToast, VStack } from "@chakra-ui/react";
+import { Alert, AlertDescription, AlertIcon, AlertTitle, Avatar, Box, Button, Card, Center, Container, Flex, FormLabel, Grid, GridItem, Heading, HStack, Input, InputGroup, InputLeftElement, InputRightAddon, Select, Show, SlideFade, Switch, Tab, TabList, TabPanel, TabPanels, Tabs, Tag, TagLabel, TagLeftIcon, Text, Textarea, Tooltip, useColorMode, useColorModeValue, useToast, VStack } from "@chakra-ui/react";
 import { getPublicKey, nip05, nip19 } from "nostr-tools";
 import { useEffect, useState } from "react";
 import { FaAdjust, FaGlobe, FaKey, FaPortrait, FaSave, FaSignOutAlt, FaTrash } from "react-icons/fa";
@@ -254,6 +254,10 @@ const SettingsContainer = (props) => {
                                             <InputRightAddon><Button onClick={SwitchAccount}>{intl.formatMessage({ id: 'switchAndSignOut' })}</Button></InputRightAddon>
                                         </InputGroup>
                                         <FormLabel mt={5}>{intl.formatMessage({ id: 'signOut' })}:</FormLabel>
+                                        <Alert status='warning' mb={3}>
+                                            <AlertIcon />
+                                            <AlertDescription>{intl.formatMessage({ id: 'signOutAlert' })}</AlertDescription>
+                                        </Alert>
                                         <Button leftIcon={<FaSignOutAlt />} onClick={signOut}>{intl.formatMessage({ id: 'signOut' })}</Button>
                                     </TabPanel>
                                     <TabPanel p={0} mb={50}>
@@ -349,10 +353,10 @@ const SettingsContainer = (props) => {
                                         <Select onChange={e => { setLanguage(e.target.value) }} defaultValue={language}>
                                             <option value="">Detect</option>
                                             <option value="en-US">English</option>
-                                            <option value="es-ES">Spanish</option>
-                                            <option value="fr">French</option>
-                                            <option value="pt-BR">Portuguese</option>
-                                            <option value="de">German</option>
+                                            <option value="es-ES">Español</option>
+                                            <option value="fr">Français</option>
+                                            <option value="pt-BR">Português</option>
+                                            <option value="de">Deutsch</option>
                                         </Select>
                                         <Button mt={5} leftIcon={<FaSave />} bgGradient="linear(to-br, brand.purple, brand.green)" onClick={saveLanguage}>Save language configuration</Button>
                                     </TabPanel>

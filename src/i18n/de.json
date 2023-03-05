@@ -60,6 +60,7 @@
     "copy": "Kopieren",
     "switchAndSignOut": "austragen",
     "switchAccounts": "Konto wechseln (neuen privaten Schlüssel eingeben)",
+    "signOutAlert":"Bevor Sie sich abmelden, vergewissern Sie sich, dass Ihr privater Schlüssel gesichert ist (kopieren Sie ihn oben und bewahren Sie ihn an einem sicheren Ort auf!), oder Sie können sich nicht erneut anmelden. Es gibt kein „Passwort vergessen“.",
     "signOut": "Austragen",
     "uploadBannerImage": "Bannerbild hochladen",
     "enterBannerUrl": "...oder Bild-URL eingeben",

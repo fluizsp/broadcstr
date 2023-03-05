@@ -60,6 +60,7 @@
   "copy": "Copie",
   "switchAndSignOut": "se déconnecter",
   "switchAccounts": "Changer de compte (saisir une nouvelle clé privée)",
+  "signOutAlert":"Avant de vous déconnecter, assurez-vous d'avoir enregistré votre clé privée (utilisez l'option de copie ci-dessus), sinon vous ne pourrez plus vous reconnecter avec le même compte. Il n'y a aucun moyen de 'récupérer le mot de passe'.",
   "signOut": "Se déconnecter",
   "uploadBannerImage": "Télécharger l'image de la bannière",
   "enterBannerUrl": "... ou entrez l'URL de l'image",

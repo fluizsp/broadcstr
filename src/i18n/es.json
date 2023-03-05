@@ -60,6 +60,7 @@
     "copy": "Copiar",
     "switchAndSignOut": "desconectar",
     "switchAccounts": "Cambiar de cuenta (ingresar nueva clave privada)",
+    "signOutAlert":"Antes de cerrar sesión, asegúrese de haber guardado su clave privada (utilice la opción de copia anterior), o no podrá volver a iniciar sesión con la misma cuenta. No hay forma de 'Recuperar contraseña'.",
     "signOut": "Desconectar",
     "uploadBannerImage": "Subir imagen de banner",
     "enterBannerUrl": "...o introduce la URL de la imagen",

@@ -60,6 +60,7 @@
     "copy":"Copy",
     "switchAndSignOut":"Sign out & Switch",
     "switchAccounts":"Switch accounts (enter new Private Key)",
+    "signOutAlert":"Before signing out make sure your private key is secured (copy above and save it somewhere safe!), or you won't be able to sign in again. There is no 'Forgot password'.",
     "signOut":"Sign Out",
     "uploadBannerImage":"Upload Banner Image",
     "enterBannerUrl":"...or enter image url",
