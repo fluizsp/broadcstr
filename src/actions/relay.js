@@ -1,11 +1,10 @@
 import {
-    relayInit,
     nip19,
     validateEvent,
     getEventHash,
     signEvent,
 } from 'nostr-tools'
-import { SimplePool } from 'nostr-tools';
+import NostrRelayPoolService from '../services/NostrRelayPoolService';
 
 import { setAccount } from './account';
 
@@ -28,7 +27,7 @@ export const REPLY_TO = "REPLY_TO";
 export const VIEW_IMAGE = "VIEW_IMAGE";
 export const CLOSE_IMAGE = "CLOSE_IMAGE";
 
-const myPool = new SimplePool({ eoseSubTimeout: 3000 });
+let poolService = null;
 let requestedMetadatas = [];
 let requestedRelateds = [];
 
@@ -59,6 +58,19 @@ const getWriteRelaysUrls = relays => {
     return relays.filter(r => r.write).map(r => { return r.url });
 }
 
+export const initializeRelays = () => {
+    return (dispatch, getState) => {
+        poolService = new NostrRelayPoolService(getState().user.relays)
+        poolService.initialize();
+        poolService.addListener('open', relay => {
+            console.log('pool relay opened');
+        });
+        poolService.addListener('close', relay => {
+            console.log('pool relay closed');
+        });
+    }
+}
+
 export const sign = async (event, account) => {
     return new Promise((resolve, reject) => {
         try {
@@ -82,14 +94,13 @@ export const getFollowingFeed = (limit) => {
     return ((dispatch, getState) => {
         let eventBulk = [];
         if (getState().user.following && getState().user.following.length > 0) {
-            let relays = getReadRelaysUrls(getState().user.relays);
-            let filters = [{
+            let filters = {
                 kinds: [1, 6],
                 authors: getState().user.following,
                 limit: limit
-            }];
-            let sub = myPool.sub(relays, filters);
-            sub.on('event', event => {
+            };
+            let sub = poolService.createSubscription(filters);
+            sub.onEvent(event => {
                 if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
 
                     eventBulk.push(event);
@@ -110,27 +121,26 @@ export const getFollowingFeed = (limit) => {
                     }
                 }
             });
-            sub.on('eose', () => {
+            sub.onEose(() => {
                 eventBulk.forEach(event => {
                     dispatch(addNoteRelatedToload(event.id));
                     dispatch({ type: RECEIVED_NOTE, data: { feedType: 'following', notes: event } });
                 });
                 eventBulk = [];
-                sub.unsub();
-            })
+                //sub.unsub();
+            });
         }
     });
 }
 
 export const getZapsFeed = (limit) => {
     return (dispatch, getState) => {
-        let relays = getReadRelaysUrls(getState().user.relays);
         let events = {};
-        let zapsFilters = [{
+        let zapsFilters = {
             kinds: [9735],
             limit: limit * 10
-        }];
-        myPool.list(relays, zapsFilters).then(results => {
+        };
+        poolService.list(zapsFilters).then(results => {
             results.forEach(zap => {
                 let zapInfo = {};
                 let noteId = zap.tags.filter(t => t[0] === 'e')[0];
@@ -159,12 +169,12 @@ export const getZapsFeed = (limit) => {
             let eventList = Object.keys(events).map(k => { return { id: k, amount: events[k] } })
             eventList = eventList.sort((a, b) => { return a.amount > b.amount ? -1 : 1 })
             eventList = eventList.slice(0, limit * 2);
-            let eventsFilters = [{
+            let eventsFilters = {
                 kinds: [1, 6],
                 ids: eventList.map(e => { return e.id }),
                 limit: limit * 2
-            }];
-            myPool.list(relays, eventsFilters).then(results => {
+            };
+            poolService.list(eventsFilters).then(results => {
                 results.forEach(event => {
                     if (events[event.id]) {
                         let eventWithZapAmount = Object.assign({}, event);
@@ -193,14 +203,13 @@ export const getForYouFeed = (limit) => {
         let eventBulk = [];
         let following = getState().user.following;
         if (getState().user.following && getState().user.following.length > 0) {
-            let relays = getReadRelaysUrls(getState().user.relays);
-            let followingFilters = [{
+            let followingFilters = {
                 kinds: [1, 6],
                 authors: following,
                 limit: limit
-            }];
-            let followingSub = myPool.sub(relays, followingFilters);
-            followingSub.on('event', async event => {
+            };
+            let followingSub = poolService.createSubscription(followingFilters);
+            followingSub.onEvent(async event => {
                 if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
                     eventBulk.push(event);
                     if (!getState().user.usersMetadata[event.pubkey]) {
@@ -220,22 +229,21 @@ export const getForYouFeed = (limit) => {
                     }
                 }
             });
-            followingSub.on('eose', () => {
+            followingSub.onEose(() => {
                 eventBulk.forEach(event => {
                     addNoteRelatedToload(event.id);
                     dispatch({ type: RECEIVED_NOTE, data: { feedType: 'following', notes: event } });
                 });
                 eventBulk = [];
-                followingSub.unsub();
             })
             //TODO:following feed "as is" is the 1st return
-            let secondLevelfollowingFilters = [{
+            let secondLevelfollowingFilters = {
                 kinds: [3],
                 authors: following,
                 limit: limit
-            }];
+            };
             let secondLevelFollowingList = [];
-            myPool.list(relays, secondLevelfollowingFilters).then(results => {
+            poolService.list(secondLevelfollowingFilters).then(results => {
                 let totalTarget = 100;
                 let perFollowingTarget = Math.ceil(totalTarget / results.length);
                 results.forEach(following => {
@@ -249,13 +257,13 @@ export const getForYouFeed = (limit) => {
                 secondLevelFollowingList = secondLevelFollowingList.filter(function (item, pos) {
                     return secondLevelFollowingList.indexOf(item) === pos;
                 })
-                let secondLevelNotesFilters = [{
+                let secondLevelNotesFilters = {
                     kinds: [1],
                     authors: secondLevelFollowingList,
                     limit: limit
-                }];
-                let secondLevelNotesSub = myPool.sub(relays, secondLevelNotesFilters);
-                secondLevelNotesSub.on('event', async event => {
+                };
+                let secondLevelNotesSub = poolService.createSubscription(secondLevelNotesFilters);
+                secondLevelNotesSub.onEvent(async event => {
                     if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
                         eventBulk.push(event);
                         if (!getState().user.usersMetadata[event.pubkey]) {
@@ -275,33 +283,32 @@ export const getForYouFeed = (limit) => {
                         }
                     }
                 });
-                secondLevelNotesSub.on('eose', () => {
+                secondLevelNotesSub.onEose(() => {
                     eventBulk.forEach(event => {
                         dispatch(addNoteRelatedToload(event.id));
                         dispatch({ type: RECEIVED_NOTE, data: { feedType: 'foryou', notes: event } });
                     });
                     eventBulk = [];
-                    secondLevelNotesSub.unsub();
                 })
             });
-            let secondLevelLikedFilters = [{
+            let secondLevelLikedFilters = {
                 kinds: [7],
                 authors: following,
                 limit: limit
-            }];
-            myPool.list(relays, secondLevelLikedFilters).then(results => {
+            };
+            poolService.list(secondLevelLikedFilters).then(results => {
                 let likedNoteIds = [];
                 results.forEach(liked => {
                     likedNoteIds.push(liked.tags.filter(t => t[0] === 'e').map(t => { return t[1] }));
                 })
                 likedNoteIds = likedNoteIds.flat().slice(0, limit);
-                let likedNotesFilter = [{
+                let likedNotesFilter = {
                     kinds: [1],
                     ids: likedNoteIds,
                     limit: limit
-                }];
-                let likedNotesSub = myPool.sub(relays, likedNotesFilter);
-                likedNotesSub.on('event', async event => {
+                };
+                let likedNotesSub = poolService.createSubscription(likedNotesFilter);
+                likedNotesSub.onEvent(async event => {
                     if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
                         eventBulk.push(event);
                         if (!getState().user.usersMetadata[event.pubkey]) {
@@ -321,7 +328,7 @@ export const getForYouFeed = (limit) => {
                         }
                     }
                 });
-                likedNotesSub.on('eose', () => {
+                likedNotesSub.onEose(() => {
                     eventBulk.forEach(event => {
                         dispatch(addNoteRelatedToload(event.id));
                         dispatch({ type: RECEIVED_NOTE, data: { feedType: 'foryou', notes: event } });
@@ -330,8 +337,6 @@ export const getForYouFeed = (limit) => {
                     likedNotesSub.unsub();
                 })
             });
-
-
         }
     }
 }
@@ -339,16 +344,13 @@ export const getForYouFeed = (limit) => {
 export const getUserNotes = (publicKeyHex, limit) => {
     return ((dispatch, getState) => {
         let eventBulk = [];
-        let relays = getReadRelaysUrls(getState().user.relays);
-        let filters = [
-            {
-                kinds: [1, 6],
-                authors: [publicKeyHex],
-                limit: limit ?? 15
-            }
-        ];
-        let sub = myPool.sub(relays, filters);
-        sub.on('event', async event => {
+        let filters = {
+            kinds: [1, 6],
+            authors: [publicKeyHex],
+            limit: limit ?? 15
+        };
+        let sub = poolService.createSubscription(filters);
+        sub.onEvent(async event => {
             eventBulk.push(event);
             //dispatch(receivedNote(event));
             if (!getState().user.usersMetadata[event.pubkey]) {
@@ -367,28 +369,24 @@ export const getUserNotes = (publicKeyHex, limit) => {
                 eventBulk = [];
             }
         });
-        sub.on('eose', () => {
+        sub.onEose(() => {
             eventBulk.forEach(event => {
                 dispatch(addNoteRelatedToload(event.id));
                 dispatch({ type: RECEIVED_NOTE, data: { feedType: 'profile', notes: event } });
             });
             eventBulk = [];
-            sub.unsub();
         });
     });
 }
 
 export const getUserFollowing = (publicKeyHex, limit) => {
     return ((dispatch, getState) => {
-        let relays = getReadRelaysUrls(getState().user.relays);
-        let filters = [
-            {
-                kinds: [3]
-                , authors: [publicKeyHex],
-                limit: limit ?? 1000
-            }
-        ];
-        myPool.list(relays, filters).then(results => {
+        let filters = {
+            kinds: [3]
+            , authors: [publicKeyHex],
+            limit: limit ?? 1000
+        };
+        poolService.list(filters).then(results => {
             results.forEach(event => {
                 event.tags.forEach(t => {
                     if (t[0] === "p")
@@ -399,22 +397,19 @@ export const getUserFollowing = (publicKeyHex, limit) => {
                 dispatch({ type: USER_FOLLOWING, data: event });
             });
         });
-    })
+    });
 }
 
 export const getUserFollowers = (publicKeyHex, limit) => {
     return ((dispatch, getState) => {
         let followersBatch = [];
-        let relays = getReadRelaysUrls(getState().user.relays);
-        let filters = [
-            {
-                kinds: [3],
-                "#p": [publicKeyHex],
-                limit: limit ?? 1000
-            }
-        ];
-        let sub = myPool.sub(relays, filters);
-        sub.on('event', event => {
+        let filters = {
+            kinds: [3],
+            "#p": [publicKeyHex],
+            limit: limit ?? 1000
+        };
+        let sub = poolService.createSubscription(filters);
+        sub.onEvent(event => {
             if (!getState().user.usersMetadata[event.pubkey]) {
                 dispatch(receivedUserMetadata(event.pubkey, {}));
             }
@@ -426,7 +421,7 @@ export const getUserFollowers = (publicKeyHex, limit) => {
                 followersBatch = [];
             }
         });
-        sub.on('eose', () => {
+        sub.onEose(() => {
             if (followersBatch.length > 0) {
                 followersBatch.forEach(e => {
                     dispatch(e);
@@ -443,15 +438,12 @@ export const getNote = (id) => {
             dispatch(receivedNote(getState().content.allNotes[id], id));
             return;
         }
-        let relays = getReadRelaysUrls(getState().user.relays);
-        let filters = [
-            {
-                kinds: [1, 6],
-                ids: [id],
-                limit: 1
-            }
-        ];
-        myPool.list(relays, filters).then(results => {
+        let filters = {
+            kinds: [1, 6],
+            ids: [id],
+            limit: 1
+        };
+        poolService.list(filters).then(results => {
             let event = results[0];
             if (validateEvent(event)) {
                 dispatch(receivedNote(event, event.id));
@@ -473,37 +465,37 @@ export const getMyInfo = () => {
     return ((dispatch, getState) => {
         let publicKey = getState().user.account.publicKey;
         if (publicKey) {
-            let relays = getReadRelaysUrls(getState().user.relays);
-            let filters = [{
-                kinds: [0, 3, 7],
+            let metadataFilters = {
+                kinds: [0],
                 authors: [nip19.decode(publicKey).data]
-            }];
-            let sub = myPool.sub(relays, filters);//.then(results => {
-            sub.on('event', event => {
-                //results.forEach(event => {
-                if (event.kind === 0) {
-                    let accountInfo = JSON.parse(event.content);
-                    dispatch(setAccount(null, accountInfo));
-                }
-                if (event.kind === 3) {
-                    let following = event.tags.map(t => {
-                        return t[1];
-                    })
-                    dispatch(setAccount(null, null, following));
-                }
-                if (event.kind === 7) {
-                    let likes = event.tags.map(t => {
-                        return t[1];
-                    });
-                    dispatch(setAccount(null, null, null, likes));
-                }
-                //});
-            });/*.catch(err => {
-                console.log(err);
-            })*/
-            sub.on('eose', () => {
-                sub.unsub();
-            })
+            };
+            let metadataSub = poolService.createSubscription(metadataFilters);//.then(results => {
+            metadataSub.onEvent(event => {
+                let accountInfo = JSON.parse(event.content);
+                dispatch(setAccount(null, accountInfo));
+            });
+            let followingFilters = {
+                kinds: [3],
+                authors: [nip19.decode(publicKey).data]
+            };
+            let followingSub = poolService.createSubscription(followingFilters);//.then(results => {
+            followingSub.onEvent(event => {
+                let following = event.tags.map(t => {
+                    return t[1]
+                });
+                dispatch(setAccount(null, null, following));
+            });
+            let likeFilters = {
+                kinds: [3],
+                authors: [nip19.decode(publicKey).data]
+            };
+            let likeSub = poolService.createSubscription(likeFilters);//.then(results => {
+            likeSub.onEvent(event => {
+                let likes = event.tags.map(t => {
+                    return t[1];
+                });
+                dispatch(setAccount(null, null, null, likes));
+            });
         }
     });
 }
@@ -523,15 +515,12 @@ export const getUsersMetadata = () => {
             requestedMetadatas.push(key)
         });
         if (emptyUsersMetadata.length > 0) {
-            let relays = getReadRelaysUrls(getState().user.relays);
-            let filters = [
-                {
-                    kinds: [0],
-                    authors: emptyUsersMetadata
-                }
-            ];
-            let sub = myPool.sub(relays, filters);
-            sub.on('event', event => {
+            let filters = {
+                kinds: [0],
+                authors: emptyUsersMetadata
+            };
+            let sub = poolService.createSubscription(filters);
+            sub.onEvent(event => {
                 let userMetadata = JSON.parse(event.content);
                 userMetadata.load = false;
                 userMetadata.created_at = event.created_at;
@@ -544,12 +533,11 @@ export const getUsersMetadata = () => {
                     metadataBulk = [];
                 }
             });
-            sub.on('eose', event => {
+            sub.onEose(event => {
                 metadataBulk.forEach(userMetadata => {
                     dispatch(receivedUserMetadata(userMetadata.pubkey, userMetadata));
                 });
                 metadataBulk = [];
-                sub.unsub();
             });
         }
     });
@@ -566,7 +554,6 @@ export const addNoteRelatedToload = (id) => {
 
 export const listNotesRelateds = () => {
     return (dispatch, getState) => {
-        console.log('listNotesRelateds');
         let notesRelatedsToLoad = [];
         Object.keys(getState().content.allNotesRelateds ?? {}).forEach(k => {
             if (getState().content.allNotesRelateds[k].load && !requestedRelateds.includes(k))
@@ -574,17 +561,13 @@ export const listNotesRelateds = () => {
         })
         notesRelatedsToLoad.slice(0, 25);
         notesRelatedsToLoad.forEach(id => requestedRelateds.push(id));
-        console.log(notesRelatedsToLoad.length);
         if (notesRelatedsToLoad.length > 0) {
-            let relays = getReadRelaysUrls(getState().user.relays);
-            let filters = [
-                {
-                    kinds: [1, 6, 7, 9735],
-                    "#e": notesRelatedsToLoad,
-                    limit: 5000
-                }
-            ];
-            myPool.list(relays, filters).then(results => {
+            let filters = {
+                kinds: [1, 6, 7, 9735],
+                "#e": notesRelatedsToLoad,
+                limit: 5000
+            };
+            poolService.list(filters).then(results => {
                 results.forEach(event => {
                     if (!getState().user.usersMetadata[event.pubkey]) {
                         dispatch(receivedUserMetadata(event.pubkey, {}));
@@ -604,15 +587,12 @@ export const listNotesRelateds = () => {
 export const listNoteRelateds = (id, limit) => {
     return ((dispatch, getState) => {
         console.log(`listNoteRelateds for id:${id} `);
-        let relays = getReadRelaysUrls(getState().user.relays);
-        let filters = [
-            {
-                kinds: [1, 6, 7, 9735],
-                "#e": [id],
-                limit: 5000
-            }
-        ];
-        myPool.list(relays, filters).then(results => {
+        let filters = {
+            kinds: [1, 6, 7, 9735],
+            "#e": [id],
+            limit: 5000
+        };
+        poolService.list(filters).then(results => {
             results.forEach(event => {
                 if (!getState().user.usersMetadata[event.pubkey]) {
                     dispatch(receivedUserMetadata(event.pubkey, {}));
@@ -661,17 +641,14 @@ export const search = (type, term) => {
                 }
             })
         }
-        let relays = getReadRelaysUrls(getState().user.relays);
-        let filters = [
-            {
-                kinds: kinds,
-                limit: 5000,
-            }
-        ];
+        let filters = {
+            kinds: kinds,
+            limit: 5000,
+        };
         if (type === "notes")
             filters[0]["#t"] = [term];
-        let sub = myPool.sub(relays, filters);
-        sub.on('event', event => {
+        let sub = poolService.createSubscription(filters);
+        sub.onEvent(event => {
             if (type === "users") {
                 let userMetadata = JSON.parse(event.content);
                 if (performUserSearch(term, userMetadata)) {
@@ -699,7 +676,7 @@ export const search = (type, term) => {
                 }
             }
         });
-        sub.on('eose', () => {
+        sub.onEose(() => {
             sub.unsub();
         })
     });
@@ -735,13 +712,12 @@ export const publishNote = draftNote => {
             })
         event.id = getEventHash(event)
         sign(event, getState().user.account).then(signedEvent => {
-            let relaysUrls = getWriteRelaysUrls(getState().user.relays);
-            let pubs = myPool.publish(relaysUrls, signedEvent);
+            /*let pubs = myPool.publish(relaysUrls, signedEvent);
             pubs.forEach(pub => {
                 pub.on('ok', () => {
                     console.log('Sucessfull published profile');
                 });
-            });
+            });*/
         }).catch(err => {
             console.log(err);
         });
@@ -761,13 +737,12 @@ export const likeNote = note => {
         event.tags.push(['e', note.id]);
         event.id = getEventHash(event)
         sign(event, getState().user.account).then(signedEvent => {
-            let relaysUrls = getWriteRelaysUrls(getState().user.relays);
-            let pubs = myPool.publish(relaysUrls, signedEvent);
+            /*let pubs = myPool.publish(relaysUrls, signedEvent);
             pubs.forEach(pub => {
                 pub.on('ok', () => {
                     console.log('Sucessfull published profile');
                 });
-            });
+            });*/
         }).catch(err => {
             console.log(err);
         });
@@ -787,13 +762,12 @@ export const repostNote = note => {
         event.tags.push(['e', note.id]);
         event.id = getEventHash(event)
         sign(event, getState().user.account).then(signedEvent => {
-            let relaysUrls = getWriteRelaysUrls(getState().user.relays);
-            let pubs = myPool.publish(relaysUrls, signedEvent);
+            /*let pubs = myPool.publish(relaysUrls, signedEvent);
             pubs.forEach(pub => {
                 pub.on('ok', () => {
                     console.log('Sucessfull published profile');
                 });
-            });
+            });*/
         }).catch(err => {
             console.log(err);
         });
@@ -811,13 +785,12 @@ export const publishProfile = profile => {
         };
         event.id = getEventHash(event)
         sign(event, getState().user.account).then(signedEvent => {
-            let relaysUrls = getWriteRelaysUrls(getState().user.relays);
-            let pubs = myPool.publish(relaysUrls, signedEvent);
+            /*let pubs = myPool.publish(relaysUrls, signedEvent);
             pubs.forEach(pub => {
                 pub.on('ok', () => {
                     console.log('Sucessfull published profile');
                 });
-            });
+            });*/
         }).catch(err => {
             console.log(err);
         });
@@ -840,13 +813,12 @@ export const addFollowing = (publicKeyHex) => {
         event.tags.push(['p', publicKeyHex]);
         event.id = getEventHash(event)
         sign(event, getState().user.account).then(signedEvent => {
-            let relaysUrls = getWriteRelaysUrls(getState().user.relays);
-            let pubs = myPool.publish(relaysUrls, signedEvent);
+            /*let pubs = myPool.publish(relaysUrls, signedEvent);
             pubs.forEach(pub => {
                 pub.on('ok', () => {
                     console.log('Sucessfull published profile');
                 });
-            });
+            });*/
         }).catch(err => {
             console.log(err);
         });

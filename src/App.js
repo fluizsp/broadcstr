@@ -7,7 +7,7 @@ import {
 import rootReducer from './reducer';
 
 import { extendTheme } from "@chakra-ui/react"
-import { getUsersMetadata, listNotesRelateds, loadRelays, selectMetadatas, SELECT_NOTES } from './actions/relay';
+import { getUsersMetadata, initializeRelays, listNotesRelateds, loadRelays, selectMetadatas, SELECT_NOTES } from './actions/relay';
 import AppContainer from './containers/AppContainer';
 import { saveState } from './localStorage';
 import { throttle } from 'lodash';
@@ -22,6 +22,8 @@ import German from './i18n/de.json';
 const store = configureStore({
   reducer: rootReducer
 },)
+
+store.dispatch(initializeRelays());
 
 store.subscribe(throttle(() => {
   console.log('save state to storage')
