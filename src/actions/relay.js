@@ -127,7 +127,6 @@ export const getFollowingFeed = (limit) => {
                     dispatch({ type: RECEIVED_NOTE, data: { feedType: 'following', notes: event } });
                 });
                 eventBulk = [];
-                //sub.unsub();
             });
         }
     });
@@ -334,7 +333,6 @@ export const getForYouFeed = (limit) => {
                         dispatch({ type: RECEIVED_NOTE, data: { feedType: 'foryou', notes: event } });
                     });
                     eventBulk = [];
-                    likedNotesSub.unsub();
                 })
             });
         }
@@ -559,7 +557,7 @@ export const listNotesRelateds = () => {
             if (getState().content.allNotesRelateds[k].load && !requestedRelateds.includes(k))
                 notesRelatedsToLoad.push(k);
         })
-        notesRelatedsToLoad.slice(0, 25);
+        notesRelatedsToLoad.slice(0, 5);
         notesRelatedsToLoad.forEach(id => requestedRelateds.push(id));
         if (notesRelatedsToLoad.length > 0) {
             let filters = {
@@ -646,7 +644,7 @@ export const search = (type, term) => {
             limit: 5000,
         };
         if (type === "notes")
-            filters[0]["#t"] = [term];
+            filters["#t"] = [term];
         let sub = poolService.createSubscription(filters);
         sub.onEvent(event => {
             if (type === "users") {
@@ -676,9 +674,6 @@ export const search = (type, term) => {
                 }
             }
         });
-        sub.onEose(() => {
-            sub.unsub();
-        })
     });
 }
 
