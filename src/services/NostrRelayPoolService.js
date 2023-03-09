@@ -1,4 +1,21 @@
+import store from "../store";
 import NostrRelayService from "./NostrRelayService";
+
+let globalPoolService = null;
+
+export const getPoolService = () => {
+    if (!globalPoolService) {
+        globalPoolService = new NostrRelayPoolService(store.getState().user.relays)
+        globalPoolService.initialize();
+        globalPoolService.addListener('open', relay => {
+            console.log('pool relay opened');
+        });
+        globalPoolService.addListener('close', relay => {
+            console.log('pool relay closed');
+        });
+    }
+    return globalPoolService;
+}
 
 class NostrRelayPoolService {
     constructor(relaysConfigs, subscriptionOptions = { subTimeout: 3000, subLife: 30000 }) {

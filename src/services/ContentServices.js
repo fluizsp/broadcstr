@@ -2,20 +2,19 @@ import { SimplePool } from "nostr-tools";
 import { addNoteRelatedToload, receivedUserMetadata } from "../actions/relay";
 import { getNoteModel } from "../model/NoteModel";
 import store from "../store";
-//import { getPoolService } from "./NostrRelayPoolService";
+import { getPoolService } from "./NostrRelayPoolService";
 
 const nostrPool = new SimplePool();
 
 export const getUserNotes = (publicKeyHex, limit, onNotes) => {
     let eventBulk = [];
-    let filters = [{
+    let filters = {
         kinds: [1, 6],
         authors: [publicKeyHex],
         limit: limit ?? 15
-    }];
-    let relaysUrls = store.getState().user.relays.map(r => { if (r.read) return r.url }).filter(r => r);
-    let sub = nostrPool.sub(relaysUrls, filters);
-    sub.on('event', event => {
+    };
+    let sub = getPoolService().createSubscription(filters);
+    sub.onEvent(event => {
         if (eventBulk.filter(e => e.id === event.id).length === 0)
             eventBulk.push(event);
         if (!store.getState().user.usersMetadata[event.pubkey]) {
@@ -34,7 +33,7 @@ export const getUserNotes = (publicKeyHex, limit, onNotes) => {
             eventBulk = [];
         }
     });
-    sub.on('eose', () => {
+    sub.onEose(() => {
         eventBulk.forEach(event => {
             store.dispatch(addNoteRelatedToload(event.id));
         });
@@ -44,13 +43,12 @@ export const getUserNotes = (publicKeyHex, limit, onNotes) => {
 }
 export const getUserFollowing = (publicKeyHex, limit) => {
     return new Promise((resolve, reject) => {
-        let relaysUrls = store.getState().user.relays.map(r => { if (r.read) return r.url }).filter(r => r);
-        let filters = [{
+        let filters = {
             kinds: [3]
             , authors: [publicKeyHex],
             limit: limit ?? 1000
-        }];
-        nostrPool.list(relaysUrls, filters).then(results => {
+        };
+        getPoolService().list(filters).then(results => {
             results.forEach(event => {
                 event.tags.forEach(t => {
                     if (t[0] === "p")
@@ -65,15 +63,14 @@ export const getUserFollowing = (publicKeyHex, limit) => {
 }
 export const getUserFollowers = (publicKeyHex, limit, onEvents) => {
     let followersBatch = [];
-    let filters = [{
+    let filters = {
         kinds: [3],
         "#p": [publicKeyHex],
         limit: limit ?? 1000
-    }];
-    let relaysUrls = store.getState().user.relays.map(r => { if (r.read) return r.url }).filter(r => r);
-    let sub = nostrPool.sub(relaysUrls, filters);
+    };
+    let sub = getPoolService().createSubscription(filters);
 
-    sub.on('event', event => {
+    sub.onEvent(event => {
         if (!store.getState().user.usersMetadata[event.pubkey]) {
             store.dispatch(receivedUserMetadata(event.pubkey, {}));
         }
@@ -83,7 +80,7 @@ export const getUserFollowers = (publicKeyHex, limit, onEvents) => {
             followersBatch = [];
         }
     });
-    sub.on('eose', () => {
+    sub.onEose(() => {
         onEvents(followersBatch);
         followersBatch = [];
     })

@@ -46,7 +46,7 @@ class NostrRelayService {
         } catch (err) {
             setTimeout(() => {
                 this.ws.send(reqMessage)
-            }, 100)
+            }, 300)
             console.log(err)
         }
     }
@@ -87,10 +87,10 @@ class NostrRelayService {
         };
         this.sendInterval = setInterval(() => {
             this.sendSubscriptions();
-        }, 100);
+        }, 300);
         this.timeoutInterval = setInterval(() => {
             this.timeoutSubscriptions();
-        }, 1000)
+        }, 3000)
 
     }
     sendSubscriptions() {

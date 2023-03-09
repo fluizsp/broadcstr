@@ -4,7 +4,7 @@ import {
     getEventHash,
     signEvent,
 } from 'nostr-tools'
-import NostrRelayPoolService from '../services/NostrRelayPoolService';
+import NostrRelayPoolService, { getPoolService } from '../services/NostrRelayPoolService';
 
 import { setAccount } from './account';
 
@@ -27,7 +27,6 @@ export const REPLY_TO = "REPLY_TO";
 export const VIEW_IMAGE = "VIEW_IMAGE";
 export const CLOSE_IMAGE = "CLOSE_IMAGE";
 
-let poolService = null;
 let requestedMetadatas = [];
 let requestedRelateds = [];
 
@@ -58,19 +57,6 @@ const getWriteRelaysUrls = relays => {
     return relays.filter(r => r.write).map(r => { return r.url });
 }
 
-export const initializeRelays = () => {
-    return (dispatch, getState) => {
-        poolService = new NostrRelayPoolService(getState().user.relays)
-        poolService.initialize();
-        poolService.addListener('open', relay => {
-            console.log('pool relay opened');
-        });
-        poolService.addListener('close', relay => {
-            console.log('pool relay closed');
-        });
-    }
-}
-
 export const sign = async (event, account) => {
     return new Promise((resolve, reject) => {
         try {
@@ -99,7 +85,7 @@ export const getFollowingFeed = (limit) => {
                 authors: getState().user.following,
                 limit: limit
             };
-            let sub = poolService.createSubscription(filters);
+            let sub = getPoolService().createSubscription(filters);
             sub.onEvent(event => {
                 if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
 
@@ -139,7 +125,7 @@ export const getZapsFeed = (limit) => {
             kinds: [9735],
             limit: limit * 10
         };
-        poolService.list(zapsFilters).then(results => {
+        getPoolService().list(zapsFilters).then(results => {
             results.forEach(zap => {
                 let zapInfo = {};
                 let noteId = zap.tags.filter(t => t[0] === 'e')[0];
@@ -173,7 +159,7 @@ export const getZapsFeed = (limit) => {
                 ids: eventList.map(e => { return e.id }),
                 limit: limit * 2
             };
-            poolService.list(eventsFilters).then(results => {
+            getPoolService().list(eventsFilters).then(results => {
                 results.forEach(event => {
                     if (events[event.id]) {
                         let eventWithZapAmount = Object.assign({}, event);
@@ -207,7 +193,7 @@ export const getForYouFeed = (limit) => {
                 authors: following,
                 limit: limit
             };
-            let followingSub = poolService.createSubscription(followingFilters);
+            let followingSub = getPoolService().createSubscription(followingFilters);
             followingSub.onEvent(async event => {
                 if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
                     eventBulk.push(event);
@@ -242,7 +228,7 @@ export const getForYouFeed = (limit) => {
                 limit: limit
             };
             let secondLevelFollowingList = [];
-            poolService.list(secondLevelfollowingFilters).then(results => {
+            getPoolService().list(secondLevelfollowingFilters).then(results => {
                 let totalTarget = 100;
                 let perFollowingTarget = Math.ceil(totalTarget / results.length);
                 results.forEach(following => {
@@ -261,7 +247,7 @@ export const getForYouFeed = (limit) => {
                     authors: secondLevelFollowingList,
                     limit: limit
                 };
-                let secondLevelNotesSub = poolService.createSubscription(secondLevelNotesFilters);
+                let secondLevelNotesSub = getPoolService().createSubscription(secondLevelNotesFilters);
                 secondLevelNotesSub.onEvent(async event => {
                     if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
                         eventBulk.push(event);
@@ -295,7 +281,7 @@ export const getForYouFeed = (limit) => {
                 authors: following,
                 limit: limit
             };
-            poolService.list(secondLevelLikedFilters).then(results => {
+            getPoolService().list(secondLevelLikedFilters).then(results => {
                 let likedNoteIds = [];
                 results.forEach(liked => {
                     likedNoteIds.push(liked.tags.filter(t => t[0] === 'e').map(t => { return t[1] }));
@@ -306,7 +292,7 @@ export const getForYouFeed = (limit) => {
                     ids: likedNoteIds,
                     limit: limit
                 };
-                let likedNotesSub = poolService.createSubscription(likedNotesFilter);
+                let likedNotesSub = getPoolService().createSubscription(likedNotesFilter);
                 likedNotesSub.onEvent(async event => {
                     if (validateEvent(event) && ((event.kind === 1 && event.tags.filter(tag => { return tag[0] === "e" }).length === 0) || event.kind === 6)) {
                         eventBulk.push(event);
@@ -347,7 +333,7 @@ export const getUserNotes = (publicKeyHex, limit) => {
             authors: [publicKeyHex],
             limit: limit ?? 15
         };
-        let sub = poolService.createSubscription(filters);
+        let sub = getPoolService().createSubscription(filters);
         sub.onEvent(async event => {
             eventBulk.push(event);
             //dispatch(receivedNote(event));
@@ -384,7 +370,7 @@ export const getUserFollowing = (publicKeyHex, limit) => {
             , authors: [publicKeyHex],
             limit: limit ?? 1000
         };
-        poolService.list(filters).then(results => {
+        getPoolService().list(filters).then(results => {
             results.forEach(event => {
                 event.tags.forEach(t => {
                     if (t[0] === "p")
@@ -406,7 +392,7 @@ export const getUserFollowers = (publicKeyHex, limit) => {
             "#p": [publicKeyHex],
             limit: limit ?? 1000
         };
-        let sub = poolService.createSubscription(filters);
+        let sub = getPoolService().createSubscription(filters);
         sub.onEvent(event => {
             if (!getState().user.usersMetadata[event.pubkey]) {
                 dispatch(receivedUserMetadata(event.pubkey, {}));
@@ -441,7 +427,7 @@ export const getNote = (id) => {
             ids: [id],
             limit: 1
         };
-        poolService.list(filters).then(results => {
+        getPoolService().list(filters).then(results => {
             let event = results[0];
             if (validateEvent(event)) {
                 dispatch(receivedNote(event, event.id));
@@ -467,7 +453,7 @@ export const getMyInfo = () => {
                 kinds: [0],
                 authors: [nip19.decode(publicKey).data]
             };
-            let metadataSub = poolService.createSubscription(metadataFilters);//.then(results => {
+            let metadataSub = getPoolService().createSubscription(metadataFilters);//.then(results => {
             metadataSub.onEvent(event => {
                 let accountInfo = JSON.parse(event.content);
                 dispatch(setAccount(null, accountInfo));
@@ -476,7 +462,7 @@ export const getMyInfo = () => {
                 kinds: [3],
                 authors: [nip19.decode(publicKey).data]
             };
-            let followingSub = poolService.createSubscription(followingFilters);//.then(results => {
+            let followingSub = getPoolService().createSubscription(followingFilters);//.then(results => {
             followingSub.onEvent(event => {
                 let following = event.tags.map(t => {
                     return t[1]
@@ -487,7 +473,7 @@ export const getMyInfo = () => {
                 kinds: [3],
                 authors: [nip19.decode(publicKey).data]
             };
-            let likeSub = poolService.createSubscription(likeFilters);//.then(results => {
+            let likeSub = getPoolService().createSubscription(likeFilters);//.then(results => {
             likeSub.onEvent(event => {
                 let likes = event.tags.map(t => {
                     return t[1];
@@ -517,7 +503,7 @@ export const getUsersMetadata = () => {
                 kinds: [0],
                 authors: emptyUsersMetadata
             };
-            let sub = poolService.createSubscription(filters);
+            let sub = getPoolService().createSubscription(filters);
             sub.onEvent(event => {
                 let userMetadata = JSON.parse(event.content);
                 userMetadata.load = false;
@@ -565,7 +551,7 @@ export const listNotesRelateds = () => {
                 "#e": notesRelatedsToLoad,
                 limit: 5000
             };
-            poolService.list(filters).then(results => {
+            getPoolService().list(filters).then(results => {
                 results.forEach(event => {
                     if (!getState().user.usersMetadata[event.pubkey]) {
                         dispatch(receivedUserMetadata(event.pubkey, {}));
@@ -590,7 +576,7 @@ export const listNoteRelateds = (id, limit) => {
             "#e": [id],
             limit: 5000
         };
-        poolService.list(filters).then(results => {
+        getPoolService().list(filters).then(results => {
             results.forEach(event => {
                 if (!getState().user.usersMetadata[event.pubkey]) {
                     dispatch(receivedUserMetadata(event.pubkey, {}));
@@ -645,7 +631,7 @@ export const search = (type, term) => {
         };
         if (type === "notes")
             filters["#t"] = [term];
-        let sub = poolService.createSubscription(filters);
+        let sub = getPoolService().createSubscription(filters);
         sub.onEvent(event => {
             if (type === "users") {
                 let userMetadata = JSON.parse(event.content);
