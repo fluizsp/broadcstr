@@ -51,7 +51,7 @@ const initialState = {
     usersMetadata: loadState('user.usersMetadata') ?? {},
     likes: loadState('user.likes') ?? [],
     language: loadState('user.language') ?? null,
-    following: []
+    following: loadState('user.following') ?? [],
 };
 
 function removeEmpty(obj) {

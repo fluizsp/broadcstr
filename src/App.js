@@ -22,18 +22,18 @@ store.subscribe(throttle(() => {
   console.log('save state to storage')
   try {
     saveState(store.getState().user.account, 'user.account');
+    saveState(store.getState().user.following, 'user.following');
     saveState(store.getState().user.accountInfo, 'user.accountInfo');
     saveState(store.getState().user.likes, 'user.likes');
     saveState(store.getState().user.relays, 'user.relays');
     saveState(store.getState().user.usersMetadata, 'user.usersMetadata');
-    saveState(store.getState().content.allNotes, 'content.allNotes');
   } catch { }
 }, 30000));
 
 if (!window.metadataInterval)
   window.metadataInterval = setInterval(() => {
-    store.dispatch(getUsersMetadata());
-    store.dispatch(listNotesRelateds());
+    //store.dispatch(getUsersMetadata());
+    //store.dispatch(listNotesRelateds());
   }, 5000)
 
 // 2. Call `extendTheme` and pass your custom values

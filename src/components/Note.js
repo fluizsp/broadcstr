@@ -266,8 +266,7 @@ const Note = props => {
                     <Box bg={uiColor}>
                         <HStack>
                             <Tooltip label={liked ? intl.formatMessage({ id: 'youLiked' }) : intl.formatMessage({ id: 'like' })} fontSize='md' hasArrow={true}>
-                                <Button isDisabled={!account.publicKey || liked} leftIcon={liked ? <IoIosHeart color="red" /> : <BiHeart />} onClick={like} variant="ghost" size="md">{likes ?? ""}</Button>
-
+                                <Button isDisabled={!account.publicKey || liked} leftIcon={liked ? <IoIosHeart color="red" /> : <BiHeart />} onClick={like} variant="ghost" size="md">{likes > 0 ? likes : ""}</Button>
                             </Tooltip>
                             <Link ref={lnRef} href={ln}></Link>
                             <Popover>
@@ -288,11 +287,11 @@ const Note = props => {
                             </Popover>
 
                             <Tooltip label={intl.formatMessage({ id: 'reply' })} fontSize='md' hasArrow={true}>
-                                <Button isDisabled={!account.publicKey} leftIcon={<HiReply />} variant="ghost" size="md" onClick={reply}>{replies ?? ""}</Button>
+                                <Button isDisabled={!account.publicKey} leftIcon={<HiReply />} variant="ghost" size="md" onClick={reply}>{replies > 0 ? replies : ""}</Button>
                             </Tooltip>
                             <Popover>
                                 <PopoverTrigger>
-                                    <Button isDisabled={!account.publicKey} leftIcon={reposted ? <GoCheck /> : <GoBroadcast />} variant="ghost" size="md" >{reposts ?? ""}</Button>
+                                    <Button isDisabled={!account.publicKey} leftIcon={reposted ? <GoCheck /> : <GoBroadcast />} variant="ghost" size="md" >{reposts > 0 ? reposts : ""}</Button>
                                 </PopoverTrigger>
                                 <PopoverContent>
                                     <PopoverArrow />
