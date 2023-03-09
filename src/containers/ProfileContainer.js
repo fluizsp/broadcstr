@@ -1,7 +1,7 @@
 import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button, Link, Tooltip, Tag, TagLabel, TagLeftIcon } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { addFollowing, getMyInfo, getUserFollowers, getUserFollowing, getUserNotes, receivedUserMetadata, RECEIVED_USER_ID, removeFollowing, SET_LIMIT, UNLOAD_NOTES } from '../actions/relay';
+import { addFollowing, receivedUserMetadata, RECEIVED_USER_ID, removeFollowing, SET_LIMIT, UNLOAD_NOTES } from '../actions/relay';
 import { useNavigate, useParams } from 'react-router';
 import { nip05, nip19 } from 'nostr-tools';
 import NoteList from '../components/NoteList';
@@ -10,6 +10,7 @@ import { IoMdPersonAdd, IoMdRemove, IoMdSettings } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
 import { useIntl } from 'react-intl';
 import { GoVerified } from 'react-icons/go';
+import { getUserFollowers, getUserFollowing, getUserNotes } from '../services/ContentServices';
 
 const ProfileContainer = props => {
     const dispatch = useDispatch();
@@ -20,6 +21,9 @@ const ProfileContainer = props => {
     const params = useParams();
     const [activeView, setActiveView] = useState(0);
     const [nipInfo, setNipInfo] = useState();
+    const [allNotes, setAllNotes] = useState([]);
+    const [following, setFollowing] = useState([]);
+    const [followers, setFollowers] = useState([]);
     const [limit, setLimit] = useState(25);
     const [nip05Status, setNip05Status] = useState();
     const [publicKeyHex, setPublicKeyHex] = useState(null);
@@ -37,7 +41,14 @@ const ProfileContainer = props => {
         dispatch({ type: RECEIVED_USER_ID, data: publicKeyHex })
     }
     const loadNotes = (publicKeyHex, limit) => {
-        dispatch(getUserNotes(publicKeyHex, limit * 5));
+        getUserNotes(publicKeyHex, limit * 5, results => {
+            let updatedNotes = notes;
+            results.forEach(r => {
+                if (notes.filter(n => n.id === r.id).length === 0)
+                    updatedNotes.push(r);
+            })
+            setAllNotes(updatedNotes);
+        });
     };
     const followingAdd = publicKeyHex => {
         dispatch(addFollowing(publicKeyHex));
@@ -46,15 +57,31 @@ const ProfileContainer = props => {
         dispatch(removeFollowing(publicKeyHex));
     };
     const loadUserFollowing = publicKeyHex => {
-        dispatch(getUserFollowing(publicKeyHex));
+        getUserFollowing(publicKeyHex).then(data => {
+            let followingList = data.tags.map(t => {
+                if (t[0] === "p")
+                    return t[1]
+            });
+            setFollowing(followingList);
+        })
     };
     const loadUserFollowers = publicKeyHex => {
-        dispatch(getUserFollowers(publicKeyHex));
+        getUserFollowers(publicKeyHex, 1000, results => {
+            let updatedFollowers = followers;
+            results.forEach(r => {
+                if (!updatedFollowers.includes(r))
+                    updatedFollowers.push(r);
+            })
+            setFollowers(updatedFollowers);
+        });
     }
 
     useEffect(() => {
         console.log('useEffect publicKeyHex');
         if (publicKeyHex) {
+            setAllNotes([]);
+            setFollowers([]);
+            setFollowing([]);
             loadUser(publicKeyHex);
             loadNotes(publicKeyHex, 25);
             loadUserFollowing(publicKeyHex);
@@ -62,6 +89,9 @@ const ProfileContainer = props => {
         }
     }, [publicKeyHex]);
     useEffect(() => {
+        setAllNotes([]);
+        setFollowers([]);
+        setFollowing([]);
         if (!params.id.includes('@') && params.id.includes('npub'))
             setPublicKeyHex(nip19.decode(params.id).data);
         else
@@ -83,7 +113,7 @@ const ProfileContainer = props => {
             navigate('/welcome');*/
         if (params.id.includes('@'))
             nip05.queryProfile(params.id).then(value => {
-                if (value){
+                if (value) {
                     setPublicKeyHex(value.pubkey);
                     setNip05Status(true);
                 }
@@ -93,7 +123,7 @@ const ProfileContainer = props => {
     }, [])
     const account = useSelector(state => state.user.account);
     let user = useSelector(state => state.user.usersMetadata[publicKeyHex]) ?? {};
-    if (params.id!==user.nip05 && user && user.nip05 && !user.nip05Status) {
+    if (params.id !== user.nip05 && user && user.nip05 && !user.nip05Status) {
         nip05.queryProfile(user.nip05).then(value => {
             if (value) {
                 setNip05Status(true);
@@ -104,39 +134,12 @@ const ProfileContainer = props => {
         });
     }
     let userLoaded = user.name ? true : false;
-    let notes = [];
-    let replies = [];
+    let notes = allNotes.filter(n => (n.kind === 1 && n.tags.filter(([t, v]) => t === 'e').length === 0) || n.kind === 6)
+        .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
+        .slice(0, limit);
+    let replies = allNotes.filter(n => (n.kind === 1 && n.tags.filter(([t, v]) => t === 'e').length > 0));
     let isOwnProfile = account.publicKey && nip19.decode(account.publicKey).data === publicKeyHex;
     let isFollowing = useSelector(state => state.user.following.filter(f => f === publicKeyHex).length > 0);
-    notes = useSelector(state => Object.keys(state.content.allNotes).map(k => { return state.content.allNotes[k] })
-        .filter(note => note.pubkey === publicKeyHex || note.reposted_by === publicKeyHex)
-        .filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
-        .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
-        .slice(0, limit * 2), (a, b) => {
-            if (!a)
-                return false;
-            let aIds = a.map(aNote => { return aNote.id });
-            aIds = aIds.join(",");
-            let bIds = b.map(bNote => { return bNote.id });
-            bIds = bIds.join(",");
-            return aIds === bIds;
-        })
-
-    replies = useSelector(state => Object.keys(state.content.allNotes).map(k => { return state.content.allNotes[k] })
-        .filter(note => note.pubkey === publicKeyHex)
-        .filter(note => note.kind === 1 && note.tags.filter(t => t[0] === "e").length > 0)
-        .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
-        .slice(0, limit * 2), (a, b) => {
-            if (!a)
-                return false;
-            let aIds = a.map(aNote => { return aNote.id });
-            aIds = aIds.join(",");
-            let bIds = b.map(bNote => { return bNote.id });
-            bIds = bIds.join(",");
-            return aIds === bIds;
-        });
-    let following = useSelector(state => state.content.usersFollowing[publicKeyHex]) ?? [];
-    let followers = useSelector(state => state.content.usersFollowers[publicKeyHex]) ?? [];
     console.log("Render Profile");
     return (
         <Box minH="100vH" bgGradient={bgGradient}>

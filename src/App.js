@@ -1,10 +1,9 @@
 import React from 'react';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit'
 import {
   ChakraProvider,
 } from '@chakra-ui/react';
-import rootReducer from './reducer';
+import store from './store';
 
 import { extendTheme } from "@chakra-ui/react"
 import { getUsersMetadata, initializeRelays, listNotesRelateds, loadRelays, selectMetadatas, SELECT_NOTES } from './actions/relay';
@@ -18,12 +17,6 @@ import English from './i18n/en-US.json';
 import Spanish from './i18n/es.json';
 import French from './i18n/fr.json';
 import German from './i18n/de.json';
-
-const store = configureStore({
-  reducer: rootReducer
-},)
-
-store.dispatch(initializeRelays());
 
 store.subscribe(throttle(() => {
   console.log('save state to storage')
