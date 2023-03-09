@@ -90,9 +90,10 @@ export const getZapsFeed = (limit, onResults) => {
     let events = {};
     let zapsFilters = {
         kinds: [9735],
-        limit: limit * 10
+        limit: limit * 5
     };
-    getPoolService().list(zapsFilters).then(results => {
+    getPoolService().list(zapsFilters, { timeout: 500 }).then(results => {
+        console.log(results.length)
         results.forEach(zap => {
             let zapInfo = {};
             let noteId = zap.tags.filter(t => t[0] === 'e')[0];

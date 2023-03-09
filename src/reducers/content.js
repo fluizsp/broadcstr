@@ -4,7 +4,7 @@ import { getNoteModel } from '../model/NoteModel';
 
 const initialState = {
     notes: {},
-    allNotes: loadState('content.allNotes') ?? {},
+    allNotes: {},
     allNotesRelateds: {},
     feeds: {
         following: {},

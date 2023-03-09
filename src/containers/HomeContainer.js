@@ -20,7 +20,9 @@ const HomeContainer = props => {
     const bgGradient = useColorModeValue('linear(to-tl, brand.blessing1, brand.blessing2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const [feedType, setFeedType] = useState('zaps');
     const [limit, setLimit] = useState(15);
-    const [notes, setNotes] = useState([]);
+    const [zaps, setZaps] = useState([]);
+    const [following, setFollowing] = useState([]);
+    const [foryou, setForYou] = useState([]);
     const [lastUpdate, setLastUpdate] = useState(new Date());
     const account = useSelector(state => state.user.account);
     useEffect(() => {
@@ -39,8 +41,6 @@ const HomeContainer = props => {
 
     const loadNotes = newFeedType => {
         setFeedType(newFeedType);
-        let updatedNotes = newFeedType === feedType ? notes : []
-        setNotes(updatedNotes);
         setLastUpdate(new Date());
         switch (newFeedType) {
             case 'foryou':
@@ -50,22 +50,24 @@ const HomeContainer = props => {
             case 'zaps':
                 navigate('/');
                 getZapsFeed(limit + 15, results => {
+                    let updatedZaps = zaps;
                     results.forEach(r => {
-                        if (updatedNotes.filter(n => n.id === r.id).length === 0)
-                            updatedNotes.push(r);
+                        if (updatedZaps.filter(n => n.id === r.id).length === 0)
+                            updatedZaps.push(r);
                     })
-                    setNotes(updatedNotes);
+                    setZaps(updatedZaps);
                     setLastUpdate(new Date());
                 });
                 break;
             default: //following
                 navigate('/following');
                 getFollowingFeed(limit + 15, results => {
+                    let updatedFollowing = following;
                     results.forEach(r => {
-                        if (updatedNotes.filter(n => n.id === r.id).length === 0)
-                            updatedNotes.push(r);
+                        if (updatedFollowing.filter(n => n.id === r.id).length === 0)
+                            updatedFollowing.push(r);
                     })
-                    setNotes(updatedNotes);
+                    setFollowing(updatedFollowing);
                     setLastUpdate(new Date());
                 })
         }
@@ -75,8 +77,8 @@ const HomeContainer = props => {
         if (limit > notes.length)
             loadNotes(feedType);
     }
-    /*let notes = [];
-    notes = useSelector(state => Object.keys(state.content.feeds[feedType]).map(k => { return state.content.feeds[feedType][k] })
+    let notes = feedType === 'following' ? following : feedType === 'zaps' ? zaps : [];
+    /*notes = useSelector(state => Object.keys(state.content.feeds[feedType]).map(k => { return state.content.feeds[feedType][k] })
         .filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
         , (a, b) => {
             if (!a)

@@ -32,7 +32,7 @@ store.subscribe(throttle(() => {
 
 if (!window.metadataInterval)
   window.metadataInterval = setInterval(() => {
-    //store.dispatch(getUsersMetadata());
+    store.dispatch(getUsersMetadata());
     //store.dispatch(listNotesRelateds());
   }, 5000)
 

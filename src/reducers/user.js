@@ -20,11 +20,6 @@ const initialState = {
             write: true
         },
         {
-            url: 'wss://nostr-pub.semisol.dev',
-            read: true,
-            write: true
-        },
-        {
             url: 'wss://eden.nostr.land',
             read: true,
             write: true
