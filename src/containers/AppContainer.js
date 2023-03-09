@@ -20,6 +20,7 @@ import SettingsContainer from './SettingsContainer';
 import AboutContainer from './AboutContainer';
 import WelcomeV2Container from './WelcomeV2Container';
 import { useIntl } from 'react-intl';
+import RelayTestContainer from './RelayTestContainer';
 
 const home = props => (
     <Box>
@@ -99,7 +100,7 @@ const AppContainer = (props) => {
                 <Route path="/note/:id" element={noteDetail(props)} />
                 <Route exact path="/:id" element={profile(props)} />
                 <Route path="/search/:term?" element={search(props)} />
-
+                <Route path="/relaytest" element={<RelayTestContainer/>} />
             </Routes>
         </BrowserRouter>
         <Modal size="full" isOpen={imageSrc && imageSrc !== ""} bg="none" onClose={closeImage} closeOnEsc closeOnOverlayClick>
