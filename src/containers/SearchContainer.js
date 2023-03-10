@@ -1,25 +1,14 @@
-import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Tabs, TabList, Tab, Button, Input, InputGroup, InputLeftElement, Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react'
+import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Tabs, TabList, Tab, Button, Input, InputGroup, InputLeftElement } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { addFollowing, CLEAR_SEARCH, getMyInfo, getUserFollowers, getUserFollowing, getUserNotes, locatedNip05, LOCATED_USER, removeFollowing, search, UNLOAD_NOTES } from '../actions/relay';
+import { useDispatch } from 'react-redux';
+import { locatedNip05 } from '../actions/relay';
 import { useParams } from 'react-router';
 import NoteList from '../components/NoteList';
 import { IoIosSearch } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
 import { nip05 } from 'nostr-tools';
 import { useIntl } from 'react-intl';
-
-const mapDispatchToProps = (dispatch, getState) => {
-    return {
-
-    }
-};
-
-const mapStateToProps = (state, ownProps) => {
-    return {
-        account: state.user.account,
-    }
-};
+import { search } from '../services/ContentServices';
 
 const SearchContainer = props => {
     const dispatch = useDispatch();
@@ -29,8 +18,10 @@ const SearchContainer = props => {
     const params = useParams();
     const [activeView, setActiveView] = useState(0);
     const [limit, setLimit] = useState(50);
+    const [users, setUsers] = useState([]);
+    const [notes, setNotes] = useState([]);
+    const [lastUpdate, setLastUpdate] = useState(new Date());
     const [searchTerm, setSearchTerm] = useState(params.term);
-    const [noResults, setNoResults] = useState(false);
     const moreResults = () => {
         setLimit(limit + 50);
     }
@@ -40,65 +31,50 @@ const SearchContainer = props => {
     const removeFollowing = publicKeyHex => {
         dispatch(removeFollowing(publicKeyHex));
     }
-    const loadUserFollowing = publicKeyHex => {
-        dispatch(getUserFollowing(publicKeyHex));
-    }
-    const loadUserFollowers = publicKeyHex => {
-        dispatch(getUserFollowers(publicKeyHex));
-    }
-        
-    const clearSearch = async () => {
-        await dispatch({ type: CLEAR_SEARCH });
-    }
-
     useEffect(() => {
-        clearSearch();
         performSearch();
         document.title = "Broadcstr - Search"
     }, [])
-    let notes = [];
-    let users = [];
-    notes = useSelector(state => state.content.locatedNotes
-        //.sort((a, b) => { return a && b && a.created_at > b.created_at ? -1 : 1 })
-        .slice(0, limit * 2), (a, b) => {
-            if (!a)
-                return false;
-            let aIds = a.map(aNote => { return aNote.id });
-            aIds = aIds.join(",");
-            let bIds = b.map(bNote => { return bNote.id });
-            bIds = bIds.join(",");
-            return aIds === bIds;
-        }) ?? [];
-    users = useSelector(state => state.content.locatedUsers);
-    users = Object.keys(users).map(u => {
-        return {
-            publicKeyHex: u,
-            metadata: users[u]
-        }
-    });
-    const performSearch = term => {
-        clearSearch();
+    const performSearch = async term => {
         if (!term)
             term = searchTerm;
         if (term && term.length >= 3) {
+            let newSearch = true;
             if (term.includes('@')) {
                 nip05.queryProfile(term).then(value => {
                     if (value) {
-                        console.log(value);
-                        dispatch(locatedNip05(value.pubkey));
+                        setUsers([{ publicKeyHex: value.pubkey, metadata: {} }]);
                     }
                 })
             }
             setSearchTerm(term);
-            dispatch(search(activeView === 0 ? 'users' : 'notes', term.replace('#', '')));
-            setNoResults(false);
+            search(activeView === 0 ? 'users' : 'notes', term.replace('#', ''), results => {
+                if (activeView === 0) {
+                    let updatedUsers = newSearch ? [] : users;
+                    newSearch = false;
+                    results.forEach(r => {
+                        if (r.publicKeyHex && updatedUsers.filter(u => u.publicKeyHex === r.publicKeyHex).length === 0)
+                            updatedUsers.push(r);
+                    })
+                    setUsers(updatedUsers);
+                    setLastUpdate(new Date());
+                }
+                if (activeView === 1) {
+                    let updatedNotes = newSearch ? [] : notes;
+                    newSearch = false;
+                    if (updatedNotes.filter(n => n.id === results.id).length === 0)
+                        updatedNotes.splice(0, 0, results);
+
+                    setNotes(updatedNotes);
+                    setLastUpdate(new Date());
+                }
+            });
         }
     }
     const setTab = index => {
         setLimit(25);
         setActiveView(index);
         setSearchTerm();
-        setNoResults(false);
     }
     const isLoading = searchTerm && searchTerm.length >= 3 && ((activeView === 0 && users.length === 0) || (activeView === 1 && notes.length === 0))
     console.log("Render Search");
@@ -111,7 +87,7 @@ const SearchContainer = props => {
                             {/*<FormLabel color="gray.400" mb="5">Searching for: "{params.term}"</FormLabel>*/}
                             <InputGroup variant="unstyçed" mb="5">
                                 <InputLeftElement children={<IoIosSearch />}></InputLeftElement>
-                                <Input bg="transparent" variant="unstyçed" placeholder={searchTerm === undefined ? activeView === 0 ? intl.formatMessage({ id: 'userSearchHelp' }) : intl.formatMessage({ id: 'noteSearchHelp' }) : intl.formatMessage({ id: 'searchingFor' }, { term: searchTerm })} onKeyUp={async k => { if (k.key === "Enter") { performSearch(k.target.value) } }}></Input>
+                                <Input bg="transparent" variant="unstyçed" placeholder={searchTerm === undefined ? activeView === 0 ? intl.formatMessage({ id: 'userSearchHelp' }) : intl.formatMessage({ id: 'noteSearchHelp' }) : intl.formatMessage({ id: 'searchingFor' }, { term: searchTerm })} onKeyUp={k => { if (k.key === "Enter") { performSearch(k.target.value) } }}></Input>
                             </InputGroup>
                             <Tabs ml="-12px" index={activeView} mr="-12px">
                                 <TabList>

@@ -4,12 +4,17 @@
   "icons": [
     {
       "src": "icon.svg",
-      "type": "image/svg",
-      "sizes": "192x192"
+      "sizes": "128x128"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "256x256"
     }
   ],
   "start_url": "/",
+  "scope" : "/",
   "display": "standalone",
   "theme_color": "#ffffff",
-  "background_color": "#8452F6"
+  "background_color": "#8452F6",
+  "prefer_related_applications": true
 }

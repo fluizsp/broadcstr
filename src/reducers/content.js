@@ -1,9 +1,10 @@
 import { createReducer } from '@reduxjs/toolkit'
 import { loadState } from '../localStorage';
+import { getNoteModel } from '../model/NoteModel';
 
 const initialState = {
     notes: {},
-    allNotes: loadState('content.allNotes') ?? { },
+    allNotes: {},
     allNotesRelateds: {},
     feeds: {
         following: {},
@@ -48,24 +49,8 @@ export const treatEmbeds = (note) => {
 
 const contentReducer = createReducer(initialState, {
     RECEIVED_NOTE: (state, action) => {
-        let newNote = Object.assign({}, action.data.notes);
-        /*if (state.allNotes[newNote.id] !== undefined && !action.data.notes.zapAmount)
-            newNote = state.allNotes[newNote.id];
-        else {*/
-        if (newNote.kind === 6) {
-            let reposted_by = newNote.pubkey;
-            if (newNote.content)
-                newNote = JSON.parse(newNote.content);
-            //newNote.id = action.data.notes.id;
-            newNote.reposted_by = reposted_by;
-        }
-        newNote.pTags = newNote.tags.filter(t => t[0] === 'p').map(t => { return t[1] }) ?? [];
-        newNote.eTags = newNote.tags.filter(t => t[0] === 'e').map(t => { return t[1] }) ?? [];
-        newNote = treatImages(newNote);
-        newNote = treatEmbeds(newNote);
+        let newNote = getNoteModel(action.data.notes);
         state.allNotes[newNote.id] = newNote;
-        //}
-
 
         if ((!action.data.feedType && state.notes[newNote.id] === undefined)
             || (action.data.feedType && state.feeds[action.data.feedType][newNote.id] === undefined)) {

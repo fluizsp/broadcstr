@@ -1,5 +1,3 @@
-import { Link } from "@chakra-ui/react";
-import { nip19 } from "nostr-tools";
 import Note from "./Note";
 
 const NoteList = props => {

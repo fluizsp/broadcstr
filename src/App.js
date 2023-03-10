@@ -1,13 +1,12 @@
 import React from 'react';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit'
 import {
   ChakraProvider,
 } from '@chakra-ui/react';
-import rootReducer from './reducer';
+import store from './store';
 
 import { extendTheme } from "@chakra-ui/react"
-import { getUsersMetadata, listNotesRelateds, loadRelays, selectMetadatas, SELECT_NOTES } from './actions/relay';
+import { getUsersMetadata, initializeRelays, listNotesRelateds, loadRelays, selectMetadatas, SELECT_NOTES } from './actions/relay';
 import AppContainer from './containers/AppContainer';
 import { saveState } from './localStorage';
 import { throttle } from 'lodash';
@@ -19,29 +18,23 @@ import Spanish from './i18n/es.json';
 import French from './i18n/fr.json';
 import German from './i18n/de.json';
 
-const store = configureStore({
-  reducer: rootReducer
-},)
-
 store.subscribe(throttle(() => {
   console.log('save state to storage')
   try {
     saveState(store.getState().user.account, 'user.account');
+    saveState(store.getState().user.following, 'user.following');
     saveState(store.getState().user.accountInfo, 'user.accountInfo');
     saveState(store.getState().user.likes, 'user.likes');
     saveState(store.getState().user.relays, 'user.relays');
     saveState(store.getState().user.usersMetadata, 'user.usersMetadata');
-    saveState(store.getState().content.allNotes, 'content.allNotes');
   } catch { }
 }, 30000));
 
 if (!window.metadataInterval)
   window.metadataInterval = setInterval(() => {
     store.dispatch(getUsersMetadata());
-    store.dispatch(listNotesRelateds());
   }, 5000)
 
-// 2. Call `extendTheme` and pass your custom values
 const customTheme = extendTheme({
   initialColorMode: 'dark',
   useSystemColorMode: false,

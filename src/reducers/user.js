@@ -20,11 +20,6 @@ const initialState = {
             write: true
         },
         {
-            url: 'wss://nostr-pub.semisol.dev',
-            read: true,
-            write: true
-        },
-        {
             url: 'wss://eden.nostr.land',
             read: true,
             write: true
@@ -51,7 +46,7 @@ const initialState = {
     usersMetadata: loadState('user.usersMetadata') ?? {},
     likes: loadState('user.likes') ?? [],
     language: loadState('user.language') ?? null,
-    following: []
+    following: loadState('user.following') ?? [],
 };
 
 function removeEmpty(obj) {
