@@ -27,6 +27,7 @@
     "react-router-dom": "^6.8.1",
     "react-scripts": "5.0.1",
     "redux": "^4.2.1",
+    "ssl-express-www": "^3.2.1",
     "swiper": "^9.0.3",
     "underscore": "^1.13.6",
     "web-vitals": "^2.1.4",

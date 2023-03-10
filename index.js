@@ -1,7 +1,11 @@
 const express = require('express');
 const path = require('path');
+const secure = require('ssl-express-www');
 
 const app = express();
+
+app.use(secure);
+
 app.use(express.static(path.join(__dirname, 'build')))
 
 app.get("/.well-known/nostr.json", (req, res) => {
