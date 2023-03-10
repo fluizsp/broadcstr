@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import defaultBanner from '../defaultBanner.gif';
 import { useNavigate, useParams } from "react-router";
 import { LOGOUT, saveToStorage, SAVE_LANGUAGE, setAccount, SET_RELAYS } from "../actions/account";
+import { publishProfile } from "../services/ContentServices";
 import { UploadPicture } from "../services/NostrBuildService";
 import { useIntl } from "react-intl";
 
@@ -172,9 +173,9 @@ const SettingsContainer = (props) => {
         newInfo.lud16 = event.target.value;
         setAccountInfo(newInfo);
     }
-    const publishProfile = (accountInfo) => {
+    const publishProfileToService = (accountInfo) => {
         dispatch(setAccount(null, accountInfo));
-        dispatch(publishProfile(accountInfo));
+        publishProfile(accountInfo);
     }
     const saveProfile = async () => {
         let newInfo = {};
@@ -199,7 +200,7 @@ const SettingsContainer = (props) => {
             newInfo.banner = newBannerImage;
         }
         setAccountInfo(newInfo);
-        publishProfile(newInfo);
+        publishProfileToService(newInfo);
     }
     const saveLanguage = () => {
         dispatch({ type: SAVE_LANGUAGE, data: language })

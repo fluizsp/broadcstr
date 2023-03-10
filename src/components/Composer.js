@@ -6,8 +6,8 @@ import { FaFileImage } from "react-icons/fa";
 import { GoBroadcast } from "react-icons/go";
 import { useIntl } from "react-intl";
 import { useDispatch, useSelector } from "react-redux";
-import { publishNote } from "../actions/relay";
 import { treatEmbeds, treatImages } from "../reducers/content";
+import { publishNote } from "../services/ContentServices";
 import { UploadPicture } from "../services/NostrBuildService";
 import EmojiPicker from "./EmojiPicker";
 
@@ -90,7 +90,7 @@ const Composer = (props) => {
 
     const publish = () => {
         if (draftNote.content !== '') {
-            dispatch(publishNote(draftNote));
+            publishNote(draftNote);
             toast({ description: 'Note Published!!', status: 'success' });
             if (props.onPublish)
                 props.onPublish();

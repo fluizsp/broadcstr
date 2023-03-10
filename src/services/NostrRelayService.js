@@ -8,6 +8,7 @@ class NostrRelayService {
         this.listeners = [];
         this.eventListeners = [];
         this.eoseListeners = [];
+        this.publishListeners = [];
         this.eoseTimeouts = [];
         this.subscriptionQueue = [];
         this.activeSubscriptions = [];
@@ -50,6 +51,22 @@ class NostrRelayService {
             console.log(err)
         }
     }
+    publish(event) {
+        let pubMsg = JSON.stringify(['EVENT', event])
+        try {
+            this.ws.send(pubMsg);
+            return {
+                onPublish: calback => {
+                    this.publishListeners.push([event.id, calback]);
+                }
+            }
+        } catch (err) {
+            setTimeout(() => {
+                this.ws.send(pubMsg)
+            }, 300)
+            console.log(err)
+        }
+    }
     initialize() {
         this.ws = new WebSocket(this.url);
         this.ws.onopen = () => {
@@ -83,6 +100,11 @@ class NostrRelayService {
                     cb(data);
                 });
                 this.closeSubscription(data[1]);
+            }
+            if (data[0] === 'OK') {
+                this.publishListeners.filter(([id, cb]) => id === data[1]).forEach(([id, cb]) => {
+                    cb(data[2]);
+                });
             }
         };
         this.sendInterval = setInterval(() => {
