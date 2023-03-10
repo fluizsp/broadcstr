@@ -9,12 +9,13 @@ import format from 'date-fns/format';
 import { useDispatch, useSelector } from 'react-redux';
 import MentionTag from './MentionTag';
 import { HiLightningBolt, HiReply } from 'react-icons/hi';
-import { addFollowing, likeNote, removeFollowing, REPLY_TO, repostNote, sign, VIEW_IMAGE } from '../actions/relay';
+import { REPLY_TO, VIEW_IMAGE } from '../actions/relay';
 import { GoBroadcast, GoCheck, GoVerified } from 'react-icons/go';
 import { useRef, useState } from 'react';
 import { Nip57Service } from '../services/Nip57Service';
 import { useIntl } from 'react-intl';
 import { Code } from 'react-ionicons';
+import { addFollowing, likeNote, removeFollowing, repostNote, sign } from '../services/ContentServices';
 
 const Note = props => {
     const navigate = useNavigate();
@@ -38,10 +39,10 @@ const Note = props => {
     let responseTags = note.eTags ?? [];
     let responseUserTags = note.pTags ?? [];
     let isFollowing = useSelector(state => state.user.following.filter(f => f === note.pubkey).length > 0);
-    let likes = useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].likes ? state.content.allNotesRelateds[note.id].likes.length : 0 : 0);
-    let totalZaps = (useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].zaps ? state.content.allNotesRelateds[note.id].zaps.reduce((total, zap) => total += zap.amount, 0) : 0 : 0))
-    let replies = useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].replies ? state.content.allNotesRelateds[note.id].replies.length : 0 : 0);
-    let reposts = useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].reposts ? state.content.allNotesRelateds[note.id].reposts.length : 0 : 0);
+    let likes = props.relateds ? props.relateds.likes.length ?? 0 : 0;//useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].likes ? state.content.allNotesRelateds[note.id].likes.length : 0 : 0);
+    let totalZaps = note.zapAmount ? note.zapAmount : props.relateds ? props.relateds.zaps ? props.relateds.zaps.reduce((total, zap) => total += zap.amount, 0) : 0 : 0;//(useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].zaps ? state.content.allNotesRelateds[note.id].zaps.reduce((total, zap) => total += zap.amount, 0) : 0 : 0))
+    let replies = props.relateds ? props.relateds.replies.length ?? 0 : 0;//useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].replies ? state.content.allNotesRelateds[note.id].replies.length : 0 : 0);
+    let reposts = props.relateds ? props.relateds.reposts.length ?? 0 : 0;//useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].reposts ? state.content.allNotesRelateds[note.id].reposts.length : 0 : 0);
     let liked = useSelector(state => state.user.likes.filter(l => l === note.id).length > 0);
     const account = useSelector(state => state.user.account);
     const relays = useSelector(state => state.user.relays);
@@ -98,18 +99,18 @@ const Note = props => {
         dispatch({ type: REPLY_TO, data: { note: note, author: authorMetadata, originalResponseTags: responseTags } });
     }
     const like = () => {
-        dispatch(likeNote(note));
+        likeNote(note);
     }
     const repost = () => {
-        dispatch(repostNote(note));
+        repostNote(note);
         setReposted(true);
     }
     const viewImage = (imageSrc) => {
         dispatch({ type: VIEW_IMAGE, data: imageSrc });
     }
-    const handleClick = url => {
+    const handleClick = (url, e) => {
         let selection = window.getSelection().toString();
-        if (selection.length === 0)
+        if (selection.length === 0 && !e.target.className.includes('link'))
             navigate(url);
     }
     const followUnfollow = (isFollowing) => {
@@ -119,10 +120,10 @@ const Note = props => {
             followingRemove(note.pubkey)
     }
     const followingAdd = publicKeyHex => {
-        dispatch(addFollowing(publicKeyHex));
+        addFollowing(publicKeyHex);
     };
     const followingRemove = publicKeyHex => {
-        dispatch(removeFollowing(publicKeyHex));
+        removeFollowing(publicKeyHex);
     };
     const checkNip05 = () => {
         if (authorMetadata.nip05 && authorMetadata.nip05.includes('@'))
@@ -266,8 +267,7 @@ const Note = props => {
                     <Box bg={uiColor}>
                         <HStack>
                             <Tooltip label={liked ? intl.formatMessage({ id: 'youLiked' }) : intl.formatMessage({ id: 'like' })} fontSize='md' hasArrow={true}>
-                                <Button isDisabled={!account.publicKey || liked} leftIcon={liked ? <IoIosHeart color="red" /> : <BiHeart />} onClick={like} variant="ghost" size="md">{likes ?? ""}</Button>
-
+                                <Button isDisabled={!account.publicKey || liked} leftIcon={liked ? <IoIosHeart color="red" /> : <BiHeart />} onClick={like} variant="ghost" size="md">{likes > 0 ? likes : ""}</Button>
                             </Tooltip>
                             <Link ref={lnRef} href={ln}></Link>
                             <Popover>
@@ -288,11 +288,11 @@ const Note = props => {
                             </Popover>
 
                             <Tooltip label={intl.formatMessage({ id: 'reply' })} fontSize='md' hasArrow={true}>
-                                <Button isDisabled={!account.publicKey} leftIcon={<HiReply />} variant="ghost" size="md" onClick={reply}>{replies ?? ""}</Button>
+                                <Button isDisabled={!account.publicKey} leftIcon={<HiReply />} variant="ghost" size="md" onClick={reply}>{replies > 0 ? replies : ""}</Button>
                             </Tooltip>
                             <Popover>
                                 <PopoverTrigger>
-                                    <Button isDisabled={!account.publicKey} leftIcon={reposted ? <GoCheck /> : <GoBroadcast />} variant="ghost" size="md" >{reposts ?? ""}</Button>
+                                    <Button isDisabled={!account.publicKey} leftIcon={reposted ? <GoCheck /> : <GoBroadcast />} variant="ghost" size="md" >{reposts > 0 ? reposts : ""}</Button>
                                 </PopoverTrigger>
                                 <PopoverContent>
                                     <PopoverArrow />

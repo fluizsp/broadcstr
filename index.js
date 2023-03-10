@@ -11,6 +11,13 @@ app.get("/.well-known/nostr.json", (req, res) => {
         res.send({ "names": { "broadcstr": "5bbb8e97d5c68afc68e46d7f858aefc73d161c85264fbfb99d91ed83bf1b9d23" } })
 })
 
+app.get("manifest.json", async (req, res) => {
+    res.sendFile(path.join(__dirname, "build", "manifest.json"));
+})
+app.get("sw.js", async (req, res) => {
+    res.sendFile(path.join(__dirname, "build", "sw.js"));
+})
+
 app.get("*", async (req, res) => {
     res.sendFile(path.join(__dirname, "build", "index.html"));
 })

@@ -2,23 +2,28 @@ import { Center, Box, Button, Container, Spinner, SlideFade, VStack, Flex, Tab, 
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useColorModeValue } from '@chakra-ui/react';
-import { getFollowingFeed, getForYouFeed, getMyInfo, getZapsFeed } from '../actions/relay';
+import { getMyInfo } from '../actions/relay';
 
 import NoteList from '../components/NoteList';
 import { useEffect } from 'react';
 import { HiLightningBolt, HiRefresh } from 'react-icons/hi';
 import { useLocation, useNavigate } from 'react-router';
 import { useIntl } from 'react-intl';
+import { getFollowingFeed, getForYouFeed, getZapsFeed } from '../services/ContentServices';
 
 const HomeContainer = props => {
     const dispatch = useDispatch();
     const location = useLocation();
     const navigate = useNavigate();
-    const intl=useIntl();
+    const intl = useIntl();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const bgGradient = useColorModeValue('linear(to-tl, brand.blessing1, brand.blessing2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
     const [feedType, setFeedType] = useState('zaps');
     const [limit, setLimit] = useState(15);
+    const [zaps, setZaps] = useState([]);
+    const [following, setFollowing] = useState([]);
+    const [forYou, setForYou] = useState([]);
+    const [lastUpdate, setLastUpdate] = useState(new Date());
     const account = useSelector(state => state.user.account);
     useEffect(() => {
         setTimeout(() => {
@@ -26,7 +31,7 @@ const HomeContainer = props => {
                 location.pathname.includes('foryou') ? 'foryou' : 'zaps';
             loadNotes(initialFeed);
             loadMyInfo();
-        }, 1000)
+        }, 500)
         document.title = "Broadcstr"
     }, [])
 
@@ -34,20 +39,45 @@ const HomeContainer = props => {
         dispatch(getMyInfo());
     }
 
-    const loadNotes = feedType => {
-        setFeedType(feedType);
-        switch (feedType) {
+    const loadNotes = newFeedType => {
+        setFeedType(newFeedType);
+        setLastUpdate(new Date());
+        switch (newFeedType) {
             case 'foryou':
                 navigate('/foryou');
-                dispatch(getForYouFeed(limit + 15))
+                getForYouFeed(limit + 15, results => {
+                    let updatedForYou = forYou;
+                    results.forEach(r => {
+                        if (updatedForYou.filter(n => n.id === r.id).length === 0)
+                            updatedForYou.push(r);
+                    })
+                    setForYou(updatedForYou);
+                    setLastUpdate(new Date());
+                })
                 break;
             case 'zaps':
                 navigate('/');
-                dispatch(getZapsFeed(limit + 15));
+                getZapsFeed(limit + 15, results => {
+                    let updatedZaps = zaps;
+                    results.forEach(r => {
+                        if (updatedZaps.filter(n => n.id === r.id).length === 0)
+                            updatedZaps.push(r);
+                    })
+                    setZaps(updatedZaps);
+                    setLastUpdate(new Date());
+                });
                 break;
             default: //following
                 navigate('/following');
-                dispatch(getFollowingFeed(limit + 15));
+                getFollowingFeed(limit + 15, results => {
+                    let updatedFollowing = following;
+                    results.forEach(r => {
+                        if (updatedFollowing.filter(n => n.id === r.id).length === 0)
+                            updatedFollowing.push(r);
+                    })
+                    setFollowing(updatedFollowing);
+                    setLastUpdate(new Date());
+                })
         }
     }
     const moreResults = () => {
@@ -55,8 +85,8 @@ const HomeContainer = props => {
         if (limit > notes.length)
             loadNotes(feedType);
     }
-    let notes = [];
-    notes = useSelector(state => Object.keys(state.content.feeds[feedType]).map(k => { return state.content.feeds[feedType][k] })
+    let notes = feedType === 'following' ? following : feedType === 'zaps' ? zaps : forYou;
+    /*notes = useSelector(state => Object.keys(state.content.feeds[feedType]).map(k => { return state.content.feeds[feedType][k] })
         .filter(note => (note.kind === 1 && note.tags.filter(t => t[0] === "e").length === 0) || note.kind === 6)
         , (a, b) => {
             if (!a)
@@ -66,8 +96,8 @@ const HomeContainer = props => {
             let bIds = b.map(bNote => { return bNote.id });
             bIds = bIds.join(",");
             return aIds === bIds;
-        })
-    let sortedNotes = []
+        })*/
+    let sortedNotes = [];
     if (feedType === "zaps") {
         sortedNotes = notes.sort((a, b) => { return parseInt(a.zapAmount) > parseInt(b.zapAmount) ? -1 : 1 })
     } else

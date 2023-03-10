@@ -8,6 +8,7 @@ class NostrRelayService {
         this.listeners = [];
         this.eventListeners = [];
         this.eoseListeners = [];
+        this.publishListeners = [];
         this.eoseTimeouts = [];
         this.subscriptionQueue = [];
         this.activeSubscriptions = [];
@@ -46,7 +47,23 @@ class NostrRelayService {
         } catch (err) {
             setTimeout(() => {
                 this.ws.send(reqMessage)
-            }, 100)
+            }, 300)
+            console.log(err)
+        }
+    }
+    publish(event) {
+        let pubMsg = JSON.stringify(['EVENT', event])
+        try {
+            this.ws.send(pubMsg);
+            return {
+                onPublish: calback => {
+                    this.publishListeners.push([event.id, calback]);
+                }
+            }
+        } catch (err) {
+            setTimeout(() => {
+                this.ws.send(pubMsg)
+            }, 300)
             console.log(err)
         }
     }
@@ -84,13 +101,18 @@ class NostrRelayService {
                 });
                 this.closeSubscription(data[1]);
             }
+            if (data[0] === 'OK') {
+                this.publishListeners.filter(([id, cb]) => id === data[1]).forEach(([id, cb]) => {
+                    cb(data[2]);
+                });
+            }
         };
         this.sendInterval = setInterval(() => {
             this.sendSubscriptions();
-        }, 100);
+        }, 300);
         this.timeoutInterval = setInterval(() => {
             this.timeoutSubscriptions();
-        }, 1000)
+        }, 3000)
 
     }
     sendSubscriptions() {

@@ -1,4 +1,21 @@
+import store from "../store";
 import NostrRelayService from "./NostrRelayService";
+
+let globalPoolService = null;
+
+export const getPoolService = () => {
+    if (!globalPoolService) {
+        globalPoolService = new NostrRelayPoolService(store.getState().user.relays)
+        globalPoolService.initialize();
+        globalPoolService.addListener('open', relay => {
+            console.log('pool relay opened');
+        });
+        globalPoolService.addListener('close', relay => {
+            console.log('pool relay closed');
+        });
+    }
+    return globalPoolService;
+}
 
 class NostrRelayPoolService {
     constructor(relaysConfigs, subscriptionOptions = { subTimeout: 3000, subLife: 30000 }) {
@@ -23,7 +40,7 @@ class NostrRelayPoolService {
     }
     createSubscription(filters, options) {
         let subscriptions = [];
-        this.relayServices.forEach(relayService => {
+        this.relayServices.filter(s => s.read).forEach(relayService => {
             let sub = relayService.createSubscription(filters, options ?? this.subscriptionOptions);
             subscriptions.push(sub);
         });
@@ -41,12 +58,27 @@ class NostrRelayPoolService {
             }
         }
     }
+    publish(event) {
+        let pubs = [];
+        this.relayServices.filter(s => s.write).forEach(relayService => {
+            let pub = relayService.publish(event);
+            pubs.push(pub);
+        });
+        return {
+            pubs: pubs,
+            onPublish: callback => {
+                pubs.forEach(pub => {
+                    pub.onPublish(callback);
+                })
+            }
+        }
+    }
     list(filters, options) {
         return new Promise((resolve, reject) => {
             let subscriptions = [];
             let events = [];
             let eoseCount = 0;
-            this.relayServices.forEach(relayService => {
+            this.relayServices.filter(s => s.read).forEach(relayService => {
                 let sub = relayService.createSubscription(filters, options ?? this.subscriptionOptions);
                 subscriptions.push(sub);
             });
@@ -61,7 +93,6 @@ class NostrRelayPoolService {
                 });
             })
         })
-
     }
     updateRelays(relaysUrls) {
     }

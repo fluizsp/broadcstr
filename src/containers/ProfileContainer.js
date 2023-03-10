@@ -1,7 +1,7 @@
 import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button, Link, Tooltip, Tag, TagLabel, TagLeftIcon } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { addFollowing, receivedUserMetadata, RECEIVED_USER_ID, removeFollowing, SET_LIMIT, UNLOAD_NOTES } from '../actions/relay';
+import { useDispatch, useSelector } from 'react-redux';
+import { receivedUserMetadata, RECEIVED_USER_ID } from '../actions/relay';
 import { useNavigate, useParams } from 'react-router';
 import { nip05, nip19 } from 'nostr-tools';
 import NoteList from '../components/NoteList';
@@ -10,7 +10,7 @@ import { IoMdPersonAdd, IoMdRemove, IoMdSettings } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
 import { useIntl } from 'react-intl';
 import { GoVerified } from 'react-icons/go';
-import { getUserFollowers, getUserFollowing, getUserNotes } from '../services/ContentServices';
+import { addFollowing, getUserFollowers, getUserFollowing, getUserNotes, removeFollowing } from '../services/ContentServices';
 
 const ProfileContainer = props => {
     const dispatch = useDispatch();
@@ -24,6 +24,7 @@ const ProfileContainer = props => {
     const [allNotes, setAllNotes] = useState([]);
     const [following, setFollowing] = useState([]);
     const [followers, setFollowers] = useState([]);
+    const [lastUpdate, setLastUpdate] = useState(new Date());
     const [limit, setLimit] = useState(25);
     const [nip05Status, setNip05Status] = useState();
     const [publicKeyHex, setPublicKeyHex] = useState(null);
@@ -40,29 +41,33 @@ const ProfileContainer = props => {
         dispatch(receivedUserMetadata(publicKeyHex, { load: true }));
         dispatch({ type: RECEIVED_USER_ID, data: publicKeyHex })
     }
-    const loadNotes = (publicKeyHex, limit) => {
-        getUserNotes(publicKeyHex, limit * 5, results => {
+    const loadNotes = (pubKeyHex, limit) => {
+        getUserNotes(pubKeyHex, limit * 5, results => {
             let updatedNotes = notes;
             results.forEach(r => {
-                if (notes.filter(n => n.id === r.id).length === 0)
+                if (notes.filter(n => n.id === r.id).length === 0 && (r.pubkey === publicKeyHex || r.reposted_by === publicKeyHex))
                     updatedNotes.push(r);
             })
             setAllNotes(updatedNotes);
+            setLastUpdate(new Date());
         });
     };
     const followingAdd = publicKeyHex => {
-        dispatch(addFollowing(publicKeyHex));
+        addFollowing(publicKeyHex);
     };
     const followingRemove = publicKeyHex => {
-        dispatch(removeFollowing(publicKeyHex));
+        removeFollowing(publicKeyHex);
     };
-    const loadUserFollowing = publicKeyHex => {
-        getUserFollowing(publicKeyHex).then(data => {
-            let followingList = data.tags.map(t => {
-                if (t[0] === "p")
-                    return t[1]
-            });
-            setFollowing(followingList);
+    const loadUserFollowing = pubKeyHex => {
+        getUserFollowing(pubKeyHex).then(data => {
+            if (data.pubkey === publicKeyHex) {
+                let followingList = data.tags.map(t => {
+                    if (t[0] === "p")
+                        return t[1]
+                });
+                setFollowing(followingList);
+                setLastUpdate(new Date());
+            }
         })
     };
     const loadUserFollowers = publicKeyHex => {
@@ -73,6 +78,7 @@ const ProfileContainer = props => {
                     updatedFollowers.push(r);
             })
             setFollowers(updatedFollowers);
+            setLastUpdate(new Date());
         });
     }
 
@@ -82,6 +88,7 @@ const ProfileContainer = props => {
             setAllNotes([]);
             setFollowers([]);
             setFollowing([]);
+            setLastUpdate(new Date());
             loadUser(publicKeyHex);
             loadNotes(publicKeyHex, 25);
             loadUserFollowing(publicKeyHex);
@@ -92,6 +99,7 @@ const ProfileContainer = props => {
         setAllNotes([]);
         setFollowers([]);
         setFollowing([]);
+        setLastUpdate(new Date());
         if (!params.id.includes('@') && params.id.includes('npub'))
             setPublicKeyHex(nip19.decode(params.id).data);
         else
@@ -196,8 +204,8 @@ const ProfileContainer = props => {
                                 <TabList>
                                     <Tab w="25%" onClick={() => { setLimit(25); setActiveView(0) }}>{intl.formatMessage({ id: 'notes' })}</Tab>
                                     <Tab w="25%" onClick={() => { setLimit(25); setActiveView(1) }}>{intl.formatMessage({ id: 'replies' })}</Tab>
-                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(2) }}> {intl.formatMessage({ id: 'following' })} ({following.length}) </Tab>
-                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(3) }}> {intl.formatMessage({ id: 'followers' })} ({followers.length})</Tab>
+                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(2) }}> {intl.formatMessage({ id: 'following' })} ({following.length > 1000 ? following.length + '+' : following.length}) </Tab>
+                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(3) }}> {intl.formatMessage({ id: 'followers' })} ({followers.length > 1000 ? followers.length + '+' : followers.length})</Tab>
                                 </TabList>
                             </Tabs>
                         </Card>
@@ -207,12 +215,12 @@ const ProfileContainer = props => {
                         <SlideFade in={activeView === 1} unmountOnExit>
                             <NoteList notes={replies.slice(0, limit)} />
                         </SlideFade>
-                        <SlideFade in={activeView === 2} unmountOnExit >
+                        <SlideFade in={activeView === 2} unmountOnExit>
                             {following.slice(0, limit).map(f => {
                                 return <ContactListItem publicKeyHex={f} addFollowing={addFollowing} removeFollowing={removeFollowing} />
                             })}
                         </SlideFade>
-                        <SlideFade in={activeView === 3} unmountOnExit >
+                        <SlideFade in={activeView === 3} unmountOnExit>
                             {followers.slice(0, limit).map(f => {
                                 return <ContactListItem publicKeyHex={f} addFollowing={addFollowing} removeFollowing={removeFollowing} />
                             })}

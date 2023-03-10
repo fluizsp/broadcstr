@@ -17,6 +17,8 @@ export const saveToStorage = () => {
     return (dispatch, getState) => {
         try {
             saveState(getState().user.account, 'user.account');
+            saveState(getState().user.relays, 'user.relays');
+            saveState(getState().user.following, 'user.following');
             saveState(getState().user.accountInfo, 'user.accountInfo');
             saveState(getState().user.usersMetadata, 'user.usersMetadata');
             saveState(getState().user.likes, 'user.likes');
