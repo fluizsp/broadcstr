@@ -1,10 +1,10 @@
 const express = require('express');
 const path = require('path');
-var enforce = require('express-sslify');
+var sslRedirect = require('heroku-ssl-redirect');
 
 const app = express();
 
-app.use(enforce.HTTPS());
+app.use(sslRedirect());
 
 app.use(express.static(path.join(__dirname, 'build')))
 
