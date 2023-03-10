@@ -14,8 +14,9 @@ app.get("/.well-known/nostr.json", (req, res) => {
 app.get("manifest.json", async (req, res) => {
     res.sendFile(path.join(__dirname, "build", "manifest.json"));
 })
-app.get("sw.js", async (req, res) => {
-    res.sendFile(path.join(__dirname, "build", "sw.js"));
+
+app.get("service-worker.js", async (req, res) => {
+    res.sendFile(path.join(__dirname, "build", "service-worker.js"));
 })
 
 app.get("*", async (req, res) => {
