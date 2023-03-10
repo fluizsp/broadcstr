@@ -1,10 +1,10 @@
 const express = require('express');
 const path = require('path');
-const secure = require('ssl-express-www');
+var enforce = require('express-sslify');
 
 const app = express();
 
-app.use(secure);
+app.use(enforce.HTTPS());
 
 app.use(express.static(path.join(__dirname, 'build')))
 
