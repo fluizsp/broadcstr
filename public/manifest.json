@@ -9,12 +9,15 @@
     {
       "src": "icon.svg",
       "sizes": "256x256"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512"
     }
   ],
-  "start_url": "/",
-  "scope" : "/",
+  "start_url": ".",
   "display": "standalone",
-  "theme_color": "#ffffff",
+  "theme_color": "#1c1d2b",
   "background_color": "#8452F6",
   "prefer_related_applications": true
 }
