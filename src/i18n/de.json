@@ -90,5 +90,10 @@
     "showLess": "Zeige weniger...",
     "youLiked": "Du mochtest!",
     "like": "Wie",
-    "reply": "Antwort"
+    "reply": "Antwort",
+    "by":"Von",
+    "created":"Erstellt",
+    "flagNsfw":"Als NSFW kennzeichnen",
+    "sensitiveWarning":"Als vertraulicher Inhalt gekennzeichnet. Klicken Sie auf, um es anzuzeigen",
+    "badgeAwarded":"Abzeichen-Informationen"
   }

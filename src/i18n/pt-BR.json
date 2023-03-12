@@ -90,5 +90,10 @@
     "showLess":"Mostrar menos...",
     "youLiked":"Você curtiu!",
     "like":"Curtir",
-    "reply":"Responder"
+    "reply":"Responder",
+    "by":"por",
+    "created":"Criado",
+    "flagNsfw":"Conteúdo impróprio para menores",
+    "sensitiveWarning":"Conteúdo marcado como impróprio para menores. Clique para exibir",
+    "badgeAwarded":"Detalhes do emblema"
 }

@@ -147,9 +147,9 @@ export const getUserProfileBadges = async (publicKeyHex, limit, onResults) => {
             ids: awardsIds,
             limit: limit ?? 1000
         };
-        let awards = await getPoolService().list(awardsFilters, {timeout:500});
+        let awards = await getPoolService().list(awardsFilters, { timeout: 500 });
         let uniqueAwards = uniqueAndRepleaceble(awards);
-        let badges = await getPoolService().list(badgesFilters, {timeout:500});
+        let badges = await getPoolService().list(badgesFilters, { timeout: 500 });
         let uniqueBadges = uniqueAndRepleaceble(badges);
         let results = [];
         uniqueAwards = uniqueAwards.map(award => { return { ...award, dTag: award.tags.find(([t, v]) => t === 'a') ? award.tags.find(([t, v]) => t === 'a')[1].split(':')[2] : null } })
@@ -505,7 +505,7 @@ export const publishNote = draftNote => {
     let event = {
         kind: 1,
         created_at: draftNote.created_at,
-        tags: [],
+        tags: draftNote.tags ?? [],
         content: draftNote.content,
         pubkey: draftNote.pubkey
     };

@@ -19,6 +19,14 @@ Because it is like your social network, but:
 
 ## Version info:
 
+**Version 0.4 - Badges, new Relay Service and NIP-36!**
+- Initial implementation of Badges, you can now see users badges in profile pages (soon there will be a badges section on user profile, coming in 0.4.x);
+- Completely rewritten Relay interation through websockets, with individual subscription lifespan and timeout to improve content consistency, time to load and fine tuning for each request/sub;
+- Moved content load to containers, and removed a lot of content from redux state;
+- Reviewed PWA Configuration so users can add the app to their home screens;
+- Implemented NIP-36 on posts/notes, to obfuscate flagged sensitive content and added the flag on composer, so users can safely post NSFW content if they will;
+- Other minor performance fixes and changes;
+
 **Version 0.3.1 - Updates and fixes!**
 - Localization with initial languages (DE, EN, ES, FR, PT);
 - Better visualization of NIP-05 on profiles;

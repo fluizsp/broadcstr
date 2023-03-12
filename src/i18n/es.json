@@ -90,5 +90,10 @@
     "showLess": "Muestra menos...",
     "youLiked": "¡Te gustó!",
     "like": "Gusta",
-    "reply": "Responder"
+    "reply": "Responder",
+    "by":"por",
+    "created":"Creado",
+    "flagNsfw":"Contenido inapropiado para menores",
+    "sensitiveWarning":"Contenido marcado como inapropiado para menores. Haga clic para mostrar",
+    "badgeAwarded":"Detalles de la insignia"
   }

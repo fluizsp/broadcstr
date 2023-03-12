@@ -1,11 +1,13 @@
 import { Box, VStack, Card, Image, Heading, HStack, Text, Link, useColorModeValue, Tooltip } from '@chakra-ui/react';
 import { format } from 'date-fns';
 import { FaAward } from 'react-icons/fa';
+import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { VIEW_BADGE } from '../actions/relay';
 
 const Badge = props => {
     const dispatch = useDispatch();
+    const intl=useIntl();
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     const goldGradient = 'linear(to-br, #FEDB37 0%, #FDB931 8%, #9f7928 30%, #8A6E2F 40%, #5d4a1f 62.5%, #5d4a1f 100%)';
     const badgeBaseColor = useColorModeValue('brand.blessing1', 'brand.eternalConstance1')
@@ -54,8 +56,8 @@ const Badge = props => {
                 <Box p={10}>
                     <VStack spacing={2}>
                         <Text textAlign="center" p={2}>{badgeDescription}</Text>
-                        <HStack w="100%"><Text as="b">Created:</Text><Text>{format(created,'yyyy-MM-dd')}</Text></HStack>
-                        <HStack w="100%"><Text as="b">By:</Text><Link as="DomLink" to='/'>{badgeAuthorMetadata.nip05}</Link></HStack>
+                        <HStack w="100%"><Text as="b">{intl.formatMessage({ id: 'created' })}:</Text><Text>{format(created,'yyyy-MM-dd')}</Text></HStack>
+                        <HStack w="100%"><Text as="b">{intl.formatMessage({ id: 'by' })}:</Text><Link as="DomLink" to='/'>{badgeAuthorMetadata.nip05}</Link></HStack>
                         {/*<HStack w="100%"><Text as="b">To:</Text><Link as="DomLink">@sophiaw1926</Link></HStack>*/}
                     </VStack>
                 </Box> : null}
