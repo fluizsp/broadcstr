@@ -78,6 +78,13 @@ function App() {
 
   defineMessages(i18nMessages);
 
+  if (localStorage.getItem('chakra-ui-color-mode') === null)
+    localStorage.setItem('chakra-ui-color-mode', 'dark')
+
+  if (document.location.protocol !== 'https:') {
+    document.location.replace(`https:${document.location.href.substring(document.location.protocol.length)}`);
+  }
+
   return (
     <Provider store={store}>
       <ChakraProvider theme={customTheme}>

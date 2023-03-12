@@ -19,6 +19,14 @@ Because it is like your social network, but:
 
 ## Version info:
 
+**Version 0.3.1 - Updates and fixes!**
+- Localization with initial languages (DE, EN, ES, FR, PT);
+- Better visualization of NIP-05 on profiles;
+- Profile preview on cards;
+- Added Sign out warning, so the user can backup keys;
+- Added NIP list on Github;
+- A few performance changes;
+
 **Version 0.3 - Updates and fixes!**
 - ⚡ ZAPS! First implementation of zaps! Show total zaps of notes and zap others;
 - Localization: Localization structure and preparation;

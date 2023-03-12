@@ -22,7 +22,7 @@ export const LOCATED_USER = "LOCATED_USER";
 export const LOCATED_NOTE = "LOCATED_NOTE";
 export const REPLY_TO = "REPLY_TO";
 export const VIEW_IMAGE = "VIEW_IMAGE";
-export const CLOSE_IMAGE = "CLOSE_IMAGE";
+export const VIEW_BADGE = "VIEW_BADGE";
 
 let requestedMetadatas = [];
 
