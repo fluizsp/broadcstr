@@ -11,6 +11,32 @@ const addMetadataToLoad = publicKeyHex => {
     }
 }
 
+const uniqueAndRepleaceble = events => {
+    events = events.map(e => { return { ...e, dTag: e.tags.find(([t, v]) => t === 'd') } });
+    events = events.map(e => { return { ...e, dTag: e.dTag ? e.dTag[1] : null } });
+    let repleacebleEvents = events.filter(e => e.dTag);
+    repleacebleEvents = repleacebleEvents.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 });
+    let nonRepleacebleEvents = events.filter(e => !e.dTag);
+    let replacedEvents = {};
+    let uniqueEvents = [];
+    nonRepleacebleEvents.forEach(event => {
+        if (uniqueEvents.filter(e => e.id === event.id).length === 0)
+            uniqueEvents.push(event);
+    });
+    repleacebleEvents.forEach(event => {
+        if (!replacedEvents[event.dTag]) {
+            replacedEvents[event.dTag] = event;
+        } else {
+            if (replacedEvents[event.dTag].pubkey === event.pubkey)
+                replacedEvents[event.dTag] = event;
+        }
+    })
+    uniqueEvents.push(Object.keys(replacedEvents).map(k => replacedEvents[k]));
+    uniqueEvents = uniqueEvents.flat();
+
+    return uniqueEvents;
+}
+
 export const sign = async (event, account) => {
     return new Promise((resolve, reject) => {
         try {
@@ -97,6 +123,43 @@ export const getUserFollowers = (publicKeyHex, limit, onEvents) => {
         onEvents(followersBatch);
         followersBatch = [];
     })
+}
+export const getUserProfileBadges = async (publicKeyHex, limit, onResults) => {
+    let filters = {
+        kinds: [30008],
+        authors: [publicKeyHex],
+        limit: limit ?? 1000
+    };
+    let sub = getPoolService().createSubscription(filters, { life: 1000 });
+    sub.onEvent(async event => {
+        let badgeNames = []
+        badgeNames = event.tags.filter(([t, v]) => t === 'a').map(([t, v]) => { return v.split(':')[2] });
+        badgeNames = Array.from(new Set(badgeNames).values());
+        let awardsIds = event.tags.filter(([t, v]) => t === 'e').map(([t, v]) => { return v });;
+        awardsIds = Array.from(new Set(awardsIds).values());
+        let badgesFilters = {
+            kinds: [30009],
+            '#d': badgeNames,
+            limit: limit ?? 1000
+        };
+        let awardsFilters = {
+            kinds: [8],
+            ids: awardsIds,
+            limit: limit ?? 1000
+        };
+        let awards = await getPoolService().list(awardsFilters, {timeout:500});
+        let uniqueAwards = uniqueAndRepleaceble(awards);
+        let badges = await getPoolService().list(badgesFilters, {timeout:500});
+        let uniqueBadges = uniqueAndRepleaceble(badges);
+        let results = [];
+        uniqueAwards = uniqueAwards.map(award => { return { ...award, dTag: award.tags.find(([t, v]) => t === 'a') ? award.tags.find(([t, v]) => t === 'a')[1].split(':')[2] : null } })
+        uniqueAwards.forEach(award => {
+            let matchingBadge = uniqueBadges.find(b => b.dTag === award.dTag && b.pubkey === award.pubkey)
+            if (matchingBadge)
+                results.push({ badge: matchingBadge, award: award });
+        })
+        onResults(results);
+    });
 }
 
 export const getZapsFeed = (limit, onResults) => {

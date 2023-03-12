@@ -188,6 +188,9 @@ const contentReducer = createReducer(initialState, {
     },
     VIEW_IMAGE: (state, action) => {
         state.imageSrc = action.data;
+    },
+    VIEW_BADGE: (state, action) => {
+        state.badgeInfo = action.data;
     }
 });
 

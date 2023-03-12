@@ -95,16 +95,18 @@ class NostrRelayService {
                     cb(data[2]);
                 })
             }
-            if (data[0] === 'EOSE') {
+            else if (data[0] === 'EOSE') {
                 this.eoseListeners.filter(([id, cb]) => id === data[1]).forEach(([id, cb]) => {
                     cb(data);
                 });
                 this.closeSubscription(data[1]);
             }
-            if (data[0] === 'OK') {
+            else if (data[0] === 'OK') {
                 this.publishListeners.filter(([id, cb]) => id === data[1]).forEach(([id, cb]) => {
                     cb(data[2]);
                 });
+            }else{
+                console.log(message);
             }
         };
         this.sendInterval = setInterval(() => {
