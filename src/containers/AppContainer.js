@@ -86,6 +86,7 @@ const search = props => {
 
 const AppContainer = (props) => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
+    const intl=useIntl();
     const dispatch = useDispatch();
     const imageSrc = useSelector(state => state.content.imageSrc);
     const badgeInfo = useSelector(state => state.content.badgeInfo);
@@ -127,7 +128,7 @@ const AppContainer = (props) => {
             <ModalOverlay />
             <ModalContent bg={uiColor}>
                 <ModalCloseButton />
-                <ModalHeader>Badge Awarded!</ModalHeader>
+                <ModalHeader>{intl.formatMessage({ id: 'badgeAwarded' })}</ModalHeader>
                 <ModalBody pb={10}>
                     {badgeInfo ?
                         <Badge size="full" badgeInfo={badgeInfo} /> : ''}
