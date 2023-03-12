@@ -90,5 +90,10 @@
     "showLess":"Show Less...",
     "youLiked":"You Liked!",
     "like":"Like",
-    "reply":"Reply"
+    "reply":"Reply",
+    "by":"By",
+    "created":"Created",
+    "flagNsfw":"Flag as NSFW",
+    "sensitiveWarning":"Flagged as sensitive content. Click to display it",
+    "badgeAwarded":"Badge Information"
 }

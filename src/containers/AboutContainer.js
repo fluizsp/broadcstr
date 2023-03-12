@@ -45,6 +45,30 @@ const AboutContainer = (props) => {
                             </List>
                             <Heading size="md" mt={6}>Version info:</Heading>
                             <Text p={2}>
+                                Version <strong>0.4</strong> - Badges, new Relay Service and NIP-36!
+                                <br />Features and fixes implemented on this version:
+                                <UnorderedList spacing={2} p={2}>
+                                    <ListItem>
+                                        <strong>Badges!</strong> Initial implementation of Badges, you can now see users badges in profile pages (soon there will be a badges section on user profile, coming in 0.4.x);
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>QoL changes:</strong> Completely rewritten relay interation through websockets, with individual subscription lifespan and timeout to improve content consistency, time to load and fine tuning for each request/sub;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Content Load:</strong> Moved content load to containers, and removed a lot of content from redux state;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>PWA:</strong> Reviewed PWA Configuration so users can add the app to their home screens;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>NIP-36 (NSFW):</strong> Implemented NIP-36 on posts/notes, to obfuscate flagged sensitive content and added the flag on composer, so users can safely post NSFW content if they will;
+                                    </ListItem>
+                                    <ListItem>
+                                        <strong>Fixes:</strong> Other minor performance fixes and changes;
+                                    </ListItem>
+                                </UnorderedList>
+                            </Text>
+                            <Text p={2}>
                                 Version <strong>0.3</strong> - Updates and fixes!
                                 <br />Features and fixes implemented on this version:
                                 <UnorderedList spacing={2} p={2}>

@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Card, Flex, FormLabel, HStack, Image, Input, Link, Popover, PopoverAnchor, PopoverArrow, PopoverContent, Text, Textarea, Tooltip, useColorModeValue, useToast, VStack } from "@chakra-ui/react";
+import { Avatar, Box, Button, Card, Checkbox, Flex, FormLabel, HStack, Image, Input, Link, Popover, PopoverAnchor, PopoverArrow, PopoverContent, Text, Textarea, Tooltip, useColorModeValue, useToast, VStack } from "@chakra-ui/react";
 import { format } from "date-fns";
 import { nip19 } from "nostr-tools";
 import { useRef, useState } from "react";
@@ -79,6 +79,16 @@ const Composer = (props) => {
         setDraftNote(draft);
         textAreaRef.current.value = draft.content;
     }
+    const onNsfwChange = input => {
+        let draft = draftNote;
+        if (input.target.checked) {
+            if (!draft.tags | !draft.tags.find(([t, v]) => t === 'content-warning'))
+                draft.tags.push(['content-warning', 'Marked as NSFW']);
+        } else {
+            draft.tags = draft.tags ? draft.tags.filter(([t, v]) => t !== 'content-warning') : [];
+        }
+        setDraftNote(draft);
+    }
 
     const addEmoji = emoji => {
         let draft = draftNote;
@@ -156,7 +166,7 @@ const Composer = (props) => {
                         </Popover>
                     </Box>}
                 <Flex w="100%">
-                    <HStack w="200px">
+                    <HStack w="400px">
                         <Tooltip label={intl.formatMessage({ id: 'uploadImage' })}>
                             <FormLabel htmlFor="noteImage" cursor="pointer" pt="2" pl="2">
                                 <FaFileImage />
@@ -164,13 +174,13 @@ const Composer = (props) => {
                         </Tooltip>
                         <Input id="noteImage" accept="image/*" type="file" hidden onChange={uploadNoteImage.bind(this)} />
                         <EmojiPicker onEmojiClick={addEmoji} />
+                        <Checkbox onChange={onNsfwChange.bind(this)}>{intl.formatMessage({ id: 'flagNsfw' })}</Checkbox>
                     </HStack>
                     <Box flex={1} textAlign="right">
                         <Button variant="solid" size="sm" mr={2} onClick={() => editMode === 'preview' ? setEditMode('edit') : setEditMode('preview')}>{editMode === 'preview' ? intl.formatMessage({ id: 'editNote' }) : intl.formatMessage({ id: 'previewNote' })}</Button>
                         <Button variant="solid" rightIcon={<GoBroadcast />} bgGradient="linear(to-br, brand.purple, brand.green)" size="md" onClick={publish}>Broadcst!</Button>
                     </Box>
                 </Flex>
-
             </VStack>
         </Card>)
 }

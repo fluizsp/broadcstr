@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    Box, HStack, Image, Modal, ModalBody, ModalCloseButton, ModalContent, ModalOverlay, useColorModeValue, VStack
+    Box, Card, Heading, HStack, Image, Link, Modal, ModalBody, ModalCloseButton, ModalContent, ModalHeader, ModalOverlay, Text, useColorModeValue, VStack
 } from '@chakra-ui/react';
 import {
     Route,
@@ -15,12 +15,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import NoteDetailContainer from './NoteDetailContainer';
 import ProfileContainer from './ProfileContainer';
 import SearchContainer from './SearchContainer';
-import { VIEW_IMAGE } from '../actions/relay';
+import { VIEW_BADGE, VIEW_IMAGE } from '../actions/relay';
 import SettingsContainer from './SettingsContainer';
 import AboutContainer from './AboutContainer';
 import WelcomeV2Container from './WelcomeV2Container';
 import { useIntl } from 'react-intl';
 import RelayTestContainer from './RelayTestContainer';
+import { Link as DomLink } from 'react-router-dom';
+import { FaAward } from 'react-icons/fa';
+import Badge from '../components/Badge';
 
 const home = props => (
     <Box>
@@ -83,10 +86,15 @@ const search = props => {
 
 const AppContainer = (props) => {
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
+    const intl=useIntl();
     const dispatch = useDispatch();
     const imageSrc = useSelector(state => state.content.imageSrc);
+    const badgeInfo = useSelector(state => state.content.badgeInfo);
     const closeImage = () => {
         dispatch({ type: VIEW_IMAGE, data: null });
+    }
+    const closeBadge = () => {
+        dispatch({ type: VIEW_BADGE, data: null });
     }
     return (<Box minH="100vH" bgGradient='linear(to-br, brand.purple, brand.green)'>
         <BrowserRouter>
@@ -100,7 +108,7 @@ const AppContainer = (props) => {
                 <Route path="/note/:id" element={noteDetail(props)} />
                 <Route exact path="/:id" element={profile(props)} />
                 <Route path="/search/:term?" element={search(props)} />
-                <Route path="/relaytest" element={<RelayTestContainer/>} />
+                <Route path="/relaytest" element={<RelayTestContainer />} />
             </Routes>
         </BrowserRouter>
         <Modal size="full" isOpen={imageSrc && imageSrc !== ""} bg="none" onClose={closeImage} closeOnEsc closeOnOverlayClick>
@@ -113,6 +121,17 @@ const AppContainer = (props) => {
                             <Image p={6} maxH="100vH" src={imageSrc} />
                         </VStack>
                     </HStack>
+                </ModalBody>
+            </ModalContent>
+        </Modal>
+        <Modal size="lg" isOpen={badgeInfo && badgeInfo.badge} bg="none" onClose={closeBadge} closeOnEsc closeOnOverlayClick>
+            <ModalOverlay />
+            <ModalContent bg={uiColor}>
+                <ModalCloseButton />
+                <ModalHeader>{intl.formatMessage({ id: 'badgeAwarded' })}</ModalHeader>
+                <ModalBody pb={10}>
+                    {badgeInfo ?
+                        <Badge size="full" badgeInfo={badgeInfo} /> : ''}
                 </ModalBody>
             </ModalContent>
         </Modal>

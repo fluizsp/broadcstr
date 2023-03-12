@@ -90,5 +90,10 @@
   "showLess": "Montrer moins...",
   "youLiked": "Tu as aimé!",
   "like": "Comme",
-  "reply": "Répondre"
+  "reply": "Répondre",
+  "by":"Par",
+  "created":"Créé",
+  "flagNsfw":"Contenu inapproprié pour les mineurs",
+  "sensitiveWarning":"Contenu marqué comme inapproprié pour les mineurs. Cliquez pour afficher",
+  "badgeAwarded":"Détails du badge"
 }

@@ -1,4 +1,4 @@
-import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button, Link, Tooltip, Tag, TagLabel, TagLeftIcon } from '@chakra-ui/react'
+import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button, Link, Tooltip, Tag, TagLabel, TagLeftIcon, Wrap, WrapItem } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { receivedUserMetadata, RECEIVED_USER_ID } from '../actions/relay';
@@ -10,7 +10,8 @@ import { IoMdPersonAdd, IoMdRemove, IoMdSettings } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
 import { useIntl } from 'react-intl';
 import { GoVerified } from 'react-icons/go';
-import { addFollowing, getUserFollowers, getUserFollowing, getUserNotes, removeFollowing } from '../services/ContentServices';
+import { addFollowing, getUserFollowers, getUserFollowing, getUserNotes, getUserProfileBadges, removeFollowing } from '../services/ContentServices';
+import Badge from '../components/Badge';
 
 const ProfileContainer = props => {
     const dispatch = useDispatch();
@@ -24,6 +25,7 @@ const ProfileContainer = props => {
     const [allNotes, setAllNotes] = useState([]);
     const [following, setFollowing] = useState([]);
     const [followers, setFollowers] = useState([]);
+    const [profileBadges, setProfileBadges] = useState([]);
     const [lastUpdate, setLastUpdate] = useState(new Date());
     const [limit, setLimit] = useState(25);
     const [nip05Status, setNip05Status] = useState();
@@ -41,8 +43,8 @@ const ProfileContainer = props => {
         dispatch(receivedUserMetadata(publicKeyHex, { load: true }));
         dispatch({ type: RECEIVED_USER_ID, data: publicKeyHex })
     }
-    const loadNotes = (pubKeyHex, limit) => {
-        getUserNotes(pubKeyHex, limit * 5, results => {
+    const loadNotes = (limit) => {
+        getUserNotes(publicKeyHex, limit * 5, results => {
             let updatedNotes = notes;
             results.forEach(r => {
                 if (notes.filter(n => n.id === r.id).length === 0 && (r.pubkey === publicKeyHex || r.reposted_by === publicKeyHex))
@@ -52,14 +54,14 @@ const ProfileContainer = props => {
             setLastUpdate(new Date());
         });
     };
-    const followingAdd = publicKeyHex => {
+    const followingAdd = () => {
         addFollowing(publicKeyHex);
     };
-    const followingRemove = publicKeyHex => {
+    const followingRemove = () => {
         removeFollowing(publicKeyHex);
     };
-    const loadUserFollowing = pubKeyHex => {
-        getUserFollowing(pubKeyHex).then(data => {
+    const loadUserFollowing = () => {
+        getUserFollowing(publicKeyHex).then(data => {
             if (data.pubkey === publicKeyHex) {
                 let followingList = data.tags.map(t => {
                     if (t[0] === "p")
@@ -70,7 +72,7 @@ const ProfileContainer = props => {
             }
         })
     };
-    const loadUserFollowers = publicKeyHex => {
+    const loadUserFollowers = () => {
         getUserFollowers(publicKeyHex, 1000, results => {
             let updatedFollowers = followers;
             results.forEach(r => {
@@ -81,6 +83,17 @@ const ProfileContainer = props => {
             setLastUpdate(new Date());
         });
     }
+    const loadUserProfileBadges = () => {
+        getUserProfileBadges(publicKeyHex, 100, results => {
+            let updatedBadges = profileBadges;
+            results.forEach(r => {
+                if (!updatedBadges.find(b => b.badge.id === r.badge.id))
+                    updatedBadges.push(r);
+            })
+            setProfileBadges(updatedBadges);
+            setLastUpdate(new Date());
+        });
+    }
 
     useEffect(() => {
         console.log('useEffect publicKeyHex');
@@ -88,17 +101,20 @@ const ProfileContainer = props => {
             setAllNotes([]);
             setFollowers([]);
             setFollowing([]);
+            setProfileBadges([]);
             setLastUpdate(new Date());
-            loadUser(publicKeyHex);
-            loadNotes(publicKeyHex, 25);
-            loadUserFollowing(publicKeyHex);
-            loadUserFollowers(publicKeyHex);
+            loadUser();
+            loadNotes(25);
+            loadUserFollowing();
+            loadUserFollowers();
+            loadUserProfileBadges();
         }
     }, [publicKeyHex]);
     useEffect(() => {
         setAllNotes([]);
         setFollowers([]);
         setFollowing([]);
+        setProfileBadges([]);
         setLastUpdate(new Date());
         if (!params.id.includes('@') && params.id.includes('npub'))
             setPublicKeyHex(nip19.decode(params.id).data);
@@ -198,6 +214,13 @@ const ProfileContainer = props => {
                                             <Skeleton w="300px" h={3} mb="5" />
                                         </Box>}
                                     {user.lud16 ? <Link as="b" color="green.400" href={`lightning:${user.lud16}`} fontSize="sm">⚡{user.lud16}</Link> : ''}
+                                    <Wrap>
+                                        {
+                                            profileBadges.map(badgeInfo => {
+                                                return <WrapItem><Badge size="xs" badgeInfo={badgeInfo} /></WrapItem>
+                                            })
+                                        }
+                                    </Wrap>
                                 </GridItem>
                             </Grid>
                             <Tabs ml="-25px" index={activeView} mt="50px" mr="-25px">

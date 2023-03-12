@@ -16,6 +16,7 @@ import { Nip57Service } from '../services/Nip57Service';
 import { useIntl } from 'react-intl';
 import { Code } from 'react-ionicons';
 import { addFollowing, likeNote, removeFollowing, repostNote, sign } from '../services/ContentServices';
+import { FaEye } from 'react-icons/fa';
 
 const Note = props => {
     const navigate = useNavigate();
@@ -28,8 +29,9 @@ const Note = props => {
     const [expanded, setExpanded] = useState(false);
     const [ln, setLn] = useState(0);
     const [nip05Status, setNip05Status] = useState();
-
+    //const [sensitiveStatus, setSensitiveStatus] = useState(1);
     const [actualZapAmount, setActualZapAmount] = useState(144);
+
     const [controlledZapAmount, setControlledZapAmount] = useState(144);
     const alphaGradient = useColorModeValue('linear(to-t, brand.lightUi 75%, brand.lightUiAlpha 100%)', 'linear(to-t, brand.darkUi 75%, brand.darkUiAlpha 100%)');
     const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
@@ -43,6 +45,9 @@ const Note = props => {
     let totalZaps = note.zapAmount ? note.zapAmount : props.relateds ? props.relateds.zaps ? props.relateds.zaps.reduce((total, zap) => total += zap.amount, 0) : 0 : 0;//(useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].zaps ? state.content.allNotesRelateds[note.id].zaps.reduce((total, zap) => total += zap.amount, 0) : 0 : 0))
     let replies = props.relateds ? props.relateds.replies.length ?? 0 : 0;//useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].replies ? state.content.allNotesRelateds[note.id].replies.length : 0 : 0);
     let reposts = props.relateds ? props.relateds.reposts.length ?? 0 : 0;//useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].reposts ? state.content.allNotesRelateds[note.id].reposts.length : 0 : 0);
+    console.log(note.tags);
+    let sStatus = note.tags ? note.tags.find(t => t[0] === 'content-warning') ? 1 : 0 : 0;
+    const [sensitiveStatus, setSensitiveStatus] = useState(sStatus);
     let liked = useSelector(state => state.user.likes.filter(l => l === note.id).length > 0);
     const account = useSelector(state => state.user.account);
     const relays = useSelector(state => state.user.relays);
@@ -136,6 +141,9 @@ const Note = props => {
                 setNip05Status(false);
             });
     }
+    const dismissSensitiveContent=()=>{
+        setSensitiveStatus(-1);
+    }
     const handleZap = () => {
         let lud16 = authorMetadata.lud16;
         if (!lud16) {
@@ -178,7 +186,17 @@ const Note = props => {
     console.log("Render Note");
     return (
         < Fade in={true}>
-            <Card mb="2" bg={uiColor} ml={props.isReply ? replyLevel * 10 + 'px' : 0} >
+            <Card mb="2" bg={uiColor} ml={props.isReply ? replyLevel * 10 + 'px' : 0} pos="relative" >
+                {sensitiveStatus === 1 ?
+                    <Box pos="absolute" bottom="0" left="0" zIndex="1" p={2} pt="80px" w="100%" h="100%">
+                        <Box backdropFilter="auto" backdropBlur="10px" w="100%" h="100%">
+                            <Box textAlign="center" pt={10}>
+                                <Button onClick={dismissSensitiveContent} leftIcon={<FaEye />}>{intl.formatMessage({ id: 'sensitiveWarning' })}</Button>
+                            </Box>
+
+                        </Box>
+                    </Box> : ''}
+
                 <VStack align="left">
                     <Box p="5" pb="0">
                         <Grid templateColumns='repeat(12, 1fr)'>
