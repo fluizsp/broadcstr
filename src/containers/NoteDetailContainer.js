@@ -83,7 +83,7 @@ const NoteDetailContainer = props => {
     }
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
-            <Box ml={{ md: '100px', lg: '330px' }} >
+            <Box ml={{ md: '100px' }} >
                 <SlideFade in={true} offsetX="1000" offsetY="0" reverse={true} unmountOnExit={true}>
                     <Container maxW='4xl' pt="80px" pb="20px" >
                         {mainNote && mainNote.id ?

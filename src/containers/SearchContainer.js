@@ -80,7 +80,7 @@ const SearchContainer = props => {
     console.log("Render Search");
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
-            <Box ml={{ md: '100px', lg: '330px' }} >
+            <Box ml={{ md: '100px' }} >
                 <SlideFade in={true} offsetX="1000" offsetY="0" reverse={true} unmountOnExit={true}>
                     <Container maxW='4xl' pt="80px" pb="20px" id="d1">
                         <Card mb="5" bg={uiColor} p="25px" pb={0}>

@@ -1,4 +1,4 @@
-import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button, Link, Tooltip, Tag, TagLabel, TagLeftIcon, Wrap, WrapItem } from '@chakra-ui/react'
+import { Card, Box, Container, Spinner, SlideFade, VStack, Fade, useColorModeValue, Grid, GridItem, Avatar, Text, HStack, Tabs, TabList, Tab, Skeleton, Button, Link, Tooltip, Tag, TagLabel, TagLeftIcon, Wrap, WrapItem, TabPanel, TabPanels, Heading } from '@chakra-ui/react'
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { receivedUserMetadata, RECEIVED_USER_ID } from '../actions/relay';
@@ -6,12 +6,15 @@ import { useNavigate, useParams } from 'react-router';
 import { nip05, nip19 } from 'nostr-tools';
 import NoteList from '../components/NoteList';
 import defaultBanner from '../defaultBanner.gif';
-import { IoMdPersonAdd, IoMdRemove, IoMdSettings } from 'react-icons/io';
+import { IoIosCreate, IoMdPersonAdd, IoMdRemove, IoMdSend, IoMdSettings } from 'react-icons/io';
 import ContactListItem from '../components/ContactListItem';
 import { useIntl } from 'react-intl';
 import { GoVerified } from 'react-icons/go';
 import { addFollowing, getUserFollowers, getUserFollowing, getUserNotes, getUserProfileBadges, removeFollowing } from '../services/ContentServices';
 import Badge from '../components/Badge';
+import { BiBadge, BiBadgeCheck } from 'react-icons/bi';
+import { HiBadgeCheck, HiInbox } from 'react-icons/hi';
+import { FaGrinBeamSweat } from 'react-icons/fa';
 
 const ProfileContainer = props => {
     const dispatch = useDispatch();
@@ -157,17 +160,18 @@ const ProfileContainer = props => {
                 setNip05Status(false);
         });
     }
-    let userLoaded = user.name ? true : false;
+    let userLoaded = Object.keys(user).length>1 ? true : false;
     let notes = allNotes.filter(n => (n.kind === 1 && n.tags.filter(([t, v]) => t === 'e').length === 0) || n.kind === 6)
         .sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
         .slice(0, limit);
     let replies = allNotes.filter(n => (n.kind === 1 && n.tags.filter(([t, v]) => t === 'e').length > 0));
     let isOwnProfile = account.publicKey && nip19.decode(account.publicKey).data === publicKeyHex;
     let isFollowing = useSelector(state => state.user.following.filter(f => f === publicKeyHex).length > 0);
+    const tabSize = isOwnProfile ? '20%' : '25%';
     console.log("Render Profile");
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
-            <Box ml={{ md: '100px', lg: '330px' }} >
+            <Box ml={{ md: '100px' }} >
                 <SlideFade in={true} offsetX="1000" offsetY="0" reverse={true} unmountOnExit={true}>
                     <Box className='box1' width="100%" height="300px" mb="-300px"
                         sx={{
@@ -225,10 +229,11 @@ const ProfileContainer = props => {
                             </Grid>
                             <Tabs ml="-25px" index={activeView} mt="50px" mr="-25px">
                                 <TabList>
-                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(0) }}>{intl.formatMessage({ id: 'notes' })}</Tab>
-                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(1) }}>{intl.formatMessage({ id: 'replies' })}</Tab>
-                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(2) }}> {intl.formatMessage({ id: 'following' })} ({following.length > 1000 ? following.length + '+' : following.length}) </Tab>
-                                    <Tab w="25%" onClick={() => { setLimit(25); setActiveView(3) }}> {intl.formatMessage({ id: 'followers' })} ({followers.length > 1000 ? followers.length + '+' : followers.length})</Tab>
+                                    <Tab w={tabSize} onClick={() => { setLimit(25); setActiveView(0) }}>{intl.formatMessage({ id: 'notes' })}</Tab>
+                                    <Tab w={tabSize} onClick={() => { setLimit(25); setActiveView(1) }}>{intl.formatMessage({ id: 'replies' })}</Tab>
+                                    <Tab w={tabSize} onClick={() => { setLimit(25); setActiveView(2) }}> {intl.formatMessage({ id: 'following' })} ({following.length > 1000 ? following.length + '+' : following.length}) </Tab>
+                                    <Tab w={tabSize} onClick={() => { setLimit(25); setActiveView(3) }}> {intl.formatMessage({ id: 'followers' })} ({followers.length > 1000 ? followers.length + '+' : followers.length})</Tab>
+                                    {isOwnProfile ? <Tab w={tabSize} onClick={() => { setActiveView(4) }}>{intl.formatMessage({ id: 'badges' })}</Tab> : ''}
                                 </TabList>
                             </Tabs>
                         </Card>
@@ -248,8 +253,34 @@ const ProfileContainer = props => {
                                 return <ContactListItem publicKeyHex={f} addFollowing={addFollowing} removeFollowing={removeFollowing} />
                             })}
                         </SlideFade>
+                        <SlideFade in={activeView === 4} unmountOnExit>
+                            <Card mb="5" bg={uiColor} p="50" pb={0} mt="10px">
+                                <Tabs variant="solid-rounded" defaultIndex={1}>
+                                    <TabList>
+                                        <Tab><IoIosCreate />&nbsp;{intl.formatMessage({ id: 'create' })}</Tab>
+                                        <Tab><BiBadgeCheck/>&nbsp;{intl.formatMessage({ id: 'yourBadges' })}</Tab>
+                                        <Tab><IoMdSend/>&nbsp;{intl.formatMessage({ id: 'sent' })}</Tab>
+                                        <Tab>🎉&nbsp;{intl.formatMessage({ id: 'received' })}</Tab>
+                                    </TabList>
+                                    <TabPanels>
+                                        <TabPanel>
+                                            &nbsp;
+                                        </TabPanel>
+                                        <TabPanel>
+                                            &nbsp;
+                                        </TabPanel>
+                                        <TabPanel>
+                                            &nbsp;
+                                        </TabPanel>
+                                        <TabPanel>
+                                            &nbsp;
+                                        </TabPanel>
+                                    </TabPanels>
+                                </Tabs>
+                            </Card>
+                        </SlideFade>
                         <VStack>
-                            {<Button onClick={moreResults} hidden={(activeView === 0 && notes.length < limit) || (activeView === 1 && replies.length < limit)}>{intl.formatMessage({ id: 'moreResults' })}</Button>}
+                            {<Button onClick={moreResults} hidden={(activeView === 0 && notes.length < limit) || (activeView === 1 && replies.length < limit) || activeView === 4}>{intl.formatMessage({ id: 'moreResults' })}</Button>}
                             <Fade in={notes.length === 0 && replies.length === 0 && following.length === 0}>
                                 <Spinner size="xl" color="blue.300" />
                             </Fade>

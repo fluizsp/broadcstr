@@ -95,5 +95,10 @@
     "created":"Criado",
     "flagNsfw":"Conteúdo impróprio para menores",
     "sensitiveWarning":"Conteúdo marcado como impróprio para menores. Clique para exibir",
-    "badgeAwarded":"Detalhes do emblema"
+    "badges":"Emblemas",
+    "create":"Criar",
+    "badgeAwarded":"Detalhes do emblema",
+    "yourBadges":"Seus emblemas",
+    "sent":"Enviados",
+    "received":"Recebidos"
 }

@@ -45,7 +45,6 @@ const Note = props => {
     let totalZaps = note.zapAmount ? note.zapAmount : props.relateds ? props.relateds.zaps ? props.relateds.zaps.reduce((total, zap) => total += zap.amount, 0) : 0 : 0;//(useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].zaps ? state.content.allNotesRelateds[note.id].zaps.reduce((total, zap) => total += zap.amount, 0) : 0 : 0))
     let replies = props.relateds ? props.relateds.replies.length ?? 0 : 0;//useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].replies ? state.content.allNotesRelateds[note.id].replies.length : 0 : 0);
     let reposts = props.relateds ? props.relateds.reposts.length ?? 0 : 0;//useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].reposts ? state.content.allNotesRelateds[note.id].reposts.length : 0 : 0);
-    console.log(note.tags);
     let sStatus = note.tags ? note.tags.find(t => t[0] === 'content-warning') ? 1 : 0 : 0;
     const [sensitiveStatus, setSensitiveStatus] = useState(sStatus);
     let liked = useSelector(state => state.user.likes.filter(l => l === note.id).length > 0);
@@ -183,7 +182,7 @@ const Note = props => {
         setControlledZapAmount(Math.round(newNumber));
         txtZapAmount.current.value = Math.round(newNumber);
     }
-    console.log("Render Note");
+    //console.log("Render Note");
     return (
         < Fade in={true}>
             <Card mb="2" bg={uiColor} ml={props.isReply ? replyLevel * 10 + 'px' : 0} pos="relative" >

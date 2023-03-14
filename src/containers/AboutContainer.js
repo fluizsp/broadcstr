@@ -1,18 +1,20 @@
 import { Avatar, Box, Card, Container, Heading, HStack, Link, List, ListIcon, ListItem, SlideFade, Text, UnorderedList, useColorModeValue } from "@chakra-ui/react"
 import { useEffect } from "react";
 import { BiBitcoin, BiKey, BiNetworkChart, BiShield } from "react-icons/bi";
+import { Link as DomLink } from "react-router-dom";
 
 const AboutContainer = (props) => {
     const bgGradient = useColorModeValue('linear(to-tl, brand.blessing1, brand.blessing2)', 'linear(to-br, brand.eternalConstance1, brand.eternalConstance2)');
+    const uiColor = useColorModeValue('brand.lightUi', 'brand.darkUi');
     useEffect(() => {
         document.title = "Broadcstr - About"
     }, [])
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
-            <Box ml={{ md: '100px', lg: '330px' }} >
+            <Box ml={{ md: '100px' }} >
                 <SlideFade in={true} offsetX="-1000" offsetY="0" unmountOnExit={true}>
                     <Container maxW='4xl' pt="80px" pb="20px" >
-                        <Card p={12}>
+                        <Card p={12} bg={uiColor}>
                             <Heading color="blue.300" size="xl">Welcome to Broadcstr!</Heading>
                             <Heading size="md">and welcome to Nostr!</Heading>
                             <Heading size="md" mt={12}>What is Broadcstr?</Heading>
@@ -154,15 +156,15 @@ const AboutContainer = (props) => {
                             </Text>
                             <Heading size="md" mt={6}>More info:</Heading>
                             <Heading size="sm" mt={6}>Creator:</Heading>
-                            <Link href="/fluizsp@nostrplebs.com">
+                            <Link as={DomLink} to="/fluizsp@nostrplebs.com">
                                 <HStack mt={6}>
-                                    <Avatar size="md" src="https://member.cash/img/upload/566f881721.webp" name="Fábio Luiz" />
+                                    <Avatar size="md" src="https://nostr.build/i/nostr.build_c14cfa2a4390af9567da290ef27c790af7ca0595308fdca862fa175c4bbedb89.jpg" name="Fábio Luiz" />
                                     <Text fontSize="md" as="b" maxW="150px" noOfLines="1">Fábio Luiz</Text>
                                     <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">@fluizsp</Text>
                                 </HStack>
                             </Link>
                             <Heading size="sm" mt={6}>Official profile:</Heading>
-                            <Link href="/npub1twaca974c690c68yd4lctzh0cu73v8y9ye8mlwvaj8kc80cmn53ssyn72l">
+                            <Link as={DomLink} to="/npub1twaca974c690c68yd4lctzh0cu73v8y9ye8mlwvaj8kc80cmn53ssyn72l">
                                 <HStack mt={6}>
                                     <Avatar size="md" src="https://nostr.build/i/nostr.build_6a5803657dd0a42f6e55d53bc53d43b5f9b1d881f54c7cde1740e81936a25cc3.png" name="Broadcstr" />
                                     <Text fontSize="md" as="b" maxW="150px" noOfLines="1">Broadcstr</Text>
