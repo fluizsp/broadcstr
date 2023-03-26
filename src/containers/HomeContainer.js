@@ -104,7 +104,7 @@ const HomeContainer = props => {
         sortedNotes = notes.sort((a, b) => { return a.created_at > b.created_at ? -1 : 1 })
     return (
         <Box minH="100vH" bgGradient={bgGradient}>
-            <Box ml={{ md: '100px', lg: '330px' }} >
+            <Box ml={{ md: '100px' }} >
                 <SlideFade in={true} offsetX="-1000" offsetY="0" unmountOnExit={true}>
                     <Container maxW='4xl' pt="80px" pb="20px" >
                         <Flex mb="5">
