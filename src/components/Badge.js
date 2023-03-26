@@ -26,7 +26,6 @@ const Badge = props => {
     const badgeThumb = props.badgeInfo && props.badgeInfo.badge ? props.badgeInfo.badge.tags.find(([t, v]) => t === 'thumb')[1] : '';
     const awardedToN = props.badgeInfo && props.badgeInfo.award ? props.badgeInfo.award.tags.filter(([t, v]) => t === 'p').length : '';
     const created=props.badgeInfo && props.badgeInfo.badge? new Date(props.badgeInfo.badge.created_at*1000):'';
-    console.log(created);
     const openBadge = () => {
         dispatch({ type: VIEW_BADGE, data: props.badgeInfo });
     }

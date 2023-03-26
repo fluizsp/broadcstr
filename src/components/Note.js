@@ -1,4 +1,4 @@
-import { Box, HStack, VStack, Fade, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, useColorModeValue, Link, Popover, PopoverTrigger, PopoverContent, PopoverArrow, useToast, InputGroup, InputLeftAddon, InputRightAddon, Input, Tag, TagLeftIcon, TagLabel } from '@chakra-ui/react'
+import { Box, HStack, VStack, Fade, Code, Button, Avatar, Text, Grid, GridItem, Card, Image, Tooltip, useColorModeValue, Link, Popover, PopoverTrigger, PopoverContent, PopoverArrow, useToast, InputGroup, InputLeftAddon, InputRightAddon, Input, Tag, TagLeftIcon, TagLabel } from '@chakra-ui/react'
 import { FiMaximize } from 'react-icons/fi';
 import { BiHeart, BiMinus, BiPlus } from 'react-icons/bi';
 import { IoIosHeart, IoMdPersonAdd, IoMdRemove } from 'react-icons/io';
@@ -14,7 +14,6 @@ import { GoBroadcast, GoCheck, GoVerified } from 'react-icons/go';
 import { useRef, useState } from 'react';
 import { Nip57Service } from '../services/Nip57Service';
 import { useIntl } from 'react-intl';
-import { Code } from 'react-ionicons';
 import { addFollowing, likeNote, removeFollowing, repostNote, sign } from '../services/ContentServices';
 import { FaEye } from 'react-icons/fa';
 
@@ -47,7 +46,7 @@ const Note = props => {
     let reposts = props.relateds ? props.relateds.reposts.length ?? 0 : 0;//useSelector(state => state.content.allNotesRelateds[note.id] ? state.content.allNotesRelateds[note.id].reposts ? state.content.allNotesRelateds[note.id].reposts.length : 0 : 0);
     let sStatus = note.tags ? note.tags.find(t => t[0] === 'content-warning') ? 1 : 0 : 0;
     const [sensitiveStatus, setSensitiveStatus] = useState(sStatus);
-    let liked = useSelector(state => state.user.likes.filter(l => l === note.id).length > 0);
+    let liked = useSelector(state => state.user.likes.filter ? state.user.likes.filter(l => l === note.id).length > 0 : false);
     const account = useSelector(state => state.user.account);
     const relays = useSelector(state => state.user.relays);
     //console.log(`render note ${note.content}`)
@@ -140,7 +139,7 @@ const Note = props => {
                 setNip05Status(false);
             });
     }
-    const dismissSensitiveContent=()=>{
+    const dismissSensitiveContent = () => {
         setSensitiveStatus(-1);
     }
     const handleZap = () => {

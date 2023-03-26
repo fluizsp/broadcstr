@@ -161,6 +161,7 @@ const AboutContainer = (props) => {
                                     <Avatar size="md" src="https://nostr.build/i/nostr.build_c14cfa2a4390af9567da290ef27c790af7ca0595308fdca862fa175c4bbedb89.jpg" name="Fábio Luiz" />
                                     <Text fontSize="md" as="b" maxW="150px" noOfLines="1">Fábio Luiz</Text>
                                     <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">@fluizsp</Text>
+                                    <Text fontSize="md" color="gray.400" maxW="150px" noOfLines="1" fontSize="sm">🇧🇷</Text>
                                 </HStack>
                             </Link>
                             <Heading size="sm" mt={6}>Official profile:</Heading>
