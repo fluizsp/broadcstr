@@ -104,7 +104,7 @@ Because it is like your social network, but:
 - [ ] NIP-26: Delegated Event Signing;
 - [ ] NIP-28: Public Chat;
 - [ ] NIP-33: Parameterized Replaceable Events;
-- [ ] NIP-36: Sensitive Content;
+- [x] NIP-36: Sensitive Content;
 - [ ] NIP-40: Expiration Timestamp;
 - [ ] NIP-42: Authentication of clients to relays;
 - [ ] NIP-46: Nostr Connect;

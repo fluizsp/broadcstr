@@ -39,8 +39,8 @@ const TopBar = (props) => {
             setComposerActive(!composerActive);
     }
     return (
-        <Box w="100vW" borderBottomRadius={['xl', 'xl', '0']} ml={['0', '0', '100px', '330px']} bg={uiColor} backdropFilter="auto" backdropBlur="6px"
-            top="0" left="0" pos="fixed" zIndex="1" pr={['0', '0', '110px', '340px']}
+        <Box w="100vW" borderBottomRadius={['xl', 'xl', '0']} ml={['0', '0', '100px']} bg={uiColor} backdropFilter="auto" backdropBlur="6px"
+            top="0" left="0" pos="fixed" zIndex="1" pr={['0', '0', '110px']}
             borderBottom="1px" borderBottomColor={uiColor} dropShadow="lg">
             <Flex h="60px">
                 <Box flex={1} p="3.5" >

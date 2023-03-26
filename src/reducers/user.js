@@ -3,7 +3,7 @@ import { saveToStorage } from '../actions/account';
 import { loadState, saveState } from '../localStorage';
 
 const initialState = {
-    relays: loadState('user.relays') ?? [
+    relays: [
         {
             url: 'wss://relay.nostr.info',
             read: true,
@@ -34,11 +34,6 @@ const initialState = {
             read: true,
             write: true
         },
-        {
-            url: 'wss://nostr.relayer.se',
-            read: true,
-            write: true
-        }
     ],
     loggedIn: false,
     account: loadState('user.account') ?? {},
