@@ -260,7 +260,7 @@ const ProfileContainer = props => {
     let replies = allNotes.filter(n => (n.kind === 1 && n.tags.filter(([t, v]) => t === 'e').length > 0));
     let isOwnProfile = account.publicKey && nip19.decode(account.publicKey).data === publicKeyHex;
     let isFollowing = useSelector(state => state.user.following.filter(f => f === publicKeyHex).length > 0);
-    const tabSize = isOwnProfile ? '20%' : '25%';
+    const tabSize = isOwnProfile ? '25%' : '25%';
     const setNewBadgeAttr = (attr, value) => {
         let attrs = newBadgeAttrs;
         attrs[attr] = value;
