@@ -19,6 +19,11 @@ Because it is like your social network, but:
 
 ## Version info:
 
+**Version 0.4.1 - Layout update and fixes**
+- Removed FAT menu, using tablet menu for desktop;
+- Fixed some Youtube links not being displayed, thanks to @Gonzalo for reporting it!
+- Changed default relays;
+
 **Version 0.4 - Badges, new Relay Service and NIP-36!**
 - Initial implementation of Badges, you can now see users badges in profile pages (soon there will be a badges section on user profile, coming in 0.4.x);
 - Completely rewritten Relay interation through websockets, with individual subscription lifespan and timeout to improve content consistency, time to load and fine tuning for each request/sub;
@@ -100,10 +105,9 @@ Because it is like your social network, but:
 - [ ] NIP-22: Event created_at Limits;
 - [ ] NIP-23: Long-form Content;
 - [x] NIP-25: Reactions;
-- [x] NIP-25: Reactions;
 - [ ] NIP-26: Delegated Event Signing;
 - [ ] NIP-28: Public Chat;
-- [ ] NIP-33: Parameterized Replaceable Events;
+- [x] NIP-33: Parameterized Replaceable Events;
 - [x] NIP-36: Sensitive Content;
 - [ ] NIP-40: Expiration Timestamp;
 - [ ] NIP-42: Authentication of clients to relays;

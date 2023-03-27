@@ -439,7 +439,7 @@ const ProfileContainer = props => {
                                     <Tab w={tabSize} onClick={() => { setLimit(25); setActiveView(1) }}>{intl.formatMessage({ id: 'replies' })}</Tab>
                                     <Tab w={tabSize} onClick={() => { setLimit(25); setActiveView(2) }}> {intl.formatMessage({ id: 'following' })} ({following.length > 1000 ? following.length + '+' : following.length}) </Tab>
                                     <Tab w={tabSize} onClick={() => { setLimit(25); setActiveView(3) }}> {intl.formatMessage({ id: 'followers' })} ({followers.length > 1000 ? followers.length + '+' : followers.length})</Tab>
-                                    {isOwnProfile ? <Tab w={tabSize} onClick={() => { setActiveView(4) }}>{intl.formatMessage({ id: 'badges' })}</Tab> : ''}
+                                    {/*isOwnProfile ? <Tab w={tabSize} onClick={() => { setActiveView(4) }}>{intl.formatMessage({ id: 'badges' })}</Tab> : ''*/}
                                 </TabList>
                             </Tabs>
                         </Card>
