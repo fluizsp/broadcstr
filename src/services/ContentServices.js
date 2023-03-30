@@ -101,6 +101,7 @@ export const getUserFollowing = (publicKeyHex, limit) => {
     })
 }
 export const getUserFollowers = (publicKeyHex, limit, onEvents) => {
+    console.log('getUserFollowers');
     let followersBatch = [];
     let filters = {
         kinds: [3],

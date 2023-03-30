@@ -14,7 +14,6 @@ export const treatEmbeds = (note) => {
         let src = ytRgx[0].replace('youtube.com/', 'youtube.com/embed/');
         src = src.replace('youtu.be/', 'youtube.com/embed/');
         src = src.replace('/live/','/');
-        src = src.replace('/embed/','/');
         note.embed = { kind: 'youtube', src: src }
         note.content = note.content.replace(ytRgx[0], "");
     }
