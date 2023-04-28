@@ -15,6 +15,7 @@ export const loadState = stateName => {
       const serializedState = JSON.stringify(state);
       localStorage.setItem(stateName, serializedState);
     } catch (err) {
+      console.log(err);
       throw new Error("Can't save changes in local storage");
     }
   };
