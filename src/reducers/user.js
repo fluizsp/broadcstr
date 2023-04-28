@@ -3,12 +3,7 @@ import { saveToStorage } from '../actions/account';
 import { loadState, saveState } from '../localStorage';
 
 const initialState = {
-    relays: [
-        {
-            url: 'wss://relay.nostr.info',
-            read: true,
-            write: true
-        },
+    relays: loadState('user.relayList') ?? [
         {
             url: 'wss://relay.damus.io',
             read: true,
@@ -108,8 +103,12 @@ const userReducer = createReducer(initialState, {
             state.following.splice(state.following.indexOf(action.data), 1)
     },
     SET_RELAYS: (state, action) => {
-        if (action.data)
+        if (action.data){
+            console.log(action.data);
             state.relays = action.data;
+            saveState(action.data, "user.relayList")    
+        }
+
     },
     SAVE_LANGUAGE: (state, action) => {
         state.language = action.data;
